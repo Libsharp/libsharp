@@ -1,0 +1,16 @@
+GNU make and GNU gcc (version 4.x) are required for compilation.
+
+Simply run "./configure"; if this fails, please refer to the output of
+"./configure --help" for additional hints and, if necessary, provide
+additional flags to the configure script.
+Once the script finishes successfully, run "make autotune"
+(or "gmake autotune"). This should perform some necessary self-tuning and
+install the compilation products in the subdirectory "auto/".
+NOTE: Autotuning should be done on the the computer where you wish to use
+the library later on, and no other CPU-intensive tasks should be running
+during the autotuning process.
+
+Documentation can be created by the command "(g)make doc".
+However this requires the doxygen application to be installed
+on your system.
+The documentation will be created in the subdirectory doc/.

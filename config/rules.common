@@ -1,0 +1,31 @@
+BLDROOT = $(SRCROOT)/build.$(SHARP_TARGET)
+PREFIX  = $(SRCROOT)/$(SHARP_TARGET)
+BINDIR	= $(PREFIX)/bin
+INCDIR	= $(PREFIX)/include
+LIBDIR	= $(PREFIX)/lib
+DOCDIR	= $(SRCROOT)/doc
+
+# do not use any suffix rules
+.SUFFIXES:
+# do not use any default rules
+.DEFAULT:
+
+echo_config:
+	@echo using configuration \'$(SHARP_TARGET)\'
+
+$(BLDROOT)/%.o : $(SRCROOT)/%.c | echo_config
+	@echo "#  compiling $*.c"
+	cd $(@D) && $(CC) $(FULL_INCLUDE) -I$(BLDROOT) $(CCFLAGS) $<
+
+$(BLDROOT)/%.o : $(SRCROOT)/%.cc | echo_config
+	@echo "#  compiling $*.cc"
+	cd $(@D) && $(CXX) $(FULL_INCLUDE) -I$(BLDROOT) $(CXXCFLAGS) $<
+
+%_mkdir:
+	@if [ ! -d $* ]; then mkdir -p $* ; fi
+
+clean:
+	rm -rf $(BLDROOT) $(PREFIX) $(DOCDIR) autom4te.cache/ config.log config.status
+
+distclean: clean
+	rm -f config/config.auto
