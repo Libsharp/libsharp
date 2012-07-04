@@ -31,7 +31,7 @@
 
 #include <math.h>
 #include <stdlib.h>
-#include "ylmgen_c.h"
+#include "sharp_ylmgen_c.h"
 #include "c_utils.h"
 
 void Ylmgen_init (Ylmgen_C *gen, int l_max, int m_max, int spin)

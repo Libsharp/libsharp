@@ -22,15 +22,15 @@
  *  (DLR).
  */
 
-/*! \file vec_utils.h
+/*! \file sharp_vecutil.h
  *  Functionality related to vector instruction support
  *
  *  Copyright (C) 2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
-#ifndef PLANCK_VEC_UTILS_H
-#define PLANCK_VEC_UTILS_H
+#ifndef SHARP_VECUTIL_H
+#define SHARP_VECUTIL_H
 
 #if (defined (__AVX__) && (!defined (DISABLE_AVX)) && (!defined (DISABLE_SSE2)))
 #define VLEN 4

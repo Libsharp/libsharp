@@ -22,19 +22,19 @@
  *  (DLR).
  */
 
-/*  \file complex_hacks.h
+/*  \file sharp_complex_hacks.h
  *  support for converting vector types and complex numbers
  *
  *  Copyright (C) 2012 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
-#ifndef COMPLEX_HACKS_H
-#define COMPLEX_HACKS_H
+#ifndef SHARP_COMPLEX_HACKS_H
+#define SHARP_COMPLEX_HACKS_H
 
 #include <math.h>
 #include <complex.h>
-#include "vecsupport.h"
+#include "sharp_vecsupport.h"
 
 #define UNSAFE_CODE
 

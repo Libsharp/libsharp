@@ -22,15 +22,15 @@
  *  (DLR).
  */
 
-/*! \file ylmgen_c.h
+/*! \file sharp_ylmgen_c.h
  *  Code for efficient calculation of Y_lm(phi=0,theta)
  *
  *  Copyright (C) 2005-2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
-#ifndef PLANCK_YLMGEN_C_H
-#define PLANCK_YLMGEN_C_H
+#ifndef SHARP_YLMGEN_C_H
+#define SHARP_YLMGEN_C_H
 
 #ifdef __cplusplus
 extern "C" {

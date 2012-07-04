@@ -33,7 +33,7 @@
 #define PLANCK_SHARP_CORE_H
 
 #include "sharp.h"
-#include "ylmgen_c.h"
+#include "sharp_ylmgen_c.h"
 
 #ifdef __cplusplus
 extern "C" {

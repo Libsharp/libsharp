@@ -36,6 +36,7 @@
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
 #include "c_utils.h"
+#include "sharp_announce.h"
 #include "sharp_core.h"
 
 typedef complex double dcmplx;
@@ -94,7 +95,7 @@ int main(void)
 #ifdef USE_MPI
   MPI_Init(NULL,NULL);
 #endif
-  module_startup_c("sharp_bench",1,1,"",1);
+  sharp_module_startup("sharp_bench",1,1,"",1);
 
   printf("Benchmarking SHTs.\n\n");
   FILE *fp=fopen("oracle.inc","w");

@@ -32,9 +32,9 @@
 #include <complex.h>
 #include <math.h>
 #include <string.h>
-#include "vecsupport.h"
-#include "complex_hacks.h"
-#include "ylmgen_c.h"
+#include "sharp_vecsupport.h"
+#include "sharp_complex_hacks.h"
+#include "sharp_ylmgen_c.h"
 #include "sharp.h"
 #include "sharp_core.h"
 #include "c_utils.h"

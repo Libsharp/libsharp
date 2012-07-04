@@ -46,10 +46,6 @@ void util_warn_ (const char *file, int line, const char *func, const char *msg);
 void *util_malloc_ (size_t sz);
 void util_free_ (void *ptr);
 
-void announce_c (const char *name);
-void module_startup_c (const char *name, int argc, int argc_expected,
-  const char *argv_expected, int verbose);
-
 #if defined (__GNUC__)
 #define UTIL_FUNC_NAME__ __func__
 #else

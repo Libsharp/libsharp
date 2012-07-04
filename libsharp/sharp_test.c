@@ -59,6 +59,7 @@
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
 #include "c_utils.h"
+#include "sharp_announce.h"
 #include "sharp_core.h"
 
 typedef complex double dcmplx;
@@ -188,7 +189,7 @@ int main(int argc, char **argv)
 #ifdef USE_MPI
   MPI_Init(NULL,NULL);
 #endif
-  module_startup_c("sharp_test",argc,7,
+  sharp_module_startup("sharp_test",argc,7,
     "<healpix|ecp|gauss> <lmax> <nside|nphi> <niter> <spin> <ntrans>",1);
 
   int lmax=atoi(argv[2]);

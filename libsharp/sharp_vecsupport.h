@@ -22,18 +22,18 @@
  *  (DLR).
  */
 
-/*  \file vecsupport.h
+/*  \file sharp_vecsupport.h
  *  Convenience functions for vector arithmetics
  *
  *  Copyright (C) 2012 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
-#ifndef VECSUPPORT_H
-#define VECSUPPORT_H
+#ifndef SHARP_VECSUPPORT_H
+#define SHARP_VECSUPPORT_H
 
 #include <math.h>
-#include "vec_utils.h"
+#include "sharp_vecutil.h"
 
 typedef double Ts;
 

@@ -31,11 +31,11 @@
 
 #include <math.h>
 #include "ls_fft.h"
-#include "ylmgen_c.h"
+#include "sharp_ylmgen_c.h"
 #include "sharp.h"
 #include "c_utils.h"
 #include "sharp_core.h"
-#include "vec_utils.h"
+#include "sharp_vecutil.h"
 #include "walltime_c.h"
 
 typedef complex double dcmplx;

@@ -25,21 +25,12 @@
 /*
  *  Convenience functions
  *
- *  Copyright (C) 2008, 2009, 2010, 2011 Max-Planck-Society
+ *  Copyright (C) 2008, 2009, 2010, 2011, 2012 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
 #include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "c_utils.h"
-#include "vec_utils.h"
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-#ifdef USE_MPI
-#include <mpi.h>
-#endif
 
 void util_fail_ (const char *file, int line, const char *func, const char *msg)
   {
@@ -88,58 +79,3 @@ void *util_malloc_ (size_t sz)
 void util_free_ (void *ptr)
   { if ((ptr)!=NULL) free(ptr); }
 #endif
-
-static void OpenMP_status(void)
-  {
-#ifndef _OPENMP
-  printf("OpenMP: not supported by this binary\n");
-#else
-  int threads = omp_get_max_threads();
-  if (threads>1)
-    printf("OpenMP active: max. %d threads.\n",threads);
-  else
-    printf("OpenMP active, but running with 1 thread only.\n");
-#endif
-  }
-
-static void MPI_status(void)
-  {
-#ifndef USE_MPI
-  printf("MPI: not supported by this binary\n");
-#else
-  int tasks;
-  MPI_Comm_size(MPI_COMM_WORLD,&tasks);
-  if (tasks>1)
-    printf("MPI active with %d tasks.\n",tasks);
-  else
-    printf("MPI active, but running with 1 task only.\n");
-#endif
-  }
-
-static void vecmath_status(void)
-  { printf("Supported vector length: %d\n",VLEN); }
-
-void announce_c (const char *name)
-  {
-  size_t m, nlen=strlen(name);
-  printf("\n+-");
-  for (m=0; m<nlen; ++m) printf("-");
-  printf("-+\n");
-  printf("| %s |\n", name);
-  printf("+-");
-  for (m=0; m<nlen; ++m) printf("-");
-  printf("-+\n\n");
-  vecmath_status();
-  OpenMP_status();
-  MPI_status();
-  printf("\n");
-  }
-
-void module_startup_c (const char *name, int argc, int argc_expected,
-  const char *argv_expected, int verbose)
-  {
-  if (verbose) announce_c (name);
-  if (argc==argc_expected) return;
-  if (verbose) fprintf(stderr, "Usage: %s %s\n", name, argv_expected);
-  exit(1);
-  }
