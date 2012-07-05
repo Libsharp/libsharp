@@ -73,7 +73,8 @@ typedef complex double dcmplx;
 #undef nvec
 
 void inner_loop (sharp_job *job, const int *ispair,const double *cth,
-  const double *sth, int llim, int ulim, Ylmgen_C *gen, int mi, const int *idx)
+  const double *sth, int llim, int ulim, sharp_Ylmgen_C *gen, int mi,
+  const int *idx)
   {
   int njobs=job->ntrans;
   if (njobs<=MAXJOB_SPECIAL)

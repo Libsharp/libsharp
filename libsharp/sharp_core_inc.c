@@ -83,8 +83,8 @@ static inline void Y(mypow) (Tb val, int npow, Tb * restrict resd,
         {
         vmuleq(res.v[i],val.v[i]);
         vaddeq(scale.v[i],scaleint.v[i]);
-        Tv mask=vlt(vabs(res.v[i]),vload(fsmall));
-        vmuleq(res.v[i],vblend(mask,vload(fbig),vone));
+        Tv mask=vlt(vabs(res.v[i]),vload(sharp_fsmall));
+        vmuleq(res.v[i],vblend(mask,vload(sharp_fbig),vone));
         vsubeq(scale.v[i],vblend(mask,vone,vzero));
         }
       }
@@ -92,8 +92,8 @@ static inline void Y(mypow) (Tb val, int npow, Tb * restrict resd,
       {
       vmuleq(val.v[i],val.v[i]);
       vaddeq(scaleint.v[i],scaleint.v[i]);
-      Tv mask = vlt(vabs(val.v[i]),vload(fsmall));
-      vmuleq(val.v[i],vblend(mask,vload(fbig),vone));
+      Tv mask = vlt(vabs(val.v[i]),vload(sharp_fsmall));
+      vmuleq(val.v[i],vblend(mask,vload(sharp_fbig),vone));
       vsubeq(scaleint.v[i],vblend(mask,vone,vzero));
       }
     }
@@ -113,7 +113,7 @@ static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
     if (vanyTrue(mask))
       {
       did_scale=1;
-      Tv fact = vblend(mask,vload(fsmall),vone);
+      Tv fact = vblend(mask,vload(sharp_fsmall),vone);
       vmuleq(lam1->v[i],fact); vmuleq(lam2->v[i],fact);
       vaddeq(scale->v[i],vblend(mask,vone,vzero));
       }
@@ -123,7 +123,7 @@ static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
 
 static inline void Y(normalize) (Tb * restrict val, Tb * restrict scale)
   {
-  const Tv vfsmall=vload(fsmall), vfbig=vload(fbig);
+  const Tv vfsmall=vload(sharp_fsmall), vfbig=vload(sharp_fbig);
   for (int i=0;i<nvec; ++i)
     {
     Tv mask = vgt(vabs(val->v[i]),vone);
@@ -168,13 +168,14 @@ static inline void Y(getCorfac)(Tb scale, Tb * restrict corfac,
   Y(Tbu) sc, corf;
   sc.b=scale;
   for (int i=0; i<VLEN*nvec; ++i)
-    corf.s[i] = (sc.s[i]<minscale) ? 0. : cf[(int)(sc.s[i])-minscale];
+    corf.s[i] = (sc.s[i]<sharp_minscale) ?
+      0. : cf[(int)(sc.s[i])-sharp_minscale];
   *corfac=corf.b;
   }
 
 static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
   Tb * restrict lam_1_, Tb * restrict lam_2_, Tb * restrict scale_,
-  const Ylmgen_C * restrict gen)
+  const sharp_Ylmgen_C * restrict gen)
   {
   int l=gen->m;
   Tb lam_1=Y(Tbconst)(0.), lam_2, scale;
@@ -182,7 +183,7 @@ static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
   Y(Tbmuleq1) (&lam_2,(gen->m&1) ? -gen->mfac[gen->m]:gen->mfac[gen->m]);
   Y(normalize)(&lam_2,&scale);
 
-  int below_limit = Y(TballLt)(scale,limscale);
+  int below_limit = Y(TballLt)(scale,sharp_limscale);
   while (below_limit)
     {
     if (l+2>gen->lmax) {*l_=gen->lmax+1;return;}
@@ -193,14 +194,15 @@ static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
     for (int i=0; i<nvec; ++i)
       lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
     if (Y(rescale)(&lam_1,&lam_2,&scale))
-      below_limit = Y(TballLt)(scale,limscale);
+      below_limit = Y(TballLt)(scale,sharp_limscale);
     l+=2;
     }
   *l_=l; *lam_1_=lam_1; *lam_2_=lam_2; *scale_=scale;
   }
 
 static inline void Y(rec_step) (Tb * restrict rxp, Tb * restrict rxm,
-  Tb * restrict ryp, Tb * restrict rym, const Tb cth, const ylmgen_dbl3 fx)
+  Tb * restrict ryp, Tb * restrict rym, const Tb cth,
+  const sharp_ylmgen_dbl3 fx)
   {
   Tv fx0=vload(fx.f[0]),fx1=vload(fx.f[1]),fx2=vload(fx.f[2]);
   for (int i=0; i<nvec; ++i)
@@ -214,9 +216,9 @@ static inline void Y(rec_step) (Tb * restrict rxp, Tb * restrict rxm,
 
 static void Y(iter_to_ieee_spin) (const Tb cth, int *l_,
   Tb * rec1p_, Tb * rec1m_, Tb * rec2p_, Tb * rec2m_,
-  Tb * scalep_, Tb * scalem_, const Ylmgen_C * restrict gen)
+  Tb * scalep_, Tb * scalem_, const sharp_Ylmgen_C * restrict gen)
   {
-  const ylmgen_dbl3 * restrict fx = gen->fx;
+  const sharp_ylmgen_dbl3 * restrict fx = gen->fx;
   Tb cth2, sth2;
   for (int i=0; i<nvec; ++i)
     {
@@ -251,14 +253,16 @@ static void Y(iter_to_ieee_spin) (const Tb cth, int *l_,
 
   int l=gen->mhi;
 
-  int below_limit = Y(TballLt)(scalep,limscale) && Y(TballLt)(scalem,limscale);
+  int below_limit = Y(TballLt)(scalep,sharp_limscale)
+                 && Y(TballLt)(scalem,sharp_limscale);
   while (below_limit)
     {
     if (l+2>gen->lmax) {*l_=gen->lmax+1;return;}
     Y(rec_step)(&rec1p,&rec1m,&rec2p,&rec2m,cth,fx[l+1]);
     Y(rec_step)(&rec2p,&rec2m,&rec1p,&rec1m,cth,fx[l+2]);
     if (Y(rescale)(&rec1p,&rec2p,&scalep) | Y(rescale)(&rec1m,&rec2m,&scalem))
-      below_limit = Y(TballLt)(scalep,limscale) && Y(TballLt)(scalem,limscale);
+      below_limit = Y(TballLt)(scalep,sharp_limscale)
+                 && Y(TballLt)(scalem,sharp_limscale);
     l+=2;
     }
 

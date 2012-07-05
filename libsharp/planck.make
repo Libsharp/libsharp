@@ -15,7 +15,7 @@ ALLOBJ:=$(ALLOBJ:%=$(OD)/%)
 
 ODEP:=$(HDR_$(PKG)) $(HDR_libfftpack) $(HDR_c_utils)
 $(OD)/sharp_core.o: $(SD)/sharp_inchelper1.inc.c $(SD)/sharp_core_inc.c $(SD)/sharp_core_inc2.c $(SD)/sharp_core_inc3.c
-$(OD)/sharp.o: $(SD)/sharp_mpi.c $(SD)/oracle.inc
+$(OD)/sharp.o: $(SD)/sharp_mpi.c $(SD)/sharp_oracle.inc
 BDEP:=$(LIB_$(PKG)) $(LIB_libfftpack) $(LIB_c_utils)
 
 $(LIB_$(PKG)): $(LIBOBJ)

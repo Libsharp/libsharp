@@ -98,7 +98,7 @@ int main(void)
   sharp_module_startup("sharp_bench",1,1,"",1);
 
   printf("Benchmarking SHTs.\n\n");
-  FILE *fp=fopen("oracle.inc","w");
+  FILE *fp=fopen("sharp_oracle.inc","w");
   UTIL_ASSERT(fp, "failed to open oracle file for writing");
   fprintf(fp,"static const int maxtr = 6;\n");
   fprintf(fp,"static const int nv_opt[6][2][3] = {\n");

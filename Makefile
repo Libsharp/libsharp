@@ -32,7 +32,7 @@ compile_all: $(all_cbin) hdrcopy
 
 autotune: sharp_bench
 	$(BINDIR)/sharp_bench
-	mv oracle.inc $(SRCROOT)/libsharp
+	mv sharp_oracle.inc $(SRCROOT)/libsharp
 	$(MAKE)
 
 hdrclean:

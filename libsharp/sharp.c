@@ -464,7 +464,7 @@ void sharp_execute_job (sharp_job *job)
   int lmax = job->ainfo->lmax,
       mmax=sharp_get_mmax(job->ainfo->mval, job->ainfo->nm);
 
-  job->norm_l = Ylmgen_get_norm (lmax, job->spin);
+  job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
 
 /* clear output arrays if requested */
   init_output (job);
@@ -501,8 +501,8 @@ void sharp_execute_job (sharp_job *job)
 {
     sharp_job ljob = *job;
     ljob.opcnt=0;
-    Ylmgen_C generator;
-    Ylmgen_init (&generator,lmax,mmax,ljob.spin);
+    sharp_Ylmgen_C generator;
+    sharp_Ylmgen_init (&generator,lmax,mmax,ljob.spin);
     alloc_almtmp(&ljob,lmax);
 
 #pragma omp for schedule(dynamic,1)
@@ -517,7 +517,7 @@ void sharp_execute_job (sharp_job *job)
       almtmp2alm (&ljob, lmax, mi);
       }
 
-    Ylmgen_destroy(&generator);
+    sharp_Ylmgen_destroy(&generator);
     dealloc_almtmp(&ljob);
 
 #pragma omp critical
@@ -589,7 +589,7 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   if (type==ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
-#include "oracle.inc"
+#include "sharp_oracle.inc"
 
   return nv_opt[IMIN(ntrans,maxtr)-1][spin!=0][type];
   }

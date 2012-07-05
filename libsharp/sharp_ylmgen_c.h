@@ -36,11 +36,11 @@
 extern "C" {
 #endif
 
-enum { minscale=-8, limscale=-3, maxscale=5 };
-static const double fbig=0x1p+90,fsmall=0x1p-90;
+enum { sharp_minscale=-8, sharp_limscale=-3, sharp_maxscale=5 };
+static const double sharp_fbig=0x1p+90,sharp_fsmall=0x1p-90;
 
-typedef struct { double f[2]; } ylmgen_dbl2;
-typedef struct { double f[3]; } ylmgen_dbl3;
+typedef struct { double f[2]; } sharp_ylmgen_dbl2;
+typedef struct { double f[3]; } sharp_ylmgen_dbl3;
 
 typedef struct
   {
@@ -53,13 +53,13 @@ typedef struct
 
 /* used if s==0 */
   double *mfac;
-  ylmgen_dbl2 *rf;
+  sharp_ylmgen_dbl2 *rf;
 
 /* used if s!=0 */
   int sinPow, cosPow, preMinus_p, preMinus_m;
   double *prefac;
   int *fscale;
-  ylmgen_dbl3 *fx;
+  sharp_ylmgen_dbl3 *fx;
 
 /* internal usage only */
 /* used if s==0 */
@@ -68,22 +68,22 @@ typedef struct
 /* used if s!=0 */
   double *flm1, *flm2, *inv;
   int mlo, mhi;
-  } Ylmgen_C;
+  } sharp_Ylmgen_C;
 
 /*! Creates a generator which will calculate helper data for Y_lm calculation
     up to \a l=l_max and \a m=m_max. */
-void Ylmgen_init (Ylmgen_C *gen, int l_max, int m_max, int spin);
+void sharp_Ylmgen_init (sharp_Ylmgen_C *gen, int l_max, int m_max, int spin);
 
 /*! Deallocates a generator previously initialised by Ylmgen_init(). */
-void Ylmgen_destroy (Ylmgen_C *gen);
+void sharp_Ylmgen_destroy (sharp_Ylmgen_C *gen);
 
 /*! Prepares the object for the calculation at \a m. */
-void Ylmgen_prepare (Ylmgen_C *gen, int m);
+void sharp_Ylmgen_prepare (sharp_Ylmgen_C *gen, int m);
 
 /*! Returns a pointer to an array with \a lmax+1 entries containing
     normalisation factors that must be applied to Y_lm values computed for
     \a spin. The array must be deallocated (using free()) by the user. */
-double *Ylmgen_get_norm (int lmax, int spin);
+double *sharp_Ylmgen_get_norm (int lmax, int spin);
 
 #ifdef __cplusplus
 }

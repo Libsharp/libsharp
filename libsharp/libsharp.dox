@@ -61,11 +61,11 @@
   <ul>
   <li>scalar a_lm to map</li>
   <li>scalar map to a_lm</li>
-<!--   <li>polarised a_lm to map</li>
-  <li>polarised map to a_lm</li> -->
+<!--  <li>polarised a_lm to map</li>
+  <li>polarised map to a_lm</li> !-->
   <li>spin a_lm to map</li>
   <li>spin map to a_lm</li>
-<!--  <li>scalar a_lm to maps of first derivatives</li> -->
+  <li>scalar a_lm to maps of first derivatives</li>
   </ul>
 
   SHARP supports shared-memory parallelisation via OpenMP; this feature will
