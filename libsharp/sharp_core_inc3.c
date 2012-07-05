@@ -511,6 +511,106 @@ static void Y(calc_map2alm_spin) (Tb cth, const Ylmgen_C * restrict gen,
   Y(map2alm_spin_kernel)(cth,p1,p2,rec1p,rec1m,rec2p,rec2m,fx,alm,l,lmax,njobs);
   }
 
+static inline void Y(saddstep_d) (Y(Tbqu) * restrict px, Y(Tbqu) * restrict py,
+  const Tb rxp, const Tb rxm, const dcmplx * restrict alm, int njobs)
+  {
+  for (int j=0; j<njobs; ++j)
+    {
+    Tv ar=vload(creal(alm[j])), ai=vload(cimag(alm[j]));
+    for (int i=0; i<nvec; ++i)
+      {
+      Tv lw=vadd(rxp.v[i],rxm.v[i]);
+      vfmaeq(px[j].qr.v[i],ar,lw);
+      vfmaeq(px[j].qi.v[i],ai,lw);
+      }
+    for (int i=0; i<nvec; ++i)
+      {
+      Tv lx=vsub(rxm.v[i],rxp.v[i]);
+      vfmaeq(py[j].ur.v[i],ai,lx);
+      vfmseq(py[j].ui.v[i],ar,lx);
+      }
+    }
+  }
+
+static void Y(alm2map_deriv1_kernel) (Tb cth, Y(Tbqu) * restrict p1,
+  Y(Tbqu) * restrict p2, Tb rec1p, Tb rec1m, Tb rec2p, Tb rec2m,
+  const ylmgen_dbl3 * restrict fx, const dcmplx * restrict alm, int l,
+  int lmax, int njobs)
+  {
+  while (l<lmax)
+    {
+    Tv fx0=vload(fx[l+1].f[0]),fx1=vload(fx[l+1].f[1]),
+       fx2=vload(fx[l+1].f[2]);
+    for (int i=0; i<nvec; ++i)
+      {
+      rec1p.v[i] = vsub(vmul(vsub(cth.v[i],fx1),vmul(fx0,rec2p.v[i])),
+                        vmul(fx2,rec1p.v[i]));
+      rec1m.v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rec2m.v[i])),
+                        vmul(fx2,rec1m.v[i]));
+      }
+    Y(saddstep_d)(p1,p2,rec2p,rec2m,&alm[njobs*l],njobs);
+    Y(saddstep_d)(p2,p1,rec1p,rec1m,&alm[njobs*(l+1)],njobs);
+    fx0=vload(fx[l+2].f[0]);fx1=vload(fx[l+2].f[1]);
+    fx2=vload(fx[l+2].f[2]);
+    for (int i=0; i<nvec; ++i)
+      {
+      rec2p.v[i] = vsub(vmul(vsub(cth.v[i],fx1),vmul(fx0,rec1p.v[i])),
+                        vmul(fx2,rec2p.v[i]));
+      rec2m.v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rec1m.v[i])),
+                        vmul(fx2,rec2m.v[i]));
+      }
+    l+=2;
+    }
+  if (l==lmax)
+    Y(saddstep_d)(p1, p2, rec2p, rec2m, &alm[njobs*l], njobs);
+  }
+
+static void Y(calc_alm2map_deriv1) (const Tb cth, const Ylmgen_C *gen,
+  sharp_job *job, Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2, int njobs,
+  int *done)
+  {
+  int l, lmax=gen->lmax;
+  Tb rec1p, rec1m, rec2p, rec2m, scalem, scalep;
+  Y(iter_to_ieee_spin) (cth,&l,&rec1p,&rec1m,&rec2p,&rec2m,&scalep,&scalem,gen);
+  job->opcnt += (l-gen->m) * 10*VLEN*nvec;
+  if (l>lmax)
+   { *done=1; return; }
+  job->opcnt += (lmax+1-l) * (12+8*njobs)*VLEN*nvec;
+
+  const ylmgen_dbl3 * restrict fx = gen->fx;
+  Tb corfacp,corfacm;
+  Y(getCorfac)(scalep,&corfacp,gen->cf);
+  Y(getCorfac)(scalem,&corfacm,gen->cf);
+  const dcmplx * restrict alm=job->almtmp;
+  int full_ieee = Y(TballGt)(scalep,minscale) && Y(TballGt)(scalem,minscale);
+  while (!full_ieee)
+    {
+    Y(saddstep_d)(p1, p2, Y(Tbprod)(rec2p,corfacp), Y(Tbprod)(rec2m,corfacm),
+      &alm[njobs*l],njobs);
+    if (++l>lmax) break;
+    Y(rec_step)(&rec1p,&rec1m,&rec2p,&rec2m,cth,fx[l]);
+    Y(saddstep_d)(p2, p1, Y(Tbprod)(rec1p,corfacp), Y(Tbprod)(rec1m,corfacm),
+      &alm[njobs*l], njobs);
+    if (++l>lmax) break;
+    Y(rec_step)(&rec2p,&rec2m,&rec1p,&rec1m,cth,fx[l]);
+    if (Y(rescale)(&rec1p,&rec2p,&scalep) | Y(rescale)(&rec1m,&rec2m,&scalem))
+      {
+      Y(getCorfac)(scalep,&corfacp,gen->cf);
+      Y(getCorfac)(scalem,&corfacm,gen->cf);
+      full_ieee = Y(TballGt)(scalep,minscale) && Y(TballGt)(scalem,minscale);
+      }
+    }
+
+  if (l>lmax)
+    { *done=1; return; }
+
+  Y(Tbmuleq)(&rec1p,corfacp); Y(Tbmuleq)(&rec2p,corfacp);
+  Y(Tbmuleq)(&rec1m,corfacm); Y(Tbmuleq)(&rec2m,corfacm);
+  Y(alm2map_deriv1_kernel) (cth, p1, p2, rec1p, rec1m, rec2p, rec2m, fx, alm, l,
+    lmax, njobs);
+  }
+
+
 #define VZERO(var) do { memset(&(var),0,sizeof(var)); } while(0)
 
 static void Y(inner_loop) (sharp_job *job, const int *ispair,
@@ -524,6 +624,7 @@ static void Y(inner_loop) (sharp_job *job, const int *ispair,
   switch (job->type)
     {
     case ALM2MAP:
+    case ALM2MAP_DERIV1:
       {
       if (job->spin==0)
         {
@@ -581,7 +682,11 @@ static void Y(inner_loop) (sharp_job *job, const int *ispair,
               itot=idx[itot];
               cth.s[i]=cth_[itot];
               }
-            Y(calc_alm2map_spin) (cth.b,gen,job,&p1[0].b,&p2[0].b,njobs,&done);
+            (job->type==ALM2MAP) ?
+              Y(calc_alm2map_spin  )
+                (cth.b,gen,job,&p1[0].b,&p2[0].b,njobs,&done) :
+              Y(calc_alm2map_deriv1)
+                (cth.b,gen,job,&p1[0].b,&p2[0].b,njobs,&done);
             }
 
           for (int i=0; i<nval; ++i)
@@ -615,8 +720,6 @@ static void Y(inner_loop) (sharp_job *job, const int *ispair,
         }
       break;
       }
-    case ALM2MAP_DERIV1:
-      break;
     case MAP2ALM:
       {
       if (job->spin==0)

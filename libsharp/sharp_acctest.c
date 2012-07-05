@@ -100,42 +100,86 @@ static void check_sign_scale(void)
   sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
   ptrdiff_t nalms = ((mmax+1)*(mmax+2))/2 + (mmax+1)*(lmax-mmax);
 
-  double **map;
-  ALLOC2D(map,double,2,npix);
+  for (int ntrans=1; ntrans<10; ++ntrans)
+    {
+    double **map;
+    ALLOC2D(map,double,2*ntrans,npix);
 
-  dcmplx **alm;
-  ALLOC2D(alm,dcmplx,2,nalms);
-  for (int i=0; i<2; ++i)
-    for (int j=0; j<nalms; ++j)
-      alm[i][j]=1.+_Complex_I;
+    dcmplx **alm;
+    ALLOC2D(alm,dcmplx,2*ntrans,nalms);
+    for (int i=0; i<2*ntrans; ++i)
+      for (int j=0; j<nalms; ++j)
+        alm[i][j]=1.+_Complex_I;
 
-  sharp_job job;
-  sharpd_build_job(&job,ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,1);
-  sharp_execute_job(&job);
-  UTIL_ASSERT(FAPPROX(map[0][0     ], 3.588246976618616912e+00,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix/2], 4.042209792157496651e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix-1],-1.234675107554816442e+01,1e-12),"error");
+    sharp_job job;
+    sharpd_build_job(&job,ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharp_execute_job(&job);
+    for (int it=0; it<ntrans; ++it)
+      {
+      UTIL_ASSERT(FAPPROX(map[it][0     ], 3.588246976618616912e+00,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[it][npix/2], 4.042209792157496651e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[it][npix-1],-1.234675107554816442e+01,1e-12),
+        "error");
+      }
+    sharpd_build_job(&job,ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharp_execute_job(&job);
+    for (int it=0; it<ntrans; ++it)
+      {
+      UTIL_ASSERT(FAPPROX(map[2*it  ][0     ], 2.750897760535633285e+00,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix/2], 3.137704477368562905e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix-1],-8.405730859837063917e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][0     ],-2.398026536095463346e+00,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix/2],-4.961140548331700728e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix-1],-1.412765834230440021e+01,1e-12),
+        "error");
+      }
 
-  sharpd_build_job(&job,ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,1);
-  sharp_execute_job(&job);
-  UTIL_ASSERT(FAPPROX(map[0][0     ], 2.750897760535633285e+00,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix/2], 3.137704477368562905e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix-1],-8.405730859837063917e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][0     ],-2.398026536095463346e+00,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][npix/2],-4.961140548331700728e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][npix-1],-1.412765834230440021e+01,1e-12),"error");
+    sharpd_build_job(&job,ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharp_execute_job(&job);
+    for (int it=0; it<ntrans; ++it)
+      {
+      UTIL_ASSERT(FAPPROX(map[2*it  ][0     ],-1.398186224727334448e+00,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix/2],-2.456676000884031197e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix-1],-1.516249174408820863e+02,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][0     ],-3.173406200299964119e+00,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix/2],-5.831327404513146462e+01,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix-1],-1.863257892248353897e+01,1e-12),
+        "error");
+      }
 
-  sharpd_build_job(&job,ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,1);
-  sharp_execute_job(&job);
-  UTIL_ASSERT(FAPPROX(map[0][0     ],-1.398186224727334448e+00,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix/2],-2.456676000884031197e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[0][npix-1],-1.516249174408820863e+02,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][0     ],-3.173406200299964119e+00,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][npix/2],-5.831327404513146462e+01,1e-12),"error");
-  UTIL_ASSERT(FAPPROX(map[1][npix-1],-1.863257892248353897e+01,1e-12),"error");
+    sharpd_build_job(&job,ALM2MAP_DERIV1,1,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharp_execute_job(&job);
+    for (int it=0; it<ntrans; ++it)
+      {
+      UTIL_ASSERT(FAPPROX(map[2*it  ][0     ],-6.859393905369091105e-01,1e-11),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix/2],-2.103947835973212364e+02,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it  ][npix-1],-1.092463246472086439e+03,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][0     ],-1.411433220713928165e+02,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix/2],-1.146122859381925082e+03,1e-12),
+        "error");
+      UTIL_ASSERT(FAPPROX(map[2*it+1][npix-1], 7.821618677689795049e+02,1e-12),
+        "error");
+      }
 
-  DEALLOC2D(map);
-  DEALLOC2D(alm);
+    DEALLOC2D(map);
+    DEALLOC2D(alm);
+    }
 
   sharp_destroy_alm_info(alms);
   sharp_destroy_geom_info(tinfo);

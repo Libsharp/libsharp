@@ -103,32 +103,39 @@ int main(void)
   fprintf(fp,"static const int maxtr = 6;\n");
   fprintf(fp,"static const int nv_opt[6][2][3] = {\n");
 
+  const char *shtname[]={"map2alm","alm2map","a2mder1"};
+
   for (int ntr=1; ntr<=6; ++ntr)
     {
     fprintf(fp,"{");
     for (int spin=0; spin<=2; spin+=2)
       {
       fprintf(fp,"{");
-      for (sharp_jobtype type=MAP2ALM; type<=ALM2MAP; ++type)
+      for (sharp_jobtype type=MAP2ALM; type<=ALM2MAP_DERIV1; ++type)
         {
-        int nvbest=-1, nvoracle=sharp_nv_oracle(type,spin,ntr);
-        unsigned long long opmin=1000000000000000, op;
-        double tmin=1e30;
-        double *time=RALLOC(double,sharp_get_nv_max()+1);
-        for (int nv=1; nv<=sharp_get_nv_max(); ++nv)
+        if ((type==ALM2MAP_DERIV1) && (spin==0))
+          fprintf(fp,"-1");
+        else
           {
-          bench_sht (spin,nv,type,ntr,&time[nv],&op);
-          if (op<opmin) opmin=op;
-          if (time[nv]<tmin)
-            { tmin=time[nv]; nvbest=nv; }
+          int nvbest=-1, nvoracle=sharp_nv_oracle(type,spin,ntr);
+          unsigned long long opmin=1000000000000000, op;
+          double tmin=1e30;
+          double *time=RALLOC(double,sharp_get_nv_max()+1);
+          for (int nv=1; nv<=sharp_get_nv_max(); ++nv)
+            {
+            bench_sht (spin,nv,type,ntr,&time[nv],&op);
+            if (op<opmin) opmin=op;
+            if (time[nv]<tmin)
+              { tmin=time[nv]; nvbest=nv; }
+            }
+          printf("nt: %d  %s  spin: %d   nv: %d   time: %6.3f   perf: %6.3f"
+            "   dev[%d]: %6.2f%%\n",ntr,shtname[type],
+            spin,nvbest,tmin,opmin/tmin*1e-9,nvoracle,
+            (time[nvoracle]-tmin)/tmin*100.);
+          DEALLOC(time);
+          fprintf(fp,"%d",nvbest);
           }
-        printf("nt: %d  %s  spin: %d   nv: %d   time: %6.3f   perf: %6.3f"
-          "   dev[%d]: %6.2f%%\n",ntr,(type==ALM2MAP)?"alm2map":"map2alm",
-          spin,nvbest,tmin,opmin/tmin*1e-9,nvoracle,
-          (time[nvoracle]-tmin)/tmin*100.);
-        DEALLOC(time);
-        fprintf(fp,"%d",nvbest);
-        fprintf(fp,(type==MAP2ALM)?",":",-1");
+        if (type!=ALM2MAP_DERIV1) fprintf(fp,",");
         }
       fprintf(fp,(spin==0)?"},":"}");
       printf("\n");

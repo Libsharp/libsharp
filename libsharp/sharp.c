@@ -406,7 +406,7 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
       {
       ptrdiff_t aidx = sharp_alm_index(job->ainfo,l,mi);
       double fct = (job->type==ALM2MAP) ? job->norm_l[l] :
-                    -fabs(job->norm_l[l])*sqrt(l*(l+1.));
+                    fabs(job->norm_l[l])*sqrt(l*(l+1.));
       for (int i=0; i<job->ntrans*job->nalm; ++i)
         if (job->fde==DOUBLE)
           job->almtmp[job->ntrans*job->nalm*l+i]
@@ -543,8 +543,8 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type, int spin
   const sharp_alm_info *alm_info, int ntrans)
   {
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
+  if (type==ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
-  UTIL_ASSERT((type==MAP2ALM)||(type==ALM2MAP), "unsupported SHT type");
   job->type = type;
   job->spin = spin;
   job->norm_l = NULL;
@@ -586,8 +586,9 @@ int sharp_get_nv_max (void)
 
 int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   {
-  UTIL_ASSERT(type!=ALM2MAP_DERIV1,"transform type not yet supported");
-
+  if (type==ALM2MAP_DERIV1) spin=1;
+  UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
+  UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
 #include "oracle.inc"
 
   return nv_opt[IMIN(ntrans,maxtr)-1][spin!=0][type];
