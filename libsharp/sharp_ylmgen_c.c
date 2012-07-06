@@ -205,3 +205,13 @@ double *sharp_Ylmgen_get_norm (int lmax, int spin)
     res[l] = (l<spin) ? 0. : spinsign*0.5*sqrt((2*l+1)/(4*pi));
   return res;
   }
+
+double *sharp_Ylmgen_get_d1norm (int lmax)
+  {
+  const double pi = 3.141592653589793238462643383279502884197;
+  double *res=RALLOC(double,lmax+1);
+
+  for (int l=0; l<=lmax; ++l)
+    res[l] = (l<1) ? 0. : 0.5*sqrt(l*(l+1.)*(2*l+1.)/(4*pi));
+  return res;
+  }

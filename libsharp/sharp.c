@@ -405,8 +405,7 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
     for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)
       {
       ptrdiff_t aidx = sharp_alm_index(job->ainfo,l,mi);
-      double fct = (job->type==ALM2MAP) ? job->norm_l[l] :
-                    fabs(job->norm_l[l])*sqrt(l*(l+1.));
+      double fct = job->norm_l[l];
       for (int i=0; i<job->ntrans*job->nalm; ++i)
         if (job->fde==DOUBLE)
           job->almtmp[job->ntrans*job->nalm*l+i]
@@ -464,7 +463,9 @@ void sharp_execute_job (sharp_job *job)
   int lmax = job->ainfo->lmax,
       mmax=sharp_get_mmax(job->ainfo->mval, job->ainfo->nm);
 
-  job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
+  job->norm_l = (job->type==ALM2MAP_DERIV1) ?
+     sharp_Ylmgen_get_d1norm (lmax) :
+     sharp_Ylmgen_get_norm (lmax, job->spin);
 
 /* clear output arrays if requested */
   init_output (job);

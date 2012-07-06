@@ -85,6 +85,12 @@ void sharp_Ylmgen_prepare (sharp_Ylmgen_C *gen, int m);
     \a spin. The array must be deallocated (using free()) by the user. */
 double *sharp_Ylmgen_get_norm (int lmax, int spin);
 
+/*! Returns a pointer to an array with \a lmax+1 entries containing
+    normalisation factors that must be applied to Y_lm values computed for
+    first derivatives. The array must be deallocated (using free()) by the
+    user. */
+double *sharp_Ylmgen_get_d1norm (int lmax);
+
 #ifdef __cplusplus
 }
 #endif
