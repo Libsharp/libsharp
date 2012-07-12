@@ -37,6 +37,8 @@
 #include "sharp_core.h"
 #include "sharp_vecutil.h"
 #include "walltime_c.h"
+#include "sharp_almhelpers.h"
+#include "sharp_geomhelpers.h"
 
 typedef complex double dcmplx;
 typedef complex float  fcmplx;
@@ -585,14 +587,84 @@ void sharps_build_job (sharp_job *job, sharp_jobtype type, int spin,
 int sharp_get_nv_max (void)
 { return 6; }
 
+static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
+  {
+  int lmax=127;
+  int mmax=(lmax+1)/2;
+  int nrings=(lmax+1)/4;
+  int ppring=1;
+
+  ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
+  sharp_geom_info *tinfo;
+  sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+
+  ptrdiff_t nalms = ((mmax+1)*(mmax+2))/2 + (mmax+1)*(lmax-mmax);
+  int ncomp = ntrans*((spin==0) ? 1 : 2);
+
+  double **map;
+  ALLOC2D(map,double,ncomp,npix);
+  SET_ARRAY(map[0],0,npix*ncomp,0.);
+
+  sharp_alm_info *alms;
+  sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
+
+  dcmplx **alm;
+  ALLOC2D(alm,dcmplx,ncomp,nalms);
+  SET_ARRAY(alm[0],0,nalms*ncomp,0.);
+
+  double time=1e30;
+  int nvbest=-1;
+
+  for (int nv=1; nv<=sharp_get_nv_max(); ++nv)
+    {
+    double time_acc=0.;
+    sharp_job job;
+    sharpd_build_job(&job,type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    job.nv=nv;
+    do
+      {
+      sharp_execute_job(&job);
+
+      if (job.time<time) { time=job.time; nvbest=nv; }
+      time_acc+=job.time;
+      }
+    while (time_acc<0.02);
+    }
+
+  DEALLOC2D(map);
+  DEALLOC2D(alm);
+
+  sharp_destroy_alm_info(alms);
+  sharp_destroy_geom_info(tinfo);
+  return nvbest;
+  }
+
 int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   {
+  static const int maxtr = 6;
+  static int nv_opt[6][2][3] = {
+    {{0,0,0},{0,0,0}},
+    {{0,0,0},{0,0,0}},
+    {{0,0,0},{0,0,0}},
+    {{0,0,0},{0,0,0}},
+    {{0,0,0},{0,0,0}},
+    {{0,0,0},{0,0,0}} };
+
+  static int in_oracle=0;
+  if (in_oracle) return -20;
+
   if (type==ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
-#include "sharp_oracle.inc"
+  ntrans=IMIN(ntrans,maxtr);
 
-  return nv_opt[IMIN(ntrans,maxtr)-1][spin!=0][type];
+  if (nv_opt[ntrans-1][spin!=0][type]==0)
+    {
+    in_oracle=1;
+    nv_opt[ntrans-1][spin!=0][type]=sharp_oracle(type,spin,ntrans);
+    in_oracle=0;
+    }
+  return nv_opt[ntrans-1][spin!=0][type];
   }
 
 #include "sharp_mpi.c"

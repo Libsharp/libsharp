@@ -26,14 +26,8 @@ $(all_lib): %: | $(LIBDIR)_mkdir
 $(all_cbin): %: | $(BINDIR)_mkdir
 	@echo "#  linking C binary $*"
 	$(CL) -o $@ $^ $(CLFLAGS)
-#	$(CXX) -o $@ $^ $(CLFLAGS)
 
 compile_all: $(all_cbin) hdrcopy
-
-autotune: sharp_bench
-	$(BINDIR)/sharp_bench
-	mv sharp_oracle.inc $(SRCROOT)/libsharp
-	$(MAKE)
 
 hdrclean:
 	@if [ -d $(INCDIR) ]; then rm -rf $(INCDIR)/* ; fi
@@ -48,3 +42,14 @@ test: compile_all
 	$(BINDIR)/sharp_test healpix 2048 1024 1 0 1 && \
 	$(BINDIR)/sharp_test ecp 2047 4096 0 2 1 && \
 	$(BINDIR)/sharp_test gauss 2047 4096 0 0 2
+
+perftest: compile_all
+	$(BINDIR)/sharp_test healpix 2048 1024 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 63 128 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 127 256 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 255 512 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 511 1024 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 1023 2048 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 2047 4096 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 4095 8192 0 0 1 && \
+	$(BINDIR)/sharp_test gauss 8191 16384 0 0 1

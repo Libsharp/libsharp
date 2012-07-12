@@ -137,10 +137,8 @@ typedef __m256d Tv;
 #ifdef __FMA4__
 #define vfmaeq(a,b,c) a=_mm256_macc_pd(b,c,a)
 #define vfmseq(a,b,c) a=_mm256_nmacc_pd(b,c,a)
-#define vfmaaeq(a,b,c,d,e) \
-  a=_mm256_macc_pd(d,e,_mm256_macc_pd(b,c,a))
-#define vfmaseq(a,b,c,d,e) \
-  a=_mm256_nmacc_pd(d,e,_mm256_macc_pd(b,c,a))
+#define vfmaaeq(a,b,c,d,e) a=_mm256_macc_pd(d,e,_mm256_macc_pd(b,c,a))
+#define vfmaseq(a,b,c,d,e) a=_mm256_nmacc_pd(d,e,_mm256_macc_pd(b,c,a))
 #else
 #define vfmaeq(a,b,c) a=_mm256_add_pd(a,_mm256_mul_pd(b,c))
 #define vfmseq(a,b,c) a=_mm256_sub_pd(a,_mm256_mul_pd(b,c))
