@@ -584,6 +584,18 @@ void sharps_build_job (sharp_job *job, sharp_jobtype type, int spin,
   job->fde=FLOAT;
   }
 
+void sharp_build_job_ll (sharp_job *job, sharp_jobtype type, int spin,
+  int add_output, void **alm, void **map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int dp)
+  {
+  if (dp)
+    sharpd_build_job (job, type, spin, add_output, (dcmplx **)alm,
+      (double **)map, geom_info, alm_info, ntrans);
+  else
+    sharps_build_job (job, type, spin, add_output, (fcmplx **)alm,
+      (float **)map, geom_info, alm_info, ntrans);
+  }
+
 int sharp_get_nv_max (void)
 { return 6; }
 
@@ -667,4 +679,6 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   return nv_opt[ntrans-1][spin!=0][type];
   }
 
+#ifdef USE_MPI
 #include "sharp_mpi.c"
+#endif

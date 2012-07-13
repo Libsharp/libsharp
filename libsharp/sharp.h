@@ -195,6 +195,10 @@ void sharps_build_job (sharp_job *job, sharp_jobtype type, int spin,
   int add_output, complex float **alm, float **map,
   const sharp_geom_info *geom_info, const sharp_alm_info *alm_info, int ntrans);
 
+void sharp_build_job_ll (sharp_job *job, sharp_jobtype type, int spin,
+  int add_output, void **alm, void **map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int dp);
+
 /*! Execute the SHT job previously constructed by sharpd_build_job() or
     sharps_build_job(). */
 void sharp_execute_job (sharp_job *job);
