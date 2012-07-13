@@ -112,7 +112,7 @@ static void check_sign_scale(void)
         alm[i][j]=1.+_Complex_I;
 
     sharp_job job;
-    sharpd_build_job(&job,ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,ntrans);
     sharp_execute_job(&job);
     for (int it=0; it<ntrans; ++it)
       {
@@ -123,7 +123,7 @@ static void check_sign_scale(void)
       UTIL_ASSERT(FAPPROX(map[it][npix-1],-1.234675107554816442e+01,1e-12),
         "error");
       }
-    sharpd_build_job(&job,ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,ntrans);
     sharp_execute_job(&job);
     for (int it=0; it<ntrans; ++it)
       {
@@ -141,7 +141,7 @@ static void check_sign_scale(void)
         "error");
       }
 
-    sharpd_build_job(&job,ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,ntrans);
     sharp_execute_job(&job);
     for (int it=0; it<ntrans; ++it)
       {
@@ -159,7 +159,8 @@ static void check_sign_scale(void)
         "error");
       }
 
-    sharpd_build_job(&job,ALM2MAP_DERIV1,1,0,&alm[0],&map[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP_DERIV1,1,0,&alm[0],&map[0],tinfo,alms,
+      ntrans);
     sharp_execute_job(&job);
     for (int it=0; it<ntrans; ++it)
       {
@@ -207,11 +208,11 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
   ALLOC2D(alm2,dcmplx,ncomp,nalms);
 
   sharp_job job;
-  sharpd_build_job(&job,ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
   job.nv=nv;
   sharp_execute_job(&job);
 
-  sharpd_build_job(&job,MAP2ALM,spin,0,&alm2[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_MAP2ALM,spin,0,&alm2[0],&map[0],tinfo,alms,ntrans);
   job.nv=nv;
   sharp_execute_job(&job);
   measure_errors(alm,alm2,nalms,ncomp);

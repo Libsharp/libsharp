@@ -111,9 +111,9 @@ int main(void)
     for (int spin=0; spin<=2; spin+=2)
       {
       fprintf(fp,"{");
-      for (sharp_jobtype type=MAP2ALM; type<=ALM2MAP_DERIV1; ++type)
+      for (sharp_jobtype type=SHARP_MAP2ALM; type<=SHARP_ALM2MAP_DERIV1; ++type)
         {
-        if ((type==ALM2MAP_DERIV1) && (spin==0))
+        if ((type==SHARP_ALM2MAP_DERIV1) && (spin==0))
           fprintf(fp,"-1");
         else
           {
@@ -135,7 +135,7 @@ int main(void)
           DEALLOC(time);
           fprintf(fp,"%d",nvbest);
           }
-        if (type!=ALM2MAP_DERIV1) fprintf(fp,",");
+        if (type!=SHARP_ALM2MAP_DERIV1) fprintf(fp,",");
         }
       fprintf(fp,(spin==0)?"},":"}");
       printf("\n");

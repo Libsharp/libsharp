@@ -117,7 +117,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
   sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
 
   sharp_job job;
-  sharpd_build_job(&job,MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
   sharp_execute_job(&job);
   printf("wall time for map2alm: %fs\n",job.time);
   printf("Performance: %fGFLOPs/s\n",1e-9*job.opcnt/job.time);
@@ -128,7 +128,8 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
     double **map2;
     ALLOC2D(map2,double,ncomp,npix);
     printf ("\niteration %i:\n", iter+1);
-    sharpd_build_job(&job,ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,
+      ntrans);
     sharp_execute_job(&job);
     printf("wall time for alm2map: %fs\n",job.time);
     printf("Performance: %fGFLOPs/s\n",1e-9*job.opcnt/job.time);
@@ -136,7 +137,8 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
       for (ptrdiff_t m=0; m<npix; ++m)
         map2[i][m] = map[i][m]-map2[i][m];
 
-    sharpd_build_job(&job,MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,
+      ntrans);
     sharp_execute_job(&job);
     printf("wall time for map2alm: %fs\n",job.time);
     printf("Performance: %fGFLOPs/s\n",1e-9*job.opcnt/job.time);
@@ -170,7 +172,7 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
 
   sharp_job job;
   printf ("\niteration 0:\n");
-  sharpd_build_job(&job,ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
   sharp_execute_job(&job);
   printf("wall time for alm2map: %fs\n",job.time);
   printf("Performance: %fGFLOPs/s\n",1e-9*job.opcnt/job.time);

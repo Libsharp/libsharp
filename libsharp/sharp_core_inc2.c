@@ -641,8 +641,8 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
 
   switch (job->type)
     {
-    case ALM2MAP:
-    case ALM2MAP_DERIV1:
+    case SHARP_ALM2MAP:
+    case SHARP_ALM2MAP_DERIV1:
       {
       if (job->spin==0)
         {
@@ -700,7 +700,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               itot=idx[itot];
               cth.s[i]=cth_[itot];
               }
-            (job->type==ALM2MAP) ?
+            (job->type==SHARP_ALM2MAP) ?
               Z(calc_alm2map_spin  ) (cth.b,gen,job,&p1.b,&p2.b,&done) :
               Z(calc_alm2map_deriv1) (cth.b,gen,job,&p1.b,&p2.b,&done);
             }
@@ -736,7 +736,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
         }
       break;
       }
-    case MAP2ALM:
+    case SHARP_MAP2ALM:
       {
       if (job->spin==0)
         {

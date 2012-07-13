@@ -360,7 +360,7 @@ static void fill_alm (const sharp_alm_info *ainfo, void *alm, dcmplx value,
 static void init_output (sharp_job *job)
   {
   if (job->add_output) return;
-  if (job->type == MAP2ALM)
+  if (job->type == SHARP_MAP2ALM)
     for (int i=0; i<job->ntrans*job->nalm; ++i)
       fill_alm (job->ainfo,job->alm[i],0.,job->fde);
   else
@@ -374,10 +374,10 @@ static void alloc_phase (sharp_job *job, int nm, int ntheta)
 static void dealloc_phase (sharp_job *job)
   { DEALLOC(job->phase); }
 
-//FIXME: set phase to zero if not MAP2ALM?
+//FIXME: set phase to zero if not SHARP_MAP2ALM?
 static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
   {
-  if (job->type != MAP2ALM) return;
+  if (job->type != SHARP_MAP2ALM) return;
   int pstride = 2*job->ntrans*job->nmaps;
 #pragma omp parallel
 {
@@ -403,7 +403,7 @@ static void dealloc_almtmp (sharp_job *job)
 
 static void alm2almtmp (sharp_job *job, int lmax, int mi)
   {
-  if (job->type!=MAP2ALM)
+  if (job->type!=SHARP_MAP2ALM)
     for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)
       {
       ptrdiff_t aidx = sharp_alm_index(job->ainfo,l,mi);
@@ -423,7 +423,7 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
 
 static void almtmp2alm (sharp_job *job, int lmax, int mi)
   {
-  if (job->type != MAP2ALM) return;
+  if (job->type != SHARP_MAP2ALM) return;
   for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)
     {
     ptrdiff_t aidx = sharp_alm_index(job->ainfo,l,mi);
@@ -439,7 +439,7 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
 
 static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
   {
-  if (job->type == MAP2ALM) return;
+  if (job->type == SHARP_MAP2ALM) return;
   int pstride = 2*job->ntrans*job->nmaps;
 #pragma omp parallel
 {
@@ -465,7 +465,7 @@ void sharp_execute_job (sharp_job *job)
   int lmax = job->ainfo->lmax,
       mmax=sharp_get_mmax(job->ainfo->mval, job->ainfo->nm);
 
-  job->norm_l = (job->type==ALM2MAP_DERIV1) ?
+  job->norm_l = (job->type==SHARP_ALM2MAP_DERIV1) ?
      sharp_Ylmgen_get_d1norm (lmax) :
      sharp_Ylmgen_get_norm (lmax, job->spin);
 
@@ -546,14 +546,14 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type, int spin
   const sharp_alm_info *alm_info, int ntrans)
   {
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
-  if (type==ALM2MAP_DERIV1) spin=1;
+  if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   job->type = type;
   job->spin = spin;
   job->norm_l = NULL;
   job->add_output = add_output;
-  job->nmaps = (type==ALM2MAP_DERIV1) ? 2 : ((spin>0) ? 2 : 1);
-  job->nalm = (type==ALM2MAP_DERIV1) ? 1 : ((spin>0) ? 2 : 1);
+  job->nmaps = (type==SHARP_ALM2MAP_DERIV1) ? 2 : ((spin>0) ? 2 : 1);
+  job->nalm = (type==SHARP_ALM2MAP_DERIV1) ? 1 : ((spin>0) ? 2 : 1);
   job->ginfo = geom_info;
   job->ainfo = alm_info;
   job->nv = sharp_nv_oracle (type, spin, ntrans);
@@ -653,7 +653,7 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   static int in_oracle=0;
   if (in_oracle) return -20;
 
-  if (type==ALM2MAP_DERIV1) spin=1;
+  if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   ntrans=IMIN(ntrans,maxtr);

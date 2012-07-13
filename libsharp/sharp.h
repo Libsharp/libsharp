@@ -140,9 +140,9 @@ void sharp_destroy_geom_info (sharp_geom_info *info);
 /*! \{ */
 
 /*! Enumeration of SHARP job types. */
-typedef enum { MAP2ALM,       /*!< analysis */
-               ALM2MAP,       /*!< synthesis */
-               ALM2MAP_DERIV1 /*!< currently unused */
+typedef enum { SHARP_MAP2ALM,       /*!< analysis */
+               SHARP_ALM2MAP,       /*!< synthesis */
+               SHARP_ALM2MAP_DERIV1 /*!< synthesis of first derivatives */
              } sharp_jobtype;
 
 typedef enum { FLOAT, DOUBLE } sharp_fde;
@@ -171,7 +171,7 @@ typedef struct
 
 /*! Initializes \a job with the appropriate parameters to perform the required
   SHT.
-  \param type the type of SHT (currently ALM2MAP and MAP2ALM)
+  \param type the type of SHT
   \param spin the spin of the quantities to be transformed
   \param add_output if 0, the output arrays will be overwritten,
     else the result will be added to the output arrays.

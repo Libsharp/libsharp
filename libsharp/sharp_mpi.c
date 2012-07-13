@@ -182,20 +182,20 @@ static void sharp_communicate_map2alm (const sharp_mpi_info *minfo, dcmplx **ph)
 static void alloc_phase_mpi (sharp_job *job, int nm, int ntheta,
   int nmfull, int nthetafull)
   {
-  ptrdiff_t phase_size = (job->type==MAP2ALM) ?
+  ptrdiff_t phase_size = (job->type==SHARP_MAP2ALM) ?
     (ptrdiff_t)(nmfull)*ntheta : (ptrdiff_t)(nm)*nthetafull;
   job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*phase_size);
   }
 
 static void alm2map_comm (sharp_job *job, const sharp_mpi_info *minfo)
   {
-  if (job->type != MAP2ALM)
+  if (job->type != SHARP_MAP2ALM)
     sharp_communicate_alm2map (minfo,&job->phase);
   }
 
 static void map2alm_comm (sharp_job *job, const sharp_mpi_info *minfo)
   {
-  if (job->type == MAP2ALM)
+  if (job->type == SHARP_MAP2ALM)
     sharp_communicate_map2alm (minfo,&job->phase);
   }
 
@@ -209,7 +209,7 @@ void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 
   int lmax = job->ainfo->lmax;
 
-  job->norm_l = Ylmgen_get_norm (lmax, job->spin);
+  job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
 
   sharp_mpi_info minfo;
   sharp_make_mpi_info(comm, job, &minfo);
@@ -244,8 +244,8 @@ void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 #pragma omp parallel
 {
   sharp_job ljob = *job;
-  Ylmgen_C generator;
-  Ylmgen_init (&generator,lmax,minfo.mmax,ljob.spin);
+  sharp_Ylmgen_C generator;
+  sharp_Ylmgen_init (&generator,lmax,minfo.mmax,ljob.spin);
   alloc_almtmp(&ljob,lmax);
 
 #pragma omp for schedule(dynamic,1)
@@ -262,7 +262,7 @@ void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
     almtmp2alm (&ljob, lmax, mi);
     }
 
-  Ylmgen_destroy(&generator);
+  sharp_Ylmgen_destroy(&generator);
   dealloc_almtmp(&ljob);
 
 #pragma omp critical

@@ -59,6 +59,7 @@
 #include "sharp_almhelpers.h"
 #include "c_utils.h"
 #include "walltime_c.h"
+#include "sharp_announce.h"
 #include "sharp_core.h"
 
 typedef complex double dcmplx;
@@ -197,7 +198,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
   reduce_alm_info(alms);
 
   sharp_job job;
-  sharpd_build_job(&job,MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
   sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
   unsigned long long opcnt=totalops(job.opcnt);
   double timer=maxTime(job.time);
@@ -210,7 +211,8 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
     double **map2;
     ALLOC2D(map2,double,ncomp,npix);
     if (mytask==0) printf ("\niteration %i:\n", iter+1);
-    sharpd_build_job(&job,ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,
+      ntrans);
     sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
     opcnt=totalops(job.opcnt);
     timer=maxTime(job.time);
@@ -220,7 +222,8 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
       for (ptrdiff_t m=0; m<npix; ++m)
         map2[i][m] = map[i][m]-map2[i][m];
 
-    sharpd_build_job(&job,MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,ntrans);
+    sharpd_build_job(&job,SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,
+      ntrans);
     sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
     opcnt=totalops(job.opcnt);
     timer=maxTime(job.time);
@@ -258,7 +261,7 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
 
   if (mytask==0) printf ("\niteration 0:\n");
   sharp_job job;
-  sharpd_build_job(&job,ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
+  sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
   sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
   unsigned long long opcnt=totalops(job.opcnt);
   double timer=maxTime(job.time);
@@ -280,7 +283,7 @@ int main(int argc, char **argv)
   MPI_Comm_size(MPI_COMM_WORLD,&ntasks);
   MPI_Comm_rank(MPI_COMM_WORLD,&mytask);
 
-  module_startup_c("sharp_test_mpi",argc,7,
+  sharp_module_startup("sharp_test_mpi",argc,7,
     "<healpix|ecp|gauss> <lmax> <nside|nphi> <niter> <spin> <ntrans>",
     mytask==0);
   int lmax=atoi(argv[2]);
