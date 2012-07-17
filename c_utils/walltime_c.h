@@ -43,7 +43,8 @@ extern "C" {
     <li> \a MPI_Wtime(), if MPI is available
     <li> \a gettimeofday() otherwise
     </ul>
-    \note Only useful for measuring time differences. */
+    \note Only useful for measuring time differences.
+    \note This function has an execution time between 10 and 100 nanoseconds. */
 double wallTime(void);
 
 #ifdef __cplusplus
