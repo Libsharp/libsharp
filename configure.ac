@@ -40,20 +40,6 @@ AC_ARG_ENABLE(debug,
      ENABLE_DEBUG=yes
    fi])
 
-ENABLE_SSE2=yes
-AC_ARG_ENABLE(sse2,
-  [  --disable-sse2          disable generation of SSE2 instructions],
-  [if test "$enableval" = no; then
-     ENABLE_SSE2=no
-   fi])
-
-ENABLE_AVX=yes
-AC_ARG_ENABLE(avx,
-  [  --disable-avx           disable generation of AVX instructions],
-  [if test "$enableval" = no; then
-     ENABLE_AVX=no
-   fi])
-
 case $CCTYPE in
   gcc)
     CCFLAGS="-O3 -fno-tree-vectorize -ffast-math -fomit-frame-pointer -std=c99 -pedantic -Wextra -Wall -Wno-unknown-pragmas -Wshadow -Wmissing-prototypes -Wfatal-errors"
@@ -100,14 +86,6 @@ fi
 
 if test $ENABLE_MPI = yes; then
   CCFLAGS="$CCFLAGS -DUSE_MPI"
-fi
-
-if test $ENABLE_SSE2 = no; then
-  CCFLAGS="$CCFLAGS -DDISABLE_SSE2"
-fi
-
-if test $ENABLE_AVX = no; then
-  CCFLAGS="$CCFLAGS -DDISABLE_AVX"
 fi
 
 CCFLAGS_NO_C="$CCFLAGS $CPPFLAGS"

@@ -32,9 +32,9 @@
 #ifndef SHARP_VECUTIL_H
 #define SHARP_VECUTIL_H
 
-#if (defined (__AVX__) && (!defined (DISABLE_AVX)) && (!defined (DISABLE_SSE2)))
+#if (defined (__AVX__))
 #define VLEN 4
-#elif (defined (__SSE2__) && (!defined (DISABLE_SSE2)))
+#elif (defined (__SSE2__))
 #define VLEN 2
 #else
 #define VLEN 1
