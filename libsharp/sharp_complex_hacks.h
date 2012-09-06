@@ -32,6 +32,10 @@
 #ifndef SHARP_COMPLEX_HACKS_H
 #define SHARP_COMPLEX_HACKS_H
 
+#ifdef __cplusplus
+#error This header file cannot be included from C++, only from C
+#endif
+
 #include <math.h>
 #include <complex.h>
 #include "sharp_vecsupport.h"
