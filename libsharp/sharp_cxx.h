@@ -25,14 +25,14 @@
 /*! \file sharp_cxx.h
  *  Spherical transform library
  *
- *  Copyright (C) 2008, 2009 Max-Planck-Society
+ *  Copyright (C) 2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
 #ifndef PLANCK_SHARP_CXX_H
 #define PLANCK_SHARP_CXX_H
 
-#include "sharp.h"
+#include "sharp_lowlevel.h"
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
 #include "xcomplex.h"
@@ -40,7 +40,6 @@
 class sharp_base
   {
   protected:
-    sharp_job job;
     sharp_alm_info *ainfo;
     sharp_geom_info *ginfo;
 
@@ -99,9 +98,8 @@ template<typename T> class sharp_cxxjob: public sharp_base
     void alm2map (const xcomplex<T> *alm, T *map, bool add)
       {
       void *aptr=conv(alm), *mptr=conv(map);
-      sharp_build_job_ll (&job, SHARP_ALM2MAP, 0, add, &aptr, &mptr, ginfo,
-        ainfo, 1, cxxjobhelper__<T>::val);
-      sharp_execute_job(&job);
+      sharp_execute_ll (SHARP_ALM2MAP, 0, add, &aptr, &mptr, ginfo, ainfo, 1,
+        cxxjobhelper__<T>::val);
       }
     void alm2map_spin (const xcomplex<T> *alm1, const xcomplex<T> *alm2,
       T *map1, T *map2, int spin, bool add)
@@ -109,24 +107,21 @@ template<typename T> class sharp_cxxjob: public sharp_base
       void *aptr[2], *mptr[2];
       aptr[0]=conv(alm1); aptr[1]=conv(alm2);
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_build_job_ll (&job, SHARP_ALM2MAP, spin, add, aptr, mptr, ginfo,
-        ainfo, 1, cxxjobhelper__<T>::val);
-      sharp_execute_job(&job);
+      sharp_execute_ll (SHARP_ALM2MAP, spin, add, aptr, mptr, ginfo, ainfo, 1,
+        cxxjobhelper__<T>::val);
       }
     void alm2map_der1 (const xcomplex<T> *alm, T *map1, T *map2, bool add)
       {
       void *aptr=conv(alm), *mptr[2];
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_build_job_ll (&job, SHARP_ALM2MAP_DERIV1, 1, add,&aptr, mptr, ginfo,
-        ainfo, 1, cxxjobhelper__<T>::val);
-      sharp_execute_job(&job);
+      sharp_execute_ll (SHARP_ALM2MAP_DERIV1, 1, add,&aptr, mptr, ginfo, ainfo,
+        1, cxxjobhelper__<T>::val);
       }
     void map2alm (const T *map, xcomplex<T> *alm, bool add)
       {
       void *aptr=conv(alm), *mptr=conv(map);
-      sharp_build_job_ll (&job, SHARP_MAP2ALM, 0, add, &aptr, &mptr, ginfo,
-        ainfo, 1, cxxjobhelper__<T>::val);
-      sharp_execute_job(&job);
+      sharp_execute_ll (SHARP_MAP2ALM, 0, add, &aptr, &mptr, ginfo, ainfo, 1,
+        cxxjobhelper__<T>::val);
       }
     void map2alm_spin (const T *map1, const T *map2, xcomplex<T> *alm1,
       xcomplex<T> *alm2, int spin, bool add)
@@ -134,9 +129,8 @@ template<typename T> class sharp_cxxjob: public sharp_base
       void *aptr[2], *mptr[2];
       aptr[0]=conv(alm1); aptr[1]=conv(alm2);
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_build_job_ll (&job, SHARP_MAP2ALM, spin, add, aptr, mptr, ginfo,
-        ainfo, 1, cxxjobhelper__<T>::val);
-      sharp_execute_job(&job);
+      sharp_execute_ll (SHARP_MAP2ALM, spin, add, aptr, mptr, ginfo, ainfo, 1,
+        cxxjobhelper__<T>::val);
       }
   };
 

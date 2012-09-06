@@ -584,16 +584,19 @@ void sharps_build_job (sharp_job *job, sharp_jobtype type, int spin,
   job->fde=FLOAT;
   }
 
-void sharp_build_job_ll (sharp_job *job, sharp_jobtype type, int spin,
-  int add_output, void **alm, void **map, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans, int dp)
+void sharp_execute_ll (sharp_jobtype type, int spin, int add_output, void **alm,
+  void **map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
+  int ntrans, int dp)
   {
+  sharp_job job;
   if (dp)
-    sharpd_build_job (job, type, spin, add_output, (dcmplx **)alm,
+    sharpd_build_job (&job, type, spin, add_output, (dcmplx **)alm,
       (double **)map, geom_info, alm_info, ntrans);
   else
-    sharps_build_job (job, type, spin, add_output, (fcmplx **)alm,
+    sharps_build_job (&job, type, spin, add_output, (fcmplx **)alm,
       (float **)map, geom_info, alm_info, ntrans);
+
+  sharp_execute_job (&job);
   }
 
 int sharp_get_nv_max (void)

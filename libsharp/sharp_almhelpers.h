@@ -32,7 +32,7 @@
 #ifndef PLANCK_SHARP_ALMHELPERS_H
 #define PLANCK_SHARP_ALMHELPERS_H
 
-#include "sharp.h"
+#include "sharp_lowlevel.h"
 
 #ifdef __cplusplus
 extern "C" {
