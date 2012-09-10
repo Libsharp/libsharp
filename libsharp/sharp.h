@@ -64,6 +64,9 @@ typedef struct
   unsigned long long opcnt;
   } sharp_job;
 
+/*! \defgroup jobgroup Functionality for defining and executing SHTs */
+/*! \{ */
+
 /*! Initializes \a job with the appropriate parameters to perform the required
   SHT.
   \param type the type of SHT
