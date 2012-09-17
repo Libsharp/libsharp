@@ -542,7 +542,7 @@ static void sharp_execute_job (sharp_job *job)
   }
 
 static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
-  int spin, int add_output, void **alm, void **map,
+  int spin, int add_output, void *alm, void *map,
   const sharp_geom_info *geom_info, const sharp_alm_info *alm_info, int ntrans,
   int dp, int nv)
   {
@@ -566,8 +566,8 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   job->fde=dp ? DOUBLE : FLOAT;
   }
 
-void sharp_execute (sharp_jobtype type, int spin, int add_output, void **alm,
-  void **map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
+void sharp_execute (sharp_jobtype type, int spin, int add_output, void *alm,
+  void *map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
   int ntrans, int dp, int nv, double *time, unsigned long long *opcnt)
   {
   sharp_job job;
@@ -617,8 +617,8 @@ static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
     int ntries=0;
     do
       {
-      sharp_execute(type,spin,0,(void **)(&alm[0]),(void **)(&map[0]),tinfo,
-        alms,ntrans,1,nv,&jtime,NULL);
+      sharp_execute(type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,1,nv,&jtime,
+        NULL);
 
       if (jtime<time) { time=jtime; nvbest=nv; }
       time_acc+=jtime;

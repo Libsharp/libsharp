@@ -170,8 +170,8 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
     (in seconds)will be written here.
   \param opcnt If not NULL, a conservative estimate of the total floating point
     operation count for this SHT will be written here. */
-void sharp_execute (sharp_jobtype type, int spin, int add_output, void **alm,
-  void **map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
+void sharp_execute (sharp_jobtype type, int spin, int add_output, void *alm,
+  void *map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
   int ntrans, int dp, int nv, double *time, unsigned long long *opcnt);
 
 /*! \} */
