@@ -67,19 +67,17 @@ static void bench_sht (int spin, int nv, sharp_jobtype type,
   SET_ARRAY(alm[0],0,nalms*ncomp,0.);
 
   int nruns=0;
-  sharp_job job;
-  sharpd_build_job(&job,type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
-  job.nv=nv;
   *time=1e30;
   *opcnt=1000000000000000;
   do
     {
-    sharpd_build_job(&job,type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
-    job.nv=nv;
-    sharp_execute_job(&job);
+    double jtime;
+    unsigned long long jopcnt;
+    sharp_execute(type,spin,0,(void **)(&alm[0]),(void **)(&map[0]),tinfo,alms,
+      ntrans,1,nv,&jtime,&jopcnt);
 
-    if (job.opcnt<*opcnt) *opcnt=job.opcnt;
-    if (job.time<*time) *time=job.time;
+    if (jopcnt<*opcnt) *opcnt=jopcnt;
+    if (jtime<*time) *time=jtime;
     }
   while (++nruns < 4);
 

@@ -22,29 +22,45 @@
  *  (DLR).
  */
 
-/*! \file sharp_core.h
- *  Interface for the computational core
+/*! \file sharp_internal.h
+ *  Internally used functionality for the spherical transform library.
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2006-2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
-#ifndef PLANCK_SHARP_CORE_H
-#define PLANCK_SHARP_CORE_H
-
-#include "sharp_internal.h"
-#include "sharp_ylmgen_c.h"
+#ifndef PLANCK_SHARP_INTERNAL_H
+#define PLANCK_SHARP_INTERNAL_H
 
 #ifdef __cplusplus
-extern "C" {
+#error This header file cannot be included from C++, only from C
 #endif
 
-void inner_loop (sharp_job *job, const int *ispair,const double *cth,
-  const double *sth, int llim, int ulim, sharp_Ylmgen_C *gen, int mi,
-  const int *idx);
+#include "sharp.h"
 
-#ifdef __cplusplus
-}
-#endif
+typedef enum { FLOAT, DOUBLE } sharp_fde;
+
+typedef struct
+  {
+  sharp_jobtype type;
+  int spin;
+  int add_output;
+  int nmaps, nalm;
+  sharp_fde fde;
+  void **map;
+  void **alm;
+  complex double *phase;
+  double *norm_l;
+  complex double *almtmp;
+  const sharp_geom_info *ginfo;
+  const sharp_alm_info *ainfo;
+  int nv;
+  double time;
+  int ntrans;
+  unsigned long long opcnt;
+  } sharp_job;
+
+int sharp_get_nv_max (void);
+int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans);
 
 #endif

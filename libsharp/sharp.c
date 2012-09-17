@@ -32,7 +32,7 @@
 #include <math.h>
 #include "ls_fft.h"
 #include "sharp_ylmgen_c.h"
-#include "sharp.h"
+#include "sharp_internal.h"
 #include "c_utils.h"
 #include "sharp_core.h"
 #include "sharp_vecutil.h"
@@ -458,7 +458,7 @@ static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
 } /* end of parallel region */
   }
 
-void sharp_execute_job (sharp_job *job)
+static void sharp_execute_job (sharp_job *job)
   {
   double timer=wallTime();
   job->opcnt=0;
@@ -541,9 +541,10 @@ void sharp_execute_job (sharp_job *job)
   job->time=wallTime()-timer;
   }
 
-static void sharp_build_job_common (sharp_job *job, sharp_jobtype type, int spin,
-  int add_output, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans)
+static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
+  int spin, int add_output, void **alm, void **map,
+  const sharp_geom_info *geom_info, const sharp_alm_info *alm_info, int ntrans,
+  int dp, int nv)
   {
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
@@ -556,47 +557,26 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type, int spin
   job->nalm = (type==SHARP_ALM2MAP_DERIV1) ? 1 : ((spin>0) ? 2 : 1);
   job->ginfo = geom_info;
   job->ainfo = alm_info;
-  job->nv = sharp_nv_oracle (type, spin, ntrans);
+  job->nv = (nv==0) ? sharp_nv_oracle (type, spin, ntrans) : nv;
   job->time = 0.;
   job->opcnt = 0;
   job->ntrans = ntrans;
+  job->alm=alm;
+  job->map=map;
+  job->fde=dp ? DOUBLE : FLOAT;
   }
 
-void sharpd_build_job (sharp_job *job, sharp_jobtype type, int spin,
-  int add_output, dcmplx **alm, double **map, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans)
-  {
-  sharp_build_job_common (job, type, spin, add_output, geom_info, alm_info,
-    ntrans);
-  job->alm=(void **)alm;
-  job->map=(void **)map;
-  job->fde=DOUBLE;
-  }
-
-void sharps_build_job (sharp_job *job, sharp_jobtype type, int spin,
-  int add_output, fcmplx **alm, float **map, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans)
-  {
-  sharp_build_job_common (job, type, spin, add_output, geom_info, alm_info,
-    ntrans);
-  job->alm=(void **)alm;
-  job->map=(void **)map;
-  job->fde=FLOAT;
-  }
-
-void sharp_execute_ll (sharp_jobtype type, int spin, int add_output, void **alm,
+void sharp_execute (sharp_jobtype type, int spin, int add_output, void **alm,
   void **map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
-  int ntrans, int dp)
+  int ntrans, int dp, int nv, double *time, unsigned long long *opcnt)
   {
   sharp_job job;
-  if (dp)
-    sharpd_build_job (&job, type, spin, add_output, (dcmplx **)alm,
-      (double **)map, geom_info, alm_info, ntrans);
-  else
-    sharps_build_job (&job, type, spin, add_output, (fcmplx **)alm,
-      (float **)map, geom_info, alm_info, ntrans);
+  sharp_build_job_common (&job, type, spin, add_output, alm, map, geom_info,
+    alm_info, ntrans, dp, nv);
 
   sharp_execute_job (&job);
+  if (time!=NULL) *time = job.time;
+  if (opcnt!=NULL) *opcnt = job.opcnt;
   }
 
 int sharp_get_nv_max (void)
@@ -633,17 +613,18 @@ static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
   for (int nv=1; nv<=sharp_get_nv_max(); ++nv)
     {
     double time_acc=0.;
-    sharp_job job;
-    sharpd_build_job(&job,type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
-    job.nv=nv;
+    double jtime;
+    int ntries=0;
     do
       {
-      sharp_execute_job(&job);
+      sharp_execute(type,spin,0,(void **)(&alm[0]),(void **)(&map[0]),tinfo,
+        alms,ntrans,1,nv,&jtime,NULL);
 
-      if (job.time<time) { time=job.time; nvbest=nv; }
-      time_acc+=job.time;
+      if (jtime<time) { time=jtime; nvbest=nv; }
+      time_acc+=jtime;
+      ++ntries;
       }
-    while (time_acc<0.02);
+    while ((time_acc<0.02)&&(ntries<2));
     }
 
   DEALLOC2D(map);
@@ -665,20 +646,13 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
     {{0,0,0},{0,0,0}},
     {{0,0,0},{0,0,0}} };
 
-  static int in_oracle=0;
-  if (in_oracle) return -20;
-
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   ntrans=IMIN(ntrans,maxtr);
 
   if (nv_opt[ntrans-1][spin!=0][type]==0)
-    {
-    in_oracle=1;
     nv_opt[ntrans-1][spin!=0][type]=sharp_oracle(type,spin,ntrans);
-    in_oracle=0;
-    }
   return nv_opt[ntrans-1][spin!=0][type];
   }
 

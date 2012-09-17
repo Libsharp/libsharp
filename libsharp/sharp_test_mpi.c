@@ -197,11 +197,13 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
   sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
   reduce_alm_info(alms);
 
-  sharp_job job;
-  sharpd_build_job(&job,SHARP_MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
-  sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
-  unsigned long long opcnt=totalops(job.opcnt);
-  double timer=maxTime(job.time);
+  double jtime;
+  unsigned long long jopcnt;
+
+  sharp_execute_mpi(MPI_COMM_WORLD,SHARP_MAP2ALM,spin,0,(void **)&alm[0],
+    (void **)&map[0],tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+  unsigned long long opcnt=totalops(jopcnt);
+  double timer=maxTime(jtime);
   if (mytask==0) printf("wall time for map2alm: %fs\n",timer);
   if (mytask==0) printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/timer);
   measure_errors(alm_orig,alm,alms,ncomp);
@@ -211,22 +213,20 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
     double **map2;
     ALLOC2D(map2,double,ncomp,npix);
     if (mytask==0) printf ("\niteration %i:\n", iter+1);
-    sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,
-      ntrans);
-    sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
-    opcnt=totalops(job.opcnt);
-    timer=maxTime(job.time);
+    sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,0,(void **)&alm[0],
+      (void **)&map2[0],tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+    opcnt=totalops(jopcnt);
+    timer=maxTime(jtime);
     if (mytask==0) printf("wall time for alm2map: %fs\n",timer);
     if (mytask==0) printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/timer);
     for (int i=0; i<ncomp; ++i)
       for (ptrdiff_t m=0; m<npix; ++m)
         map2[i][m] = map[i][m]-map2[i][m];
 
-    sharpd_build_job(&job,SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,
-      ntrans);
-    sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
-    opcnt=totalops(job.opcnt);
-    timer=maxTime(job.time);
+    sharp_execute_mpi(MPI_COMM_WORLD,SHARP_MAP2ALM,spin,1,(void **)&alm[0],
+      (void **)&map2[0],tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+    opcnt=totalops(jopcnt);
+    timer=maxTime(jtime);
     if (mytask==0) printf("wall time for map2alm: %fs\n",wallTime()-timer);
     if (mytask==0) printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/timer);
     DEALLOC2D(map2);
@@ -244,6 +244,9 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
   double **map;
   ALLOC2D(map,double,ncomp,npix);
 
+  double jtime;
+  unsigned long long jopcnt;
+
   sharp_alm_info *alms;
   ptrdiff_t nalms;
   sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
@@ -260,11 +263,10 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
   ALLOC2D(alm2,dcmplx,ncomp,nalms);
 
   if (mytask==0) printf ("\niteration 0:\n");
-  sharp_job job;
-  sharpd_build_job(&job,SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans);
-  sharp_execute_job_mpi(&job,MPI_COMM_WORLD);
-  unsigned long long opcnt=totalops(job.opcnt);
-  double timer=maxTime(job.time);
+  sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,0,(void **)&alm[0],
+    (void **)&map[0],tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+  unsigned long long opcnt=totalops(jopcnt);
+  double timer=maxTime(jtime);
   if (mytask==0) printf("wall time for alm2map: %fs\n",timer);
   if (mytask==0) printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/timer);
 

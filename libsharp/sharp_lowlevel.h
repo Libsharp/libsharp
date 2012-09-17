@@ -163,10 +163,16 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
   \param ntrans the number of simultaneous SHTs
   \param dp if 0, the \a alm is expected to have the type "complex float **"
     and \a map is expected to have the type "float **"; otherwise the expected
-    types are "complex double **" and "double **", respectively. */
-void sharp_execute_ll (sharp_jobtype type, int spin, int add_output, void **alm,
+    types are "complex double **" and "double **", respectively.
+  \param nv Internally used SHT parameter. Set to 0 unless you know what you are
+    doing.
+  \param time If not NULL, the wall clock time required for this SHT
+    (in seconds)will be written here.
+  \param opcnt If not NULL, a conservative estimate of the total floating point
+    operation count for this SHT will be written here. */
+void sharp_execute (sharp_jobtype type, int spin, int add_output, void **alm,
   void **map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
-  int ntrans, int dp);
+  int ntrans, int dp, int nv, double *time, unsigned long long *opcnt);
 
 /*! \} */
 
