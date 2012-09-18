@@ -63,6 +63,9 @@ class sharp_base
     void set_ECP_geometry (int nrings, int nphi)
       { sharp_make_ecp_geom_info (nrings, nphi, 0., 1, nphi, &ginfo); }
 
+    void set_Gauss_geometry (int nrings, int nphi)
+      { sharp_make_gauss_geom_info (nrings, nphi, 1, nphi, &ginfo); }
+
     void set_Healpix_geometry (int nside)
       { sharp_make_healpix_geom_info (nside, 1, &ginfo); }
 
