@@ -40,6 +40,13 @@ AC_ARG_ENABLE(debug,
      ENABLE_DEBUG=yes
    fi])
 
+ENABLE_PIC=no
+AC_ARG_ENABLE(pic,
+  [  --enable-pic            enable generation of position independent code],
+  [if test "$enableval" = yes; then
+     ENABLE_PIC=yes
+   fi])
+
 case $CCTYPE in
   gcc)
     CCFLAGS="-O3 -fno-tree-vectorize -ffast-math -fomit-frame-pointer -std=c99 -pedantic -Wextra -Wall -Wno-unknown-pragmas -Wshadow -Wmissing-prototypes -Wfatal-errors"
@@ -82,6 +89,10 @@ CCFLAGS="$CCFLAGS $OPENMP_CFLAGS"
 
 if test $ENABLE_DEBUG = yes; then
   CCFLAGS="$CCFLAGS -g"
+fi
+
+if test $ENABLE_PIC = yes; then
+  CCFLAGS="$CCFLAGS -fPIC"
 fi
 
 if test $ENABLE_MPI = yes; then
