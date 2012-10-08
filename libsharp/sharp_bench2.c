@@ -125,7 +125,7 @@ int main(int argc, char **argv)
   int master=(mytask==0);
 
   sharp_module_startup("sharp_bench2",argc,7,
-    "<healpix|ecp|gauss> <lmax> <nside|nphi> <a2m/m2a> <spin> <ntrans>",master);
+    "<healpix|ecp|gauss> <lmax> <nside|nphi> <a2m/m2a> <spin> <ntrans>",0);
 
   int lmax=atoi(argv[2]);
   sharp_jobtype jtype = (strcmp(argv[4],"a2m")==0) ?
@@ -184,8 +184,7 @@ int main(int argc, char **argv)
 
   double time=1e20;
   unsigned long long opcnt=0;
-int ntries;
-  for (ntries=0; (ntries<2)||(ntries*time<5); ++ntries)
+  for (int ntries=0; (ntries<2)||(ntries*time<5); ++ntries)
     {
     double ltime;
     unsigned long long lopcnt;
@@ -195,7 +194,6 @@ int ntries;
     ltime=maxTime(ltime);
     if (ltime<time) { time=ltime; opcnt=totalops(lopcnt); }
     }
-if (master) printf("%d tries\n",ntries);
   DEALLOC2D(map);
   DEALLOC2D(alm);
 
@@ -216,6 +214,8 @@ if (master) printf("%d tries\n",ntries);
   }
 
 #else
+
+#include "c_utils.h"
 
 int main(void)
   { UTIL_FAIL("Need OpenMP and MPI"); return 1; }
