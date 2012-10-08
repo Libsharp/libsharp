@@ -240,7 +240,7 @@ int main(int argc, char **argv)
   else
     UTIL_FAIL("unknown grid geometry");
 
-printf("\nMemory high water mark: %.2f MB\n",VmHWM()/(1<<20));
+  printf("\nMemory high water mark: %.2f MB\n",VmHWM()/(1<<20));
 
 #ifdef USE_MPI
   MPI_Finalize();
