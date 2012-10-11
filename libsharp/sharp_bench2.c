@@ -138,21 +138,21 @@ int main(int argc, char **argv)
   int geom2=0;
   if (strcmp(argv[1],"gauss")==0)
     {
-    int nrings=lmax+1;
-    int ppring=geom2=atoi(argv[3]);
+    int nrings=geom2=lmax+1;
+    int ppring=atoi(argv[3]);
     sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
     }
   else if (strcmp(argv[1],"ecp")==0)
     {
-    int nrings=2*lmax+2;
-    int ppring=geom2=atoi(argv[3]);
+    int nrings=geom2=2*lmax+2;
+    int ppring=atoi(argv[3]);
     sharp_make_ecp_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
     }
   else if (strcmp(argv[1],"healpix")==0)
     {
     int nside=atoi(argv[3]);
     if (nside<1) nside=1;
-    geom2=nside;
+    geom2=4*nside-1;
     sharp_make_healpix_geom_info (nside, 1, &tinfo);
     }
   else
