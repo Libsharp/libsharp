@@ -166,7 +166,7 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
 
   for (int m=0; m<nrings; ++m)
     {
-    theta[m] = acos(theta[m]);
+    theta[m] = acos(-theta[m]);
     nph[m]=nphi;
     phi0[m]=0;
     ofs[m]=(ptrdiff_t)m*stride_lat;
