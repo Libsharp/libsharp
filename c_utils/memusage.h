@@ -29,8 +29,8 @@
  *  \author Martin Reinecke
  */
 
-#ifndef PLANCK_WALLTIME_C_H
-#define PLANCK_WALLTIME_C_H
+#ifndef PLANCK_MEMUSAGE_H
+#define PLANCK_MEMUSAGE_H
 
 #ifdef __cplusplus
 extern "C" {

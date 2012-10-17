@@ -28,7 +28,6 @@
  *  Copyright (C) 2012 Max-Planck-Society
  *  Author: Martin Reinecke
  */
-#define _GNU_SOURCE
 
 #include <stdio.h>
 #include <string.h>
