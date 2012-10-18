@@ -160,6 +160,11 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
     etc. If \a spin>0, map[0] and map[1] point to the maps of the first SHT,
     map[2] and map[3] to those of the second, etc. The exact data type of \a map
     depends on the \a dp parameter.
+  \param geom_info A \c sharp_geom_info object compatible with the provided
+    \a map arrays.
+  \param alm_info A \c sharp_alm_info object compatible with the provided
+    \a alm arrays. All \c m values from 0 to some \c mmax<=lmax must be present
+    exactly once.
   \param ntrans the number of simultaneous SHTs
   \param dp if 0, the \a alm is expected to have the type "complex float **"
     and \a map is expected to have the type "float **"; otherwise the expected
