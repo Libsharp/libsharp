@@ -238,10 +238,18 @@ static void Y(iter_to_ieee_spin) (const Tb cth, int *l_,
      prescale=vload(gen->fscale[gen->m]);
   for (int i=0; i<nvec; ++i)
     {
-    rec2p.v[i]=vmul(vmul(prefac,ccp.v[i]),ssp.v[i]);
-    scalep.v[i]=vadd(vadd(prescale,ccps.v[i]),ssps.v[i]);
-    rec2m.v[i]=vmul(vmul(prefac,csp.v[i]),scp.v[i]);
-    scalem.v[i]=vadd(vadd(prescale,csps.v[i]),scps.v[i]);
+    rec2p.v[i]=vmul(prefac,ccp.v[i]);
+    scalep.v[i]=vadd(prescale,ccps.v[i]);
+    rec2m.v[i]=vmul(prefac,csp.v[i]);
+    scalem.v[i]=vadd(prescale,csps.v[i]);
+    }
+  Y(normalize)(&rec2m,&scalem); Y(normalize)(&rec2p,&scalep);
+  for (int i=0; i<nvec; ++i)
+    {
+    rec2p.v[i]=vmul(rec2p.v[i],ssp.v[i]);
+    scalep.v[i]=vadd(scalep.v[i],ssps.v[i]);
+    rec2m.v[i]=vmul(rec2m.v[i],scp.v[i]);
+    scalem.v[i]=vadd(scalem.v[i],scps.v[i]);
     if (gen->preMinus_p)
       rec2p.v[i]=vneg(rec2p.v[i]);
     if (gen->preMinus_m)

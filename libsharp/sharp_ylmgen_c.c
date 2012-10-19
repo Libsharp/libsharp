@@ -98,8 +98,14 @@ void sharp_Ylmgen_init (sharp_Ylmgen_C *gen, int l_max, int m_max, int spin)
       {
       int mlo=gen->s, mhi=m;
       if (mhi<mlo) SWAP(mhi,mlo,int);
-      gen->prefac[m]=fac[2*mhi]/(fac[mhi+mlo]*fac[mhi-mlo]);
-      gen->fscale[m]=facscale[2*mhi]-facscale[mhi+mlo]-facscale[mhi-mlo];
+      double tfac=fac[2*mhi]/fac[mhi+mlo];
+      int tscale=facscale[2*mhi]-facscale[mhi+mlo];
+      if (tfac>1.0) { tfac*=sharp_fsmall; ++tscale; }
+      tfac/=fac[mhi-mlo];
+      tscale-=facscale[mhi-mlo];
+      if (tfac>1.0) { tfac*=sharp_fsmall; ++tscale; }
+      gen->prefac[m]=tfac;
+      gen->fscale[m]=tscale;
       }
     DEALLOC(fac);
     DEALLOC(facscale);
