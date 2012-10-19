@@ -109,7 +109,7 @@ static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
   int did_scale=0;
   for (int i=0;i<nvec; ++i)
     {
-    Tv mask = vgt(vabs(lam2->v[i]),vone);
+    Tv mask = vgt(vabs(lam2->v[i]),vload(sharp_ftol));
     if (vanyTrue(mask))
       {
       did_scale=1;
@@ -126,20 +126,20 @@ static inline void Y(normalize) (Tb * restrict val, Tb * restrict scale)
   const Tv vfsmall=vload(sharp_fsmall), vfbig=vload(sharp_fbig);
   for (int i=0;i<nvec; ++i)
     {
-    Tv mask = vgt(vabs(val->v[i]),vone);
+    Tv mask = vgt(vabs(val->v[i]),vload(sharp_ftol));
     while (vanyTrue(mask))
       {
       vmuleq(val->v[i],vblend(mask,vfsmall,vone));
       vaddeq(scale->v[i],vblend(mask,vone,vzero));
-      mask = vgt(vabs(val->v[i]),vone);
+      mask = vgt(vabs(val->v[i]),vload(sharp_ftol));
       }
-    mask = vlt(vabs(val->v[i]),vfsmall);
+    mask = vlt(vabs(val->v[i]),vload(sharp_fsmall*sharp_ftol));
     mask = vand(mask,vne(val->v[i],vzero));
     while (vanyTrue(mask))
       {
       vmuleq(val->v[i],vblend(mask,vfbig,vone));
       vsubeq(scale->v[i],vblend(mask,vone,vzero));
-      mask = vlt(vabs(val->v[i]),vfsmall);
+      mask = vlt(vabs(val->v[i]),vload(sharp_fsmall*sharp_ftol));
       mask = vand(mask,vne(val->v[i],vzero));
       }
     }

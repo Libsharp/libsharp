@@ -36,8 +36,9 @@
 extern "C" {
 #endif
 
-enum { sharp_minscale=-10, sharp_limscale=0, sharp_maxscale=2 };
-static const double sharp_fbig=0x1p+90,sharp_fsmall=0x1p-90;
+enum { sharp_minscale=-1, sharp_limscale=1, sharp_maxscale=1 };
+static const double sharp_fbig=0x1p+450,sharp_fsmall=0x1p-450;
+static const double sharp_ftol=0x1p-60;
 
 typedef struct { double f[2]; } sharp_ylmgen_dbl2;
 typedef struct { double f[3]; } sharp_ylmgen_dbl3;
