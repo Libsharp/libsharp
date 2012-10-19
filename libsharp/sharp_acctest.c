@@ -96,6 +96,16 @@ static void check_sign_scale(void)
   ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
   sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
 
+  /* flip theta to emulate the "old" Gaussian grid geometry */
+  for (int i=0; i<tinfo->npairs; ++i)
+    {
+    const double pi=3.141592653589793238462643383279502884197;
+    tinfo->pair[i].r1.cth=-tinfo->pair[i].r1.cth;
+    tinfo->pair[i].r2.cth=-tinfo->pair[i].r2.cth;
+    tinfo->pair[i].r1.theta=pi-tinfo->pair[i].r1.theta;
+    tinfo->pair[i].r2.theta=pi-tinfo->pair[i].r2.theta;
+    }
+
   sharp_alm_info *alms;
   sharp_make_triangular_alm_info(lmax,mmax,1,&alms);
   ptrdiff_t nalms = ((mmax+1)*(mmax+2))/2 + (mmax+1)*(lmax-mmax);

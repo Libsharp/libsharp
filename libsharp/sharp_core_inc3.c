@@ -173,7 +173,7 @@ static void Y(calc_alm2map) (const Tb cth, const Tb sth,
   Y(getCorfac)(scale,&corfac,gen->cf);
   const sharp_ylmgen_dbl2 * restrict rf = gen->rf;
   const dcmplx * restrict alm=job->almtmp;
-  int full_ieee = Y(TballGt)(scale,sharp_minscale);
+  int full_ieee = Y(TballGe)(scale,sharp_minscale);
   while (!full_ieee)
     {
     for (int j=0; j<njobs; ++j)
@@ -207,7 +207,7 @@ static void Y(calc_alm2map) (const Tb cth, const Tb sth,
     if (Y(rescale)(&lam_1,&lam_2,&scale))
       {
       Y(getCorfac)(scale,&corfac,gen->cf);
-      full_ieee = Y(TballGt)(scale,sharp_minscale);
+      full_ieee = Y(TballGe)(scale,sharp_minscale);
       }
     }
   if (l>lmax) { *done=1; return; }
@@ -232,7 +232,7 @@ static void Y(calc_map2alm) (const Tb cth, const Tb sth,
   Tb corfac;
   Y(getCorfac)(scale,&corfac,gen->cf);
   dcmplx * restrict alm=job->almtmp;
-  int full_ieee = Y(TballGt)(scale,sharp_minscale);
+  int full_ieee = Y(TballGe)(scale,sharp_minscale);
   while (!full_ieee)
     {
     for (int j=0; j<njobs; ++j)
@@ -268,7 +268,7 @@ static void Y(calc_map2alm) (const Tb cth, const Tb sth,
     if (Y(rescale)(&lam_1,&lam_2,&scale))
       {
       Y(getCorfac)(scale,&corfac,gen->cf);
-      full_ieee = Y(TballGt)(scale,sharp_minscale);
+      full_ieee = Y(TballGe)(scale,sharp_minscale);
       }
     }
 
@@ -443,8 +443,8 @@ static void Y(calc_alm2map_spin) (const Tb cth, const sharp_Ylmgen_C *gen,
   Y(getCorfac)(scalep,&corfacp,gen->cf);
   Y(getCorfac)(scalem,&corfacm,gen->cf);
   const dcmplx * restrict alm=job->almtmp;
-  int full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+  int full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
   while (!full_ieee)
     {
     Y(saddstep)(p1, p2, Y(Tbprod)(rec2p,corfacp), Y(Tbprod)(rec2m,corfacm),
@@ -459,8 +459,8 @@ static void Y(calc_alm2map_spin) (const Tb cth, const sharp_Ylmgen_C *gen,
       {
       Y(getCorfac)(scalep,&corfacp,gen->cf);
       Y(getCorfac)(scalem,&corfacm,gen->cf);
-      full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+      full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
       }
     }
 
@@ -489,8 +489,8 @@ static void Y(calc_map2alm_spin) (Tb cth, const sharp_Ylmgen_C * restrict gen,
   Y(getCorfac)(scalep,&corfacp,gen->cf);
   Y(getCorfac)(scalem,&corfacm,gen->cf);
   dcmplx * restrict alm=job->almtmp;
-  int full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+  int full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
   while (!full_ieee)
     {
     Tb t1=Y(Tbprod)(rec2p,corfacp), t2=Y(Tbprod)(rec2m,corfacm);
@@ -505,8 +505,8 @@ static void Y(calc_map2alm_spin) (Tb cth, const sharp_Ylmgen_C * restrict gen,
       {
       Y(getCorfac)(scalep,&corfacp,gen->cf);
       Y(getCorfac)(scalem,&corfacm,gen->cf);
-      full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+      full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
       }
     }
 
@@ -586,8 +586,8 @@ static void Y(calc_alm2map_deriv1) (const Tb cth, const sharp_Ylmgen_C *gen,
   Y(getCorfac)(scalep,&corfacp,gen->cf);
   Y(getCorfac)(scalem,&corfacm,gen->cf);
   const dcmplx * restrict alm=job->almtmp;
-  int full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+  int full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
   while (!full_ieee)
     {
     Y(saddstep_d)(p1, p2, Y(Tbprod)(rec2p,corfacp), Y(Tbprod)(rec2m,corfacm),
@@ -602,8 +602,8 @@ static void Y(calc_alm2map_deriv1) (const Tb cth, const sharp_Ylmgen_C *gen,
       {
       Y(getCorfac)(scalep,&corfacp,gen->cf);
       Y(getCorfac)(scalem,&corfacm,gen->cf);
-      full_ieee = Y(TballGt)(scalep,sharp_minscale)
-               && Y(TballGt)(scalem,sharp_minscale);
+      full_ieee = Y(TballGe)(scalep,sharp_minscale)
+               && Y(TballGe)(scalem,sharp_minscale);
       }
     }
 

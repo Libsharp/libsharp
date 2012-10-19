@@ -57,8 +57,10 @@ typedef double Tv;
 #define vsqrt(a) sqrt(a)
 #define vlt(a,b) (((a)<(b))?1.:0.)
 #define vgt(a,b) (((a)>(b))?1.:0.)
+#define vge(a,b) (((a)>=(b))?1.:0.)
 #define vne(a,b) (((a)!=(b))?1.:0.)
 #define vand(a,b) ((((a)*(b))!=0.)?1.:0.)
+#define vor(a,b) ((((a)+(b))!=0.)?1.:0.)
 
 static inline Tv vmin (Tv a, Tv b) { return (a<b) ? a : b; }
 static inline Tv vmax (Tv a, Tv b) { return (a>b) ? a : b; }
@@ -102,8 +104,10 @@ typedef __m128d Tv;
 #define vsqrt(a) _mm_sqrt_pd(a)
 #define vlt(a,b) _mm_cmplt_pd(a,b)
 #define vgt(a,b) _mm_cmpgt_pd(a,b)
+#define vge(a,b) _mm_cmpge_pd(a,b)
 #define vne(a,b) _mm_cmpneq_pd(a,b)
 #define vand(a,b) _mm_and_pd(a,b)
+#define vor(a,b) _mm_or_pd(a,b)
 #define vmin(a,b) _mm_min_pd(a,b)
 #define vmax(a,b) _mm_max_pd(a,b);
 #define vanyTrue(a) (_mm_movemask_pd(a)!=0)
@@ -153,8 +157,10 @@ typedef __m256d Tv;
 #define vsqrt(a) _mm256_sqrt_pd(a)
 #define vlt(a,b) _mm256_cmp_pd(a,b,_CMP_LT_OQ)
 #define vgt(a,b) _mm256_cmp_pd(a,b,_CMP_GT_OQ)
+#define vge(a,b) _mm256_cmp_pd(a,b,_CMP_GE_OQ)
 #define vne(a,b) _mm256_cmp_pd(a,b,_CMP_NEQ_OQ)
 #define vand(a,b) _mm256_and_pd(a,b)
+#define vor(a,b) _mm256_or_pd(a,b)
 #define vmin(a,b) _mm256_min_pd(a,b)
 #define vmax(a,b) _mm256_max_pd(a,b)
 #define vanyTrue(a) (_mm256_movemask_pd(a)!=0)
