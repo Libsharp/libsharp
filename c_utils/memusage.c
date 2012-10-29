@@ -38,7 +38,8 @@ double residentSetSize(void)
   FILE *statm = fopen("/proc/self/statm","r");
   double res;
   if (!statm) return -1.0;
-  fscanf(statm,"%*f %lf",&res);
+  if (fscanf(statm,"%*f %lf",&res))
+      { fclose(statm); return -1.0; }
   fclose(statm);
   return (res*4096);
   }
@@ -55,8 +56,8 @@ double VmHWM(void)
       { fclose(f); return -1.0; }
     if (!strncmp(word, "VmHWM:", 6))
       {
-      fscanf(f,"%lf",&res);
-      fscanf(f,"%2s",word);
+      if (fscanf(f,"%lf%2s",&res,word)<0)
+	{ fclose(f); return -1.0; }
       if (strncmp(word, "kB", 2))
         { fclose(f); return -1.0; }
       res *=1024;

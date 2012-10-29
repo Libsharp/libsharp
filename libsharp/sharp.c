@@ -213,6 +213,9 @@ void sharp_destroy_geom_info (sharp_geom_info *geom_info)
   DEALLOC (geom_info);
   }
 
+/* This currently requires all m values from 0 to nm-1 to be present.
+   It might be worthwhile to relax this criterion such that holes in the m
+   distribution are permissible. */
 static int sharp_get_mmax (int *mval, int nm)
   {
   int *mcheck=RALLOC(int,nm);
@@ -220,12 +223,12 @@ static int sharp_get_mmax (int *mval, int nm)
   for (int i=0; i<nm; ++i)
     {
     int m_cur=mval[i];
-    UTIL_ASSERT((m_cur>=0) && (m_cur<nm), "m out of range");
+    UTIL_ASSERT((m_cur>=0) && (m_cur<nm), "not all m values are present");
     UTIL_ASSERT(mcheck[m_cur]==0, "duplicate m value");
     mcheck[m_cur]=1;
     }
   DEALLOC(mcheck);
-  return nm-1; // FIXME: this looks wrong
+  return nm-1;
   }
 
 static void ringhelper_phase2ring (ringhelper *self,
