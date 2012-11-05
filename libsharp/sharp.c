@@ -43,9 +43,10 @@
 typedef complex double dcmplx;
 typedef complex float  fcmplx;
 
+static int chunksize_min=500, nchunks_max=10;
+
 static void get_chunk_info (int ndata, int nmult, int *nchunks, int *chunksize)
   {
-  static const int chunksize_min=500, nchunks_max=10;
   *chunksize = IMAX(chunksize_min,(ndata+nchunks_max-1)/nchunks_max);
   *chunksize = ((*chunksize+nmult-1)/nmult)*nmult;
   *nchunks = (ndata+*chunksize-1) / *chunksize;
@@ -624,6 +625,11 @@ void sharp_execute (sharp_jobtype type, int spin, int add_output, void *alm,
   if (time!=NULL) *time = job.time;
   if (opcnt!=NULL) *opcnt = job.opcnt;
   }
+
+void sharp_set_chunksize_min(int new_chunksize_min)
+  { chunksize_min=new_chunksize_min; }
+void sharp_set_nchunks_max(int new_nchunks_max)
+  { nchunks_max=new_nchunks_max; }
 
 int sharp_get_nv_max (void)
 { return 6; }

@@ -179,6 +179,9 @@ void sharp_execute (sharp_jobtype type, int spin, int add_output, void *alm,
   void *map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
   int ntrans, int dp, int nv, double *time, unsigned long long *opcnt);
 
+void sharp_set_chunksize_min(int new_chunksize_min);
+void sharp_set_nchunks_max(int new_nchunks_max);
+
 /*! \} */
 
 #ifdef __cplusplus
