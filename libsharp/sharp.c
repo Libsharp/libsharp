@@ -274,14 +274,18 @@ static void ringhelper_phase2ring (ringhelper *self,
     }
 #endif
   real_plan_backward_c (self->plan, (double *)(self->work));
-  if (flags & SHARP_ALM2MAP_USE_WEIGHTS) {
+  if (flags & SHARP_ALM2MAP_USE_WEIGHTS)
+    {
     if (fde==DOUBLE)
       for (int m=0; m<nph; ++m)
-        ((double *)data)[m*stride+info->ofs] += creal(self->work[m]) * info->weight;
+        ((double *)data)[m*stride+info->ofs]+=creal(self->work[m])*info->weight;
     else
       for (int m=0; m<nph; ++m)
-        ((float *)data)[m*stride+info->ofs] += (float)creal(self->work[m]) * info->weight;
-  } else {
+        ((float *)data)[m*stride+info->ofs] +=
+          (float)(creal(self->work[m])*info->weight);
+    }
+  else
+    {
     if (fde==DOUBLE)
       for (int m=0; m<nph; ++m)
         ((double *)data)[m*stride+info->ofs] += creal(self->work[m]);
@@ -303,21 +307,24 @@ static void ringhelper_ring2phase (ringhelper *self,
 #endif
 
   ringhelper_update (self, nph, mmax, -info->phi0);
-  if (flags & SHARP_MAP2ALM_IGNORE_WEIGHTS) {
+  if (flags & SHARP_MAP2ALM_IGNORE_WEIGHTS)
+    {
     if (fde==DOUBLE)
       for (int m=0; m<nph; ++m)
         self->work[m] = ((double *)data)[info->ofs+m*info->stride];
     else
       for (int m=0; m<nph; ++m)
         self->work[m] = ((float *)data)[info->ofs+m*info->stride];
-  } else {
+    }
+  else
+    {
     if (fde==DOUBLE)
       for (int m=0; m<nph; ++m)
         self->work[m] = ((double *)data)[info->ofs+m*info->stride]*info->weight;
     else
       for (int m=0; m<nph; ++m)
         self->work[m] = ((float *)data)[info->ofs+m*info->stride]*info->weight;
-  }
+    }
 
   real_plan_forward_c (self->plan, (double *)self->work);
 
@@ -336,18 +343,18 @@ static void ringhelper_pair2phase (ringhelper *self, int mmax,
   const sharp_ringpair *pair, const void *data, dcmplx *phase1, dcmplx *phase2,
   int pstride, sharp_fde fde, int flags)
   {
-  ringhelper_ring2phase (self, &(pair->r1), data, mmax, phase1, pstride, fde, flags);
+  ringhelper_ring2phase (self,&(pair->r1),data,mmax,phase1,pstride,fde,flags);
   if (pair->r2.nph>0)
-    ringhelper_ring2phase (self, &(pair->r2), data, mmax, phase2, pstride, fde, flags);
+    ringhelper_ring2phase (self,&(pair->r2),data,mmax,phase2,pstride,fde,flags);
   }
 
 static void ringhelper_phase2pair (ringhelper *self, int mmax,
   const dcmplx *phase1, const dcmplx *phase2, int pstride,
   const sharp_ringpair *pair, void *data, sharp_fde fde, int flags)
   {
-  ringhelper_phase2ring (self, &(pair->r1), data, mmax, phase1, pstride, fde, flags);
+  ringhelper_phase2ring (self,&(pair->r1),data,mmax,phase1,pstride,fde,flags);
   if (pair->r2.nph>0)
-    ringhelper_phase2ring (self, &(pair->r2), data, mmax, phase2, pstride, fde, flags);
+    ringhelper_phase2ring (self,&(pair->r2),data,mmax,phase2,pstride,fde,flags);
   }
 
 static void fill_map (const sharp_geom_info *ginfo, void *map, double value,
@@ -419,7 +426,8 @@ static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
     int dim2 = pstride*(ith-llim)*(mmax+1);
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
       ringhelper_pair2phase(&helper,mmax,&job->ginfo->pair[ith], job->map[i],
-        &job->phase[dim2+2*i], &job->phase[dim2+2*i+1], pstride, job->fde, job->flags);
+        &job->phase[dim2+2*i], &job->phase[dim2+2*i+1], pstride, job->fde,
+        job->flags);
     }
   ringhelper_destroy(&helper);
 } /* end of parallel region */
@@ -613,7 +621,8 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   {
   UTIL_ASSERT((ntrans>0)&&(ntrans<=SHARP_MAXTRANS),
     "bad number of simultaneous transforms");
-  UTIL_ASSERT((flags>0),"passed -1 for old 'dp' argument which is now replaced by 'flags', please pass SHARP_DP");
+  UTIL_ASSERT((flags>0), "passed -1 for old 'dp' argument which is now\n"
+    "replaced by 'flags', please pass SHARP_DP");
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   job->type = type;

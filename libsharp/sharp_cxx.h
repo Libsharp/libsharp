@@ -78,10 +78,10 @@ class sharp_base
 template<typename T> struct cxxjobhelper__ {};
 
 template<> struct cxxjobhelper__<double>
-  { enum {val=1}; };
+  { enum {val=SHARP_DP}; };
 
 template<> struct cxxjobhelper__<float>
-  { enum {val=0}; };
+  { enum {val=SHARP_SP}; };
 
 
 template<typename T> class sharp_cxxjob: public sharp_base

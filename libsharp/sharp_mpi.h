@@ -64,9 +64,9 @@ extern "C" {
     exactly once in the union of all \a alm_info objects over the participating
     MPI tasks.
   \param ntrans the number of simultaneous SHTs
-  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, the \a alm is
-    expected to have the type "complex float **"
-    and \a map is expected to have the type "float **"; if SHARP_DP is set, the expected
+  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, then
+    \a alm is expected to have the type "complex float **" and \a map is
+    expected to have the type "float **"; if SHARP_DP is set, the expected
     types are "complex double **" and "double **", respectively.
   \param nv Internally used SHT parameter. Set to 0 unless you know what you are
     doing.

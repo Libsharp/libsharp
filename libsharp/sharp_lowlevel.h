@@ -150,16 +150,21 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
 typedef enum { SHARP_SP = 0, /*!< map and alm is in single precision */
                SHARP_DP = 1 << 1, /*!< map and alm is in double precision */
 
-               SHARP_ALM2MAP_USE_WEIGHTS = 1 << 2, /*!< apply ring weights for alm2map */
-               SHARP_MAP2ALM_IGNORE_WEIGHTS = 1 << 3, /*!< do not use ring weights for map2alm */
+               SHARP_ALM2MAP_USE_WEIGHTS = 1 << 2,
+                 /*!< apply ring weights for alm2map */
+               SHARP_MAP2ALM_IGNORE_WEIGHTS = 1 << 3,
+                 /*!< do not use ring weights for map2alm */
 
-               /* convenience flag combinations (stable API even if the default changes) */
-               SHARP_USE_WEIGHTS = SHARP_ALM2MAP_USE_WEIGHTS, /*!< use ring weights for both map2alm and alm2map */
-               SHARP_IGNORE_WEIGHTS = SHARP_MAP2ALM_IGNORE_WEIGHTS /*!< do not use ring weights for either map2alm or map2alm */
+               /* convenience flag combinations
+                  (stable API even if the default changes) */
+               SHARP_USE_WEIGHTS = SHARP_ALM2MAP_USE_WEIGHTS,
+                 /*!< use ring weights for both map2alm and alm2map */
+               SHARP_IGNORE_WEIGHTS = SHARP_MAP2ALM_IGNORE_WEIGHTS
+                 /*!< do not use ring weights for either map2alm or map2alm */
              } sharp_jobflags;
 
 /*! Performs a libsharp SHT job. The interface deliberately does not use
-  the C99 "complex" data type, in order to be callable from C. 
+  the C99 "complex" data type, in order to be callable from C89 and C++.
   \param type the type of SHT
   \param spin the spin of the quantities to be transformed
   \param add_output if 0, the output arrays will be overwritten,
@@ -180,9 +185,9 @@ typedef enum { SHARP_SP = 0, /*!< map and alm is in single precision */
     \a alm arrays. All \c m values from 0 to some \c mmax<=lmax must be present
     exactly once.
   \param ntrans the number of simultaneous SHTs
-  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, the \a alm is
-    expected to have the type "complex float **"
-    and \a map is expected to have the type "float **"; if SHARP_DP is set, the expected
+  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, then
+    \a alm is expected to have the type "complex float **" and \a map is
+    expected to have the type "float **"; if SHARP_DP is set, the expected
     types are "complex double **" and "double **", respectively.
   \param nv Internally used SHT parameter. Set to 0 unless you know what you are
     doing.
