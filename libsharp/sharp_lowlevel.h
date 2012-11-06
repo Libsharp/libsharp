@@ -123,7 +123,9 @@ void sharp_destroy_alm_info (sharp_alm_info *info);
     \param stride the stride between consecutive pixels
     \param phi0 the azimuth (in radians) of the first pixel in each ring
     \param theta the colatitude (in radians) of each ring
-    \param weight the pixel weight to be used for the ring
+    \param weight the pixel weight to be used for the ring. Pass NULL to use
+      1.0 as weight for all rings. By default weights are used for alm2map
+      but not map2alm, but the execution flags can override this.
     \param geom_info will hold a pointer to the newly created data structure
  */
 void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
@@ -143,6 +145,18 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
                SHARP_ALM2MAP,       /*!< synthesis */
                SHARP_ALM2MAP_DERIV1 /*!< synthesis of first derivatives */
              } sharp_jobtype;
+
+/*! Job flags */
+typedef enum { SHARP_SP = 0, /*!< map and alm is in single precision */
+               SHARP_DP = 1 << 1, /*!< map and alm is in double precision */
+
+               SHARP_ALM2MAP_USE_WEIGHTS = 1 << 2, /*!< apply ring weights for alm2map */
+               SHARP_MAP2ALM_IGNORE_WEIGHTS = 1 << 3, /*!< do not use ring weights for map2alm */
+
+               /* convenience flag combinations (stable API even if the default changes) */
+               SHARP_USE_WEIGHTS = SHARP_ALM2MAP_USE_WEIGHTS, /*!< use ring weights for both map2alm and alm2map */
+               SHARP_IGNORE_WEIGHTS = SHARP_MAP2ALM_IGNORE_WEIGHTS /*!< do not use ring weights for either map2alm or map2alm */
+             } sharp_jobflags;
 
 /*! Performs a libsharp SHT job. The interface deliberately does not use
   the C99 "complex" data type, in order to be callable from C. 
@@ -166,8 +180,9 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
     \a alm arrays. All \c m values from 0 to some \c mmax<=lmax must be present
     exactly once.
   \param ntrans the number of simultaneous SHTs
-  \param dp if 0, the \a alm is expected to have the type "complex float **"
-    and \a map is expected to have the type "float **"; otherwise the expected
+  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, the \a alm is
+    expected to have the type "complex float **"
+    and \a map is expected to have the type "float **"; if SHARP_DP is set, the expected
     types are "complex double **" and "double **", respectively.
   \param nv Internally used SHT parameter. Set to 0 unless you know what you are
     doing.
@@ -177,7 +192,7 @@ typedef enum { SHARP_MAP2ALM,       /*!< analysis */
     operation count for this SHT will be written here. */
 void sharp_execute (sharp_jobtype type, int spin, int add_output, void *alm,
   void *map, const sharp_geom_info *geom_info, const sharp_alm_info *alm_info,
-  int ntrans, int dp, int nv, double *time, unsigned long long *opcnt);
+  int ntrans, int flags, int nv, double *time, unsigned long long *opcnt);
 
 void sharp_set_chunksize_min(int new_chunksize_min);
 void sharp_set_nchunks_max(int new_nchunks_max);

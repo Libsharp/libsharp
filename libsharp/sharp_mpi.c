@@ -285,12 +285,12 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 
 void sharp_execute_mpi (MPI_Comm comm, sharp_jobtype type, int spin,
   int add_output, void *alm, void *map, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans, int dp, int nv, double *time,
+  const sharp_alm_info *alm_info, int ntrans, int flags, int nv, double *time,
   unsigned long long *opcnt)
   {
   sharp_job job;
   sharp_build_job_common (&job, type, spin, add_output, alm, map, geom_info,
-    alm_info, ntrans, dp, nv);
+    alm_info, ntrans, flags, nv);
 
   sharp_execute_job_mpi (&job, comm);
   if (time!=NULL) *time = job.time;

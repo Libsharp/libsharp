@@ -64,8 +64,9 @@ extern "C" {
     exactly once in the union of all \a alm_info objects over the participating
     MPI tasks.
   \param ntrans the number of simultaneous SHTs
-  \param dp if 0, the \a alm is expected to have the type "complex float **"
-    and \a map is expected to have the type "float **"; otherwise the expected
+  \param flags See sharp_jobflags. In particular, if SHARP_SP is set, the \a alm is
+    expected to have the type "complex float **"
+    and \a map is expected to have the type "float **"; if SHARP_DP is set, the expected
     types are "complex double **" and "double **", respectively.
   \param nv Internally used SHT parameter. Set to 0 unless you know what you are
     doing.
@@ -75,7 +76,7 @@ extern "C" {
     operation count for this SHT will be written here. */
 void sharp_execute_mpi (MPI_Comm comm, sharp_jobtype type, int spin,
   int add_output, void *alm, void *map, const sharp_geom_info *geom_info,
-  const sharp_alm_info *alm_info, int ntrans, int dp, int nv, double *time,
+  const sharp_alm_info *alm_info, int ntrans, int flags, int nv, double *time,
   unsigned long long *opcnt);
 
 #ifdef __cplusplus

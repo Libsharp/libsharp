@@ -201,7 +201,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
   unsigned long long jopcnt;
 
   sharp_execute_mpi(MPI_COMM_WORLD,SHARP_MAP2ALM,spin,0,&alm[0],&map[0],
-    tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+    tinfo,alms,ntrans,SHARP_DP,0,&jtime,&jopcnt);
   unsigned long long opcnt=totalops(jopcnt);
   double timer=maxTime(jtime);
   if (mytask==0) printf("wall time for map2alm: %fs\n",timer);
@@ -214,7 +214,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
     ALLOC2D(map2,double,ncomp,npix);
     if (mytask==0) printf ("\niteration %i:\n", iter+1);
     sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],
-      tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+      tinfo,alms,ntrans,SHARP_DP,0,&jtime,&jopcnt);
     opcnt=totalops(jopcnt);
     timer=maxTime(jtime);
     if (mytask==0) printf("wall time for alm2map: %fs\n",timer);
@@ -224,7 +224,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
         map2[i][m] = map[i][m]-map2[i][m];
 
     sharp_execute_mpi(MPI_COMM_WORLD,SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],
-      tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+      tinfo,alms,ntrans,SHARP_DP,0,&jtime,&jopcnt);
     opcnt=totalops(jopcnt);
     timer=maxTime(jtime);
     if (mytask==0) printf("wall time for map2alm: %fs\n",wallTime()-timer);
@@ -264,7 +264,7 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
 
   if (mytask==0) printf ("\niteration 0:\n");
   sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,0,&alm[0],&map[0],
-    tinfo,alms,ntrans,1,0,&jtime,&jopcnt);
+    tinfo,alms,ntrans,SHARP_DP,0,&jtime,&jopcnt);
   unsigned long long opcnt=totalops(jopcnt);
   double timer=maxTime(jtime);
   if (mytask==0) printf("wall time for alm2map: %fs\n",timer);
