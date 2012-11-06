@@ -46,6 +46,7 @@ typedef struct
   int spin;
   int add_output;
   int nmaps, nalm;
+  int flags;
   sharp_fde fde;
   void **map;
   void **alm;

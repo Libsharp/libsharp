@@ -121,7 +121,7 @@ static void check_sign_scale(void)
       for (int j=0; j<nalms; ++j)
         alm[i][j]=1.+_Complex_I;
 
-    sharp_execute(SHARP_ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,ntrans,1,0,NULL,
+    sharp_execute(SHARP_ALM2MAP,0,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,0,NULL,
       NULL);
     for (int it=0; it<ntrans; ++it)
       {
@@ -132,7 +132,7 @@ static void check_sign_scale(void)
       UTIL_ASSERT(FAPPROX(map[it][npix-1],-1.234675107554816442e+01,1e-12),
         "error");
       }
-    sharp_execute(SHARP_ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,ntrans,1,0,NULL,
+    sharp_execute(SHARP_ALM2MAP,1,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,0,NULL,
       NULL);
     for (int it=0; it<ntrans; ++it)
       {
@@ -150,7 +150,7 @@ static void check_sign_scale(void)
         "error");
       }
 
-    sharp_execute(SHARP_ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,ntrans,1,0,NULL,
+    sharp_execute(SHARP_ALM2MAP,2,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,0,NULL,
       NULL);
     for (int it=0; it<ntrans; ++it)
       {
@@ -168,7 +168,7 @@ static void check_sign_scale(void)
         "error");
       }
 
-    sharp_execute(SHARP_ALM2MAP_DERIV1,1,0,&alm[0],&map[0],tinfo,alms,ntrans,1,
+    sharp_execute(SHARP_ALM2MAP_DERIV1,1,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,
       0,NULL,NULL);
     for (int it=0; it<ntrans; ++it)
       {
@@ -215,9 +215,9 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
   dcmplx **alm2;
   ALLOC2D(alm2,dcmplx,ncomp,nalms);
 
-  sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,1,nv,
+  sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,nv,
     NULL,NULL);
-  sharp_execute(SHARP_MAP2ALM,spin,0,&alm2[0],&map[0],tinfo,alms,ntrans,1,nv,
+  sharp_execute(SHARP_MAP2ALM,spin,0,&alm2[0],&map[0],tinfo,alms,ntrans,SHARP_DP,nv,
     NULL,NULL);
   measure_errors(alm,alm2,nalms,ncomp);
 

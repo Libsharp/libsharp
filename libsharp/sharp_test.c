@@ -119,7 +119,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
 
   double time;
   unsigned long long opcnt;
-  sharp_execute(SHARP_MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,1,0,
+  sharp_execute(SHARP_MAP2ALM,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,0,
     &time,&opcnt);
   printf("wall time for map2alm: %fs\n",time);
   printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/time);
@@ -130,7 +130,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
     double **map2;
     ALLOC2D(map2,double,ncomp,npix);
     printf ("\niteration %i:\n", iter+1);
-    sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,ntrans,1,0,
+    sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map2[0],tinfo,alms,ntrans,SHARP_DP,0,
       &time,&opcnt);
     printf("wall time for alm2map: %fs\n",time);
     printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/time);
@@ -138,7 +138,7 @@ static void map2alm_iter (sharp_geom_info *tinfo, double **map,
       for (ptrdiff_t m=0; m<npix; ++m)
         map2[i][m] = map[i][m]-map2[i][m];
 
-    sharp_execute(SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,ntrans,1,0,
+    sharp_execute(SHARP_MAP2ALM,spin,1,&alm[0],&map2[0],tinfo,alms,ntrans,SHARP_DP,0,
       &time,&opcnt);
     printf("wall time for map2alm: %fs\n",time);
     printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/time);
@@ -173,7 +173,7 @@ static void check_accuracy (sharp_geom_info *tinfo, ptrdiff_t lmax,
   double time;
   unsigned long long opcnt;
   printf ("\niteration 0:\n");
-  sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,1,0,
+  sharp_execute(SHARP_ALM2MAP,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,0,
     &time,&opcnt);
   printf("wall time for alm2map: %fs\n",time);
   printf("Performance: %fGFLOPs/s\n",1e-9*opcnt/time);
