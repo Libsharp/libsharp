@@ -123,7 +123,9 @@ void sharp_destroy_alm_info (sharp_alm_info *info);
     \param stride the stride between consecutive pixels
     \param phi0 the azimuth (in radians) of the first pixel in each ring
     \param theta the colatitude (in radians) of each ring
-    \param weight the pixel weight to be used for the ring
+    \param weight the pixel weight to be used for the ring. Pass NULL to use
+      1.0 as weight for all rings. By default weights are used for alm2map
+      but not map2alm, but the execution flags can override this.
     \param geom_info will hold a pointer to the newly created data structure
  */
 void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,

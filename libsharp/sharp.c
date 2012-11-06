@@ -176,7 +176,7 @@ void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
     infos[m].theta = theta[m];
     infos[m].cth = cos(theta[m]);
     infos[m].sth = sin(theta[m]);
-    infos[m].weight = weight[m];
+    infos[m].weight = (weight != NULL) ? weight[m] : 1.;
     infos[m].phi0 = phi0[m];
     infos[m].ofs = ofs[m];
     infos[m].stride = stride[m];
