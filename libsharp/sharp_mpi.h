@@ -26,7 +26,7 @@
  *  Interface for the spherical transform library with MPI support.
  *
  *  Copyright (C) 2011,2012 Max-Planck-Society
- *  \author Martin Reinecke
+ *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
 #ifndef PLANCK_SHARP_MPI_H

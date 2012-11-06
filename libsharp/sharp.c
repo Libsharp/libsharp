@@ -26,7 +26,7 @@
  *  Spherical transform library
  *
  *  Copyright (C) 2006-2012 Max-Planck-Society
- *  \author Martin Reinecke
+ *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
 #include <math.h>

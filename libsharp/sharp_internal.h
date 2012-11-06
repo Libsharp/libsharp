@@ -26,7 +26,7 @@
  *  Internally used functionality for the spherical transform library.
  *
  *  Copyright (C) 2006-2012 Max-Planck-Society
- *  \author Martin Reinecke
+ *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
 #ifndef PLANCK_SHARP_INTERNAL_H

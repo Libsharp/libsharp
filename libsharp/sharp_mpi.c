@@ -26,7 +26,7 @@
  *  Functionality only needed for MPI-parallel transforms
  *
  *  Copyright (C) 2012 Max-Planck-Society
- *  \author Martin Reinecke
+ *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
 #ifdef USE_MPI
