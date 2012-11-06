@@ -41,6 +41,7 @@
 
 typedef complex double dcmplx;
 
+// must be in the range [0;6]
 #define MAXJOB_SPECIAL 2
 
 #define XCONCAT2(a,b) a##_##b
@@ -81,7 +82,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
     {
     switch (njobs*16+job->nv)
       {
-#if (MAXJOB_SPECIAL>=1)
+#if ((MAXJOB_SPECIAL>=1)&&(SHARP_MAXTRANS>=1))
       case 0x11:
         CONCAT3(inner_loop,1,1) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -101,7 +102,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
         CONCAT3(inner_loop,6,1) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
 #endif
-#if (MAXJOB_SPECIAL>=2)
+#if ((MAXJOB_SPECIAL>=2)&&(SHARP_MAXTRANS>=2))
       case 0x21:
         CONCAT3(inner_loop,1,2) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -121,7 +122,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
         CONCAT3(inner_loop,6,2) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
 #endif
-#if (MAXJOB_SPECIAL>=3)
+#if ((MAXJOB_SPECIAL>=3)&&(SHARP_MAXTRANS>=3))
       case 0x31:
         CONCAT3(inner_loop,1,3) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -141,7 +142,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
         CONCAT3(inner_loop,6,3) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
 #endif
-#if (MAXJOB_SPECIAL>=4)
+#if ((MAXJOB_SPECIAL>=4)&&(SHARP_MAXTRANS>=4))
       case 0x41:
         CONCAT3(inner_loop,1,4) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -161,7 +162,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
         CONCAT3(inner_loop,6,4) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
 #endif
-#if (MAXJOB_SPECIAL>=5)
+#if ((MAXJOB_SPECIAL>=5)&&(SHARP_MAXTRANS>=5))
       case 0x51:
         CONCAT3(inner_loop,1,5) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -181,7 +182,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
         CONCAT3(inner_loop,6,5) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
 #endif
-#if (MAXJOB_SPECIAL>=6)
+#if ((MAXJOB_SPECIAL>=6)&&(SHARP_MAXTRANS>=6))
       case 0x61:
         CONCAT3(inner_loop,1,6) (job, ispair,cth,sth,llim,ulim,gen,mi,idx);
         return;
@@ -203,7 +204,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
 #endif
       }
     }
-#if (MAXJOB_SPECIAL<6)
+#if (SHARP_MAXTRANS>MAXJOB_SPECIAL)
   else
     {
     switch (job->nv)
