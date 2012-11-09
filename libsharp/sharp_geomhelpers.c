@@ -88,7 +88,7 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
     weight_[m]=4.*pi/npix*weight[northring-1];
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, weight_,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, NULL, weight_,
     geom_info);
 
   DEALLOC(theta);
@@ -174,7 +174,7 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
     weight[m]*=2*pi/nphi;
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, NULL, weight,
     geom_info);
 
   DEALLOC(theta);
@@ -210,7 +210,7 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
     weight[m]*=2*pi/nphi;
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
     geom_info);
 
   DEALLOC(theta);

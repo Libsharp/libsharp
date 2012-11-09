@@ -38,9 +38,7 @@
 
 #include "sharp.h"
 
-#define SHARP_MAXTRANS 10
-
-typedef enum { FLOAT, DOUBLE } sharp_fde;
+#define SHARP_MAXTRANS 100
 
 typedef struct
   {
@@ -49,7 +47,6 @@ typedef struct
   int add_output;
   int nmaps, nalm;
   int flags;
-  sharp_fde fde;
   void **map;
   void **alm;
   complex double *phase;
@@ -57,7 +54,6 @@ typedef struct
   complex double *almtmp;
   const sharp_geom_info *ginfo;
   const sharp_alm_info *ainfo;
-  int nv;
   double time;
   int ntrans;
   unsigned long long opcnt;

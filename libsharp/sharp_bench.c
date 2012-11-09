@@ -73,7 +73,7 @@ static void bench_sht (int spin, int nv, sharp_jobtype type,
     {
     double jtime;
     unsigned long long jopcnt;
-    sharp_execute(type,spin,0,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP,nv,
+    sharp_execute(type,spin,&alm[0],&map[0],tinfo,alms,ntrans,SHARP_DP|nv,
       &jtime,&jopcnt);
 
     if (jopcnt<*opcnt) *opcnt=jopcnt;

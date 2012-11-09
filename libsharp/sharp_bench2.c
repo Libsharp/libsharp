@@ -188,8 +188,8 @@ int main(int argc, char **argv)
     {
     double ltime;
     unsigned long long lopcnt;
-    sharp_execute_mpi(MPI_COMM_WORLD,jtype,spin,0,&alm[0],&map[0],
-      tinfo,alms,ntrans,SHARP_DP,0,&ltime,&lopcnt);
+    sharp_execute_mpi(MPI_COMM_WORLD,jtype,spin,&alm[0],&map[0],
+      tinfo,alms,ntrans,SHARP_DP,&ltime,&lopcnt);
 
     ltime=maxTime(ltime);
     if (ltime<time) { time=ltime; opcnt=totalops(lopcnt); }

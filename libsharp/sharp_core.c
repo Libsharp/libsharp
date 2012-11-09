@@ -77,10 +77,10 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
   const double *sth, int llim, int ulim, sharp_Ylmgen_C *gen, int mi,
   const int *idx)
   {
-  int njobs=job->ntrans;
+  int njobs=job->ntrans, nv=job->flags&SHARP_NVMAX;
   if (njobs<=MAXJOB_SPECIAL)
     {
-    switch (njobs*16+job->nv)
+    switch (njobs*16+nv)
       {
 #if ((MAXJOB_SPECIAL>=1)&&(SHARP_MAXTRANS>=1))
       case 0x11:
@@ -207,7 +207,7 @@ void inner_loop (sharp_job *job, const int *ispair,const double *cth,
 #if (SHARP_MAXTRANS>MAXJOB_SPECIAL)
   else
     {
-    switch (job->nv)
+    switch (nv)
       {
       case 1:
         CONCAT2(inner_loop,1)
