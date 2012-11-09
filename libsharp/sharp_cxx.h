@@ -35,7 +35,7 @@
 #include "sharp_lowlevel.h"
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
-#include <iostream>
+
 class sharp_base
   {
   protected:
@@ -113,8 +113,6 @@ template<typename T> class sharp_cxxjob: public sharp_base
       {
       void *aptr=conv(alm), *mptr=conv(map);
       int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
-//std::cout << flags << std::endl;
-std::cout << cxxjobhelper__<T>::val << " " << add <<  " " << flags << std::endl;
       sharp_execute (SHARP_ALM2MAP, 0, &aptr, &mptr, ginfo, ainfo, 1,
         flags,0,0);
       }
@@ -125,7 +123,6 @@ std::cout << cxxjobhelper__<T>::val << " " << add <<  " " << flags << std::endl;
       aptr[0]=conv(alm1); aptr[1]=conv(alm2);
       mptr[0]=conv(map1); mptr[1]=conv(map2);
       int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
-std::cout << cxxjobhelper__<T>::val << " " << add <<  " " << flags << std::endl;
       sharp_execute (SHARP_ALM2MAP,spin,aptr,mptr,ginfo,ainfo,1,flags,0,0);
       }
     void alm2map_der1 (const T *alm, T *map1, T *map2, bool add)
