@@ -35,7 +35,7 @@
 #include "sharp_lowlevel.h"
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
-
+#include <iostream>
 class sharp_base
   {
   protected:
@@ -53,26 +53,42 @@ class sharp_base
 
     void set_general_geometry (int nrings, const int *nph, const ptrdiff_t *ofs,
       const int *stride, const double *phi0, const double *theta,
-      const double *weight)
+      const double *wgt_a2m, const double *wgt_m2a)
       {
-      sharp_make_geom_info (nrings, nph, ofs, stride, phi0, theta, weight,
-        &ginfo);
+      if (ginfo) sharp_destroy_geom_info(ginfo);
+      sharp_make_geom_info (nrings, nph, ofs, stride, phi0, theta, wgt_a2m,
+        wgt_m2a, &ginfo);
       }
 
     void set_ECP_geometry (int nrings, int nphi)
-      { sharp_make_ecp_geom_info (nrings, nphi, 0., 1, nphi, &ginfo); }
+      {
+      if (ginfo) sharp_destroy_geom_info(ginfo);
+      sharp_make_ecp_geom_info (nrings, nphi, 0., 1, nphi, &ginfo);
+      }
 
     void set_Gauss_geometry (int nrings, int nphi)
-      { sharp_make_gauss_geom_info (nrings, nphi, 1, nphi, &ginfo); }
+      {
+      if (ginfo) sharp_destroy_geom_info(ginfo);
+      sharp_make_gauss_geom_info (nrings, nphi, 1, nphi, &ginfo);
+      }
 
     void set_Healpix_geometry (int nside)
-      { sharp_make_healpix_geom_info (nside, 1, &ginfo); }
+      {
+      if (ginfo) sharp_destroy_geom_info(ginfo);
+      sharp_make_healpix_geom_info (nside, 1, &ginfo);
+      }
 
     void set_weighted_Healpix_geometry (int nside, const double *weight)
-      { sharp_make_weighted_healpix_geom_info (nside, 1, weight, &ginfo); }
+      {
+      if (ginfo) sharp_destroy_geom_info(ginfo);
+      sharp_make_weighted_healpix_geom_info (nside, 1, weight, &ginfo);
+      }
 
     void set_triangular_alm_info (int lmax, int mmax)
-      { sharp_make_triangular_alm_info (lmax, mmax, 1, &ainfo); }
+      {
+      if (ainfo) sharp_destroy_alm_info(ainfo);
+      sharp_make_triangular_alm_info (lmax, mmax, 1, &ainfo);
+      }
   };
 
 template<typename T> struct cxxjobhelper__ {};
@@ -81,7 +97,7 @@ template<> struct cxxjobhelper__<double>
   { enum {val=SHARP_DP}; };
 
 template<> struct cxxjobhelper__<float>
-  { enum {val=SHARP_SP}; };
+  { enum {val=0}; };
 
 
 template<typename T> class sharp_cxxjob: public sharp_base
@@ -96,8 +112,11 @@ template<typename T> class sharp_cxxjob: public sharp_base
     void alm2map (const T *alm, T *map, bool add)
       {
       void *aptr=conv(alm), *mptr=conv(map);
-      sharp_execute (SHARP_ALM2MAP, 0, add, &aptr, &mptr, ginfo, ainfo, 1,
-        cxxjobhelper__<T>::val,0,0,0);
+      int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
+//std::cout << flags << std::endl;
+std::cout << cxxjobhelper__<T>::val << " " << add <<  " " << flags << std::endl;
+      sharp_execute (SHARP_ALM2MAP, 0, &aptr, &mptr, ginfo, ainfo, 1,
+        flags,0,0);
       }
     void alm2map_spin (const T *alm1, const T *alm2, T *map1, T *map2,
       int spin, bool add)
@@ -105,21 +124,22 @@ template<typename T> class sharp_cxxjob: public sharp_base
       void *aptr[2], *mptr[2];
       aptr[0]=conv(alm1); aptr[1]=conv(alm2);
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_execute (SHARP_ALM2MAP, spin, add, aptr, mptr, ginfo, ainfo, 1,
-        cxxjobhelper__<T>::val,0,0,0);
+      int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
+std::cout << cxxjobhelper__<T>::val << " " << add <<  " " << flags << std::endl;
+      sharp_execute (SHARP_ALM2MAP,spin,aptr,mptr,ginfo,ainfo,1,flags,0,0);
       }
     void alm2map_der1 (const T *alm, T *map1, T *map2, bool add)
       {
       void *aptr=conv(alm), *mptr[2];
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_execute (SHARP_ALM2MAP_DERIV1, 1, add,&aptr, mptr, ginfo, ainfo,
-        1, cxxjobhelper__<T>::val,0,0,0);
+      int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
+      sharp_execute (SHARP_ALM2MAP_DERIV1,1,&aptr,mptr,ginfo,ainfo,1,flags,0,0);
       }
     void map2alm (const T *map, T *alm, bool add)
       {
       void *aptr=conv(alm), *mptr=conv(map);
-      sharp_execute (SHARP_MAP2ALM, 0, add, &aptr, &mptr, ginfo, ainfo, 1,
-        cxxjobhelper__<T>::val,0,0,0);
+      int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
+      sharp_execute (SHARP_MAP2ALM,0,&aptr,&mptr,ginfo,ainfo,1,flags,0,0);
       }
     void map2alm_spin (const T *map1, const T *map2, T *alm1, T *alm2,
       int spin, bool add)
@@ -127,8 +147,8 @@ template<typename T> class sharp_cxxjob: public sharp_base
       void *aptr[2], *mptr[2];
       aptr[0]=conv(alm1); aptr[1]=conv(alm2);
       mptr[0]=conv(map1); mptr[1]=conv(map2);
-      sharp_execute (SHARP_MAP2ALM, spin, add, aptr, mptr, ginfo, ainfo, 1,
-        cxxjobhelper__<T>::val,0,0,0);
+      int flags=cxxjobhelper__<T>::val | (add ? SHARP_ADD : 0);
+      sharp_execute (SHARP_MAP2ALM,spin,aptr,mptr,ginfo,ainfo,1,flags,0,0);
       }
   };
 

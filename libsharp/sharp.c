@@ -597,8 +597,6 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   {
   UTIL_ASSERT((ntrans>0)&&(ntrans<=SHARP_MAXTRANS),
     "bad number of simultaneous transforms");
-  UTIL_ASSERT((flags>0), "passed -1 for old 'dp' argument which is now\n"
-    "replaced by 'flags', please pass SHARP_DP");
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   job->type = type;
