@@ -26,7 +26,8 @@
  *  Spherical transform library
  *
  *  Copyright (C) 2006-2011 Max-Planck-Society
- *  \author Martin Reinecke
+ *  Copyright (C) 2007-2008 Pavel Holoborodko (for gauss_legendre_tbl)
+ *  \author Martin Reinecke \author Pavel Holoborodko
  */
 
 #include <math.h>
@@ -99,38 +100,60 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   DEALLOC(stride_);
   }
 
-static void gauleg (double x1, double x2, double *x, double *w, int n)
+/* Function adapted from GNU GSL file glfixed.c
+   Original author: Pavel Holoborodko (http://www.holoborodko.com)
+
+   Adjustments by M. Reinecke
+    - adjusted interface (keep epsilon internal, return full number of points)
+    - removed precomputed tables
+    - tweaked Newton iteration to obtain higher accuracy */
+static void gauss_legendre_tbl(int n, double* x, double* w)
   {
   const double pi = 3.141592653589793238462643383279502884197;
-  const double eps = 3.0E-14;
+  const double eps = 3e-14;
+  int i, k, m = (n+1)>>1;
 
-  int m = (n+1)/2;
-  double xm = 0.5*(x2+x1);
-  double xl = 0.5*(x2-x1);
-  for(int i=1; i<=m; ++i)
+  double t0 = 1 - (1-1./n) / (8.*n*n);
+  double t1 = 1./(4.*n+2.);
+
+  for (i=1; i<=m; ++i)
     {
-    double z = cos(pi*(i-0.25)/(n+0.5));
-    double pp;
+    double x0 = cos(pi * ((i<<2)-1) * t1) * t0;
+
     int dobreak=0;
+    int j=0;
+    double dpdx;
     while(1)
       {
-      double p1 = 1.0, p2 = 0.0;
-      double z1 = z;
-      int j;
-      for(j=1; j<=n; ++j)
+      double P_1 = 1.0;
+      double P0 = x0;
+      double dx, x1;
+
+      for (k=2; k<=n; k++)
         {
-        double p3 = p2;
-        p2 = p1;
-        p1 = ((2*j-1)*z*p2-(j-1)*p3)/j;
+        double P_2 = P_1;
+        P_1 = P0;
+//        P0 = ((2*k-1)*x0*P_1-(k-1)*P_2)/k;
+        P0 = x0*P_1 + (k-1.)/k * (x0*P_1-P_2);
         }
-      pp = n*(z*p1-p2)/(z*z-1);
-      z = z1 - p1/pp;
+
+//      dpdx = ((x0*P0 - P_1) * n) / ((x0-1.)*(x0+1.));
+      dpdx = (x0*P0 - P_1) * n / (x0*x0-1.);
+
+      /* Newton step */
+      x1 = x0 - P0/dpdx;
+      dx = x0-x1;
+      x0 = x1;
       if (dobreak) break;
-      if (fabs(z-z1) <= eps) dobreak=1;
+
+      if (fabs(dx)<=eps) dobreak=1;
+      UTIL_ASSERT(++j<100,"convergence problem");
       }
-    x[i-1] = xm - xl*z;
-    x[n-i] = xm + xl*z;
-    w[i-1] = w[n-i] = 2*xl/((1-z*z)*pp*pp);
+
+    x[i-1] = -x0;
+    x[n-i] = x0;
+//    w[i-1] = w[n-i] = 2. / (((1.-x0)*(1.+x0)) * dpdx * dpdx);
+    w[i-1] = w[n-i] = 2. / ((1.-x0*x0) * dpdx * dpdx);
     }
   }
 
@@ -146,7 +169,6 @@ static void makeweights (int bw, double *weights)
     tmpsum *= sin((2*j+1)*fudge);
     tmpsum *= 2./bw;
     weights[j] = tmpsum;
-    /* weights[j + 2*bw] = tmpsum * sin((2*j+1)*fudge); */
     }
   }
 
@@ -162,8 +184,7 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
-  gauleg(-1,1,theta,weight,nrings);
-
+  gauss_legendre_tbl(nrings,theta,weight);
   for (int m=0; m<nrings; ++m)
     {
     theta[m] = acos(-theta[m]);
