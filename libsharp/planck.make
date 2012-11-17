@@ -7,7 +7,7 @@ FULL_INCLUDE+= -I$(SD)
 
 HDR_$(PKG):=$(SD)/*.h
 LIB_$(PKG):=$(LIBDIR)/libsharp.a
-BIN:=sharp_test sharp_acctest sharp_test_mpi sharp_bench sharp_bench2
+BIN:=sharp_test sharp_acctest sharp_test_mpi sharp_bench sharp_bench2 sharp_scaletest
 LIBOBJ:=sharp_ylmgen_c.o sharp.o sharp_announce.o sharp_geomhelpers.o sharp_almhelpers.o sharp_core.o
 ALLOBJ:=$(LIBOBJ) sharp_test.o sharp_acctest.o sharp_test_mpi.o sharp_bench.o sharp_bench2.o
 LIBOBJ:=$(LIBOBJ:%=$(OD)/%)
