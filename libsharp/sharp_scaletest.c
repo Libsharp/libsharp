@@ -251,6 +251,7 @@ int main(int argc, char **argv)
 
   measure_errors(alm,sqsum,alms,ncomp);
 
+  DEALLOC(sqsum);
   DEALLOC2D(map);
   DEALLOC2D(alm);
 
