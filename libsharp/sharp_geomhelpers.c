@@ -25,7 +25,7 @@
 /*! \file sharp_geomhelpers.c
  *  Spherical transform library
  *
- *  Copyright (C) 2006-2011 Max-Planck-Society
+ *  Copyright (C) 2006-2012 Max-Planck-Society
  *  Copyright (C) 2007-2008 Pavel Holoborodko (for gauss_legendre_tbl)
  *  \author Martin Reinecke \author Pavel Holoborodko
  */
@@ -229,6 +229,58 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
     ofs[m]=(ptrdiff_t)m*stride_lat;
     stride_[m]=stride_lon;
     weight[m]*=2*pi/nphi;
+    }
+
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
+    geom_info);
+
+  DEALLOC(theta);
+  DEALLOC(weight);
+  DEALLOC(nph);
+  DEALLOC(phi0_);
+  DEALLOC(ofs);
+  DEALLOC(stride_);
+  }
+
+static double eps(int j, int J)
+  {
+  if ((j==0)||(j==J)) return 0.5;
+  if ((j>0)&&(j<J)) return 1.;
+  return 0.;
+  }
+
+/* Weights from Keiner & Potts: "Fast evaluation of quadrature formulae
+   on the sphere", 2000 */
+/* nrings MUST be odd */
+void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info)
+  {
+  const double pi=3.141592653589793238462643383279502884197;
+
+  double *theta=RALLOC(double,nrings);
+  double *weight=RALLOC(double,nrings);
+  int *nph=RALLOC(int,nrings);
+  double *phi0_=RALLOC(double,nrings);
+  ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
+  int *stride_=RALLOC(int,nrings);
+
+  UTIL_ASSERT((nrings&1)==1,"nrings must be an odd number");
+  int lmax=(nrings-1)/2;
+
+  for (int m=0; m<nrings; ++m)
+    {
+    theta[m]=pi*m/(nrings-1.);
+    if (theta[m]<1e-15) theta[m]=1e-15;
+    if (theta[m]>pi-1e-15) theta[m]=pi-1e-15;
+    nph[m]=ppring;
+    phi0_[m]=phi0;
+    ofs[m]=(ptrdiff_t)m*stride_lat;
+    stride_[m]=stride_lon;
+    double wgt=0;
+    double prefac=4*pi*eps(m,2*lmax)/lmax;
+    for (int l=0; l<=lmax; ++l)
+      wgt+=eps(l,lmax)/(1-4*l*l)*cos((pi*m*l)/lmax);
+    weight[m]=prefac*wgt/nph[m];
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,

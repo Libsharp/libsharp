@@ -75,6 +75,22 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
 void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);
 
+/*! Creates a geometry information describing an ECP map with \a nrings
+    iso-latitude rings and \a nphi pixels per ring. The azimuth of the first
+    pixel in each ring is \a phi0 (in radians). The index difference between
+    two adjacent pixels in an iso-latitude ring is \a stride_lon, the index
+    difference between the two start pixels in consecutive iso-latitude rings
+    is \a stride_lat.
+    \note The spacing of pixel centers is equidistant in colatitude and
+      longitude.
+    \note \a nrings must be an odd number.
+    \note The sphere is pixelized in a way that the colatitude of the first ring
+      is \a 0 and that of the last ring is \a pi.
+    \note This is the grid used by Huffenberger & Wandelt 2010
+    \ingroup geominfogroup */
+void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info);
+
 #ifdef __cplusplus
 }
 #endif
