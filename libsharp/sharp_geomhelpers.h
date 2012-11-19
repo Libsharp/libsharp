@@ -70,7 +70,8 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
       longitude.
     \note \a nrings must be an even number.
     \note The sphere is pixelized in a way that the colatitude of the first ring
-      is \a 0.5*(pi/nrings). There are no pixel centers at the poles.
+      is \a 0.5*(pi/nrings) and the colatitude of the last ring is
+      \a pi-0.5*(pi/nrings). There are no pixel centers at the poles.
     \ingroup geominfogroup */
 void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);

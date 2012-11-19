@@ -242,7 +242,7 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   DEALLOC(stride_);
   }
 
-static double eps(int j, int J)
+static inline double eps(int j, int J)
   {
   if ((j==0)||(j==J)) return 0.5;
   if ((j>0)&&(j<J)) return 1.;
@@ -250,7 +250,7 @@ static double eps(int j, int J)
   }
 
 /* Weights from Keiner & Potts: "Fast evaluation of quadrature formulae
-   on the sphere", 2000 */
+   on the sphere", 2008 */
 /* nrings MUST be odd */
 void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
@@ -267,20 +267,21 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   UTIL_ASSERT((nrings&1)==1,"nrings must be an odd number");
   int lmax=(nrings-1)/2;
 
-  for (int m=0; m<nrings; ++m)
+  for (int m=0; m<=nrings/2; ++m)
     {
     theta[m]=pi*m/(nrings-1.);
     if (theta[m]<1e-15) theta[m]=1e-15;
-    if (theta[m]>pi-1e-15) theta[m]=pi-1e-15;
-    nph[m]=ppring;
-    phi0_[m]=phi0;
+    theta[nrings-1-m]=pi-theta[m];
+    nph[m]=nph[nrings-1-m]=ppring;
+    phi0_[m]=phi0_[nrings-1-m]=phi0;
     ofs[m]=(ptrdiff_t)m*stride_lat;
-    stride_[m]=stride_lon;
+    ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
+    stride_[m]=stride_[nrings-1-m]=stride_lon;
     double wgt=0;
     double prefac=4*pi*eps(m,2*lmax)/lmax;
     for (int l=0; l<=lmax; ++l)
-      wgt+=eps(l,lmax)/(1-4*l*l)*cos((pi*m*l)/lmax);
-    weight[m]=prefac*wgt/nph[m];
+      wgt+=eps(l,lmax)/(1-4*l*l)*cos((pi*((m*l)%(2*lmax)))/lmax);
+    weight[m]=weight[nrings-1-m]=prefac*wgt/nph[m];
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
