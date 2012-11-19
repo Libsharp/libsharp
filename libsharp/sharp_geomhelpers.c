@@ -25,7 +25,7 @@
 /*! \file sharp_geomhelpers.c
  *  Spherical transform library
  *
- *  Copyright (C) 2006-2012 Max-Planck-Society
+ *  Copyright (C) 2006-2012 Max-Planck-Society<br>
  *  Copyright (C) 2007-2008 Pavel Holoborodko (for gauss_legendre_tbl)
  *  \author Martin Reinecke \author Pavel Holoborodko
  */

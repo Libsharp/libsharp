@@ -7,10 +7,9 @@
 
 /*! \page introduction Introduction to libsharp
 
-  "SHARP" is an acronym for <i>Performant Spherical Harmonic Transforms</i>.
+  "SHARP" is an acronym for <i>Spherical HARmonic Package</i>.
   All user-visible data types and functions in this library start with
-  the prefix "sharp_", or with "sharps_" and "sharpd_" for single- and
-  double precision variants, respectively.
+  the prefix "sharp_" to avoid pollution of the global C namespace.
 
   <i>libsharp</i>'s main functionality is the conversion between <i>maps</i>
   on the sphere and <i>spherical harmonic coefficients</i> (or <i>a_lm</i>).
@@ -57,7 +56,7 @@
   for generating often-used pixelisations like ECP grids, Gaussian grids,
   and Healpix grids.
 
-  Currently, SHARP supports the following kinds of transforms:
+  Currently, libsharp supports the following kinds of transforms:
   <ul>
   <li>scalar a_lm to map</li>
   <li>scalar map to a_lm</li>
@@ -68,10 +67,10 @@
   <li>scalar a_lm to maps of first derivatives</li>
   </ul>
 
-  SHARP supports shared-memory parallelisation via OpenMP; this feature will
+  libsharp supports shared-memory parallelisation via OpenMP; this feature will
   be automatically enabled if the compiler supports it.
 
-  SHARP will also make use of SSE2 and AVX instructions when compiled for a
+  Libsharp will also make use of SSE2 and AVX instructions when compiled for a
   platform known to support them.
 
   Support for MPI-parallel transforms is also available; in this mode,
@@ -84,7 +83,7 @@
   double-precision counterparts, but they will require significantly less
   memory.
 
-  Two example and benchmark programs are distributed with SHARP:
+  Two example and benchmark programs are distributed with libsharp:
   <ul>
   <li>sharp_test.c checks the accuracy of the (iterative) map analysis
       algorithm</li>
