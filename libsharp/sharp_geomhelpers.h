@@ -84,7 +84,6 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
     is \a stride_lat.
     \note The spacing of pixel centers is equidistant in colatitude and
       longitude.
-    \note \a nrings must be an odd number.
     \note The sphere is pixelized in a way that the colatitude of the first ring
       is \a 0 and that of the last ring is \a pi.
     \note This is the grid used by Huffenberger & Wandelt 2010

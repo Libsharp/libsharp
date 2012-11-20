@@ -100,6 +100,9 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   DEALLOC(stride_);
   }
 
+static inline double one_minus_x2 (double x)
+  { return (fabs(x)>0.1) ? (1+x)*(1-x) : 1.-x*x; }
+
 /* Function adapted from GNU GSL file glfixed.c
    Original author: Pavel Holoborodko (http://www.holoborodko.com)
 
@@ -137,8 +140,7 @@ static void gauss_legendre_tbl(int n, double* x, double* w)
         P0 = x0*P_1 + (k-1.)/k * (x0*P_1-P_2);
         }
 
-//      dpdx = ((x0*P0 - P_1) * n) / ((x0-1.)*(x0+1.));
-      dpdx = (x0*P0 - P_1) * n / (x0*x0-1.);
+      dpdx = (P_1 - x0*P0) * n / one_minus_x2(x0);
 
       /* Newton step */
       x1 = x0 - P0/dpdx;
@@ -152,8 +154,7 @@ static void gauss_legendre_tbl(int n, double* x, double* w)
 
     x[i-1] = -x0;
     x[n-i] = x0;
-//    w[i-1] = w[n-i] = 2. / (((1.-x0)*(1.+x0)) * dpdx * dpdx);
-    w[i-1] = w[n-i] = 2. / ((1.-x0*x0) * dpdx * dpdx);
+    w[i-1] = w[n-i] = 2. / (one_minus_x2(x0) * dpdx * dpdx);
     }
   }
 
@@ -249,9 +250,7 @@ static inline double eps(int j, int J)
   return 0.;
   }
 
-/* Weights from Keiner & Potts: "Fast evaluation of quadrature formulae
-   on the sphere", 2008 */
-/* nrings MUST be odd */
+/* Weights from Waldvogel 2006: BIT Numerical Mathematics 46, p. 195 */
 void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
@@ -264,9 +263,6 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
-  UTIL_ASSERT((nrings&1)==1,"nrings must be an odd number");
-  int lmax=(nrings-1)/2;
-
   for (int m=0; m<=nrings/2; ++m)
     {
     theta[m]=pi*m/(nrings-1.);
@@ -278,10 +274,11 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
     ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
     stride_[m]=stride_[nrings-1-m]=stride_lon;
     double wgt=0;
-    double prefac=4*pi*eps(m,2*lmax)/lmax;
-    for (int l=0; l<=lmax; ++l)
-      wgt+=eps(l,lmax)/(1-4*l*l)*cos((pi*((m*l)%(2*lmax)))/lmax);
-    weight[m]=weight[nrings-1-m]=prefac*wgt/nph[m];
+    int n=nrings-1;
+    for (int j=1; j<=n/2; ++j)
+      wgt += ((2*j==n)?1.:2.)/(4.*j*j-1.)*cos(2*j*theta[m]);
+    wgt = ((m%n==0)?1.:2.)/n*(1.-wgt)*2*pi/nph[m];
+    weight[m]=weight[nrings-1-m]=wgt;
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
