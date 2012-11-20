@@ -1,7 +1,12 @@
 GNU make and GNU gcc (version 4.x) are required for compilation.
 
-Simply run "./configure"; if this fails, please refer to the output of
-"./configure --help" for additional hints and, if necessary, provide
+If you obtained libsharp directly from the git repository, you will also
+need a copy of the GNU autotools. In this case, run "autoconf" in libsharp's
+main directory before any other steps.
+For libsharp releases distributed as a .tar.gz file, this step is not necessary.
+
+Afterwards, simply run "./configure"; if this fails, please refer to the output
+of "./configure --help" for additional hints and, if necessary, provide
 additional flags to the configure script.
 Once the script finishes successfully, run "make"
 (or "gmake"). This should install the compilation products in the
