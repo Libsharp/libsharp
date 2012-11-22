@@ -291,3 +291,34 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   DEALLOC(ofs);
   DEALLOC(stride_);
   }
+
+void sharp_make_mw_geom_info (int nrings, int ppring, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info)
+  {
+  const double pi=3.141592653589793238462643383279502884197;
+
+  double *theta=RALLOC(double,nrings);
+  int *nph=RALLOC(int,nrings);
+  double *phi0_=RALLOC(double,nrings);
+  ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
+  int *stride_=RALLOC(int,nrings);
+
+  for (int m=0; m<nrings; ++m)
+    {
+    theta[m]=pi*(2.*m+1.)/(2.*nrings-1.);
+    if (theta[m]>pi-1e-15) theta[m]=pi-1e-15;
+    nph[m]=ppring;
+    phi0_[m]=phi0;
+    ofs[m]=(ptrdiff_t)m*stride_lat;
+    stride_[m]=stride_lon;
+    }
+
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, NULL,
+    geom_info);
+
+  DEALLOC(theta);
+  DEALLOC(nph);
+  DEALLOC(phi0_);
+  DEALLOC(ofs);
+  DEALLOC(stride_);
+  }
