@@ -308,7 +308,7 @@ int main(int argc, char **argv)
     if (mytask==0)
       printf("\nTesting Gaussian grid (%d rings, %d pixels/ring, %ld pixels)\n",
              nrings,ppring,(long)npix);
-    sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+    sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
     reduce_geom_info(tinfo);
     npix=get_npix(tinfo);
     check_accuracy(tinfo,lmax,lmax,npix,spin,ntrans,niter);

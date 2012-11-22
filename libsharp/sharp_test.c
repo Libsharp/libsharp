@@ -211,7 +211,7 @@ int main(int argc, char **argv)
     ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
     printf("\nTesting Gaussian grid (%d rings, %d pixels/ring, %ld pixels)\n",
           nrings,ppring,(long)npix);
-    sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+    sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
     check_accuracy(tinfo,lmax,lmax,npix,spin,ntrans,niter);
     sharp_destroy_geom_info(tinfo);
     }

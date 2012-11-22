@@ -173,15 +173,15 @@ static void makeweights (int bw, double *weights)
     }
   }
 
-void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
-  int stride_lat, sharp_geom_info **geom_info)
+void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
   const double pi=3.141592653589793238462643383279502884197;
 
   double *theta=RALLOC(double,nrings);
   double *weight=RALLOC(double,nrings);
   int *nph=RALLOC(int,nrings);
-  double *phi0=RALLOC(double,nrings);
+  double *phi0_=RALLOC(double,nrings);
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
@@ -190,19 +190,19 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
     {
     theta[m] = acos(-theta[m]);
     nph[m]=nphi;
-    phi0[m]=0;
+    phi0_[m]=phi0;
     ofs[m]=(ptrdiff_t)m*stride_lat;
     stride_[m]=stride_lon;
     weight[m]*=2*pi/nphi;
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, NULL, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
     geom_info);
 
   DEALLOC(theta);
   DEALLOC(weight);
   DEALLOC(nph);
-  DEALLOC(phi0);
+  DEALLOC(phi0_);
   DEALLOC(ofs);
   DEALLOC(stride_);
   }

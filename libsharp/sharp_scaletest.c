@@ -190,7 +190,7 @@ int main(int argc, char **argv)
   ptrdiff_t npix=0;
   int nrings=lmax+1;
   int ppring=atoi(argv[2]);
-  sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+  sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
 
   reduce_geom_info(tinfo);
   npix=get_npix(tinfo);

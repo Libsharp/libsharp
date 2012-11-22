@@ -94,7 +94,7 @@ static void check_sign_scale(void)
   int nrings=lmax+1;
   int ppring=2*lmax+2;
   ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
-  sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+  sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
 
   /* flip theta to emulate the "old" Gaussian grid geometry */
   for (int i=0; i<tinfo->npairs; ++i)
@@ -247,7 +247,7 @@ int main(void)
   int nrings=lmax+1;
   int ppring=2*lmax+2;
   ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
-  sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+  sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
   for (int nv=1; nv<=6; ++nv)
     for (int ntrans=1; ntrans<=6; ++ntrans)
       {

@@ -50,7 +50,7 @@ static void bench_sht (int spin, int nv, sharp_jobtype type,
   int ppring=1024;
   ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
   sharp_geom_info *tinfo;
-  sharp_make_gauss_geom_info (nrings, ppring, 1, ppring, &tinfo);
+  sharp_make_gauss_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
 
   ptrdiff_t nalms = ((mmax+1)*(mmax+2))/2 + (mmax+1)*(lmax-mmax);
   int ncomp = ntrans*((spin==0) ? 1 : 2);

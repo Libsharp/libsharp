@@ -53,12 +53,13 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
 
 /*! Creates a geometry information describing a Gaussian map with \a nrings
     iso-latitude rings and \a nphi pixels per ring. The azimuth of the first
-    pixel in each ring is 0. The index difference between two adjacent pixels
-    in an iso-latitude ring is \a stride_lon, the index difference between the
-    two start pixels in consecutive iso-latitude rings is \a stride_lat.
+    pixel in each ring is \a phi0 (in radians). The index difference between
+    two adjacent pixels in an iso-latitude ring is \a stride_lon, the index
+    difference between the two start pixels in consecutive iso-latitude rings
+    is \a stride_lat.
     \ingroup geominfogroup */
-void sharp_make_gauss_geom_info (int nrings, int nphi, int stride_lon,
-  int stride_lat, sharp_geom_info **geom_info);
+void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info);
 
 /*! Creates a geometry information describing an ECP map with \a nrings
     iso-latitude rings and \a nphi pixels per ring. The azimuth of the first
