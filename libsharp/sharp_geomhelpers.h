@@ -25,7 +25,7 @@
 /*! \file sharp_geomhelpers.h
  *  SHARP helper function for the creation of grid geometries
  *
- *  Copyright (C) 2006-2011 Max-Planck-Society
+ *  Copyright (C) 2006-2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -69,7 +69,6 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
     is \a stride_lat.
     \note The spacing of pixel centers is equidistant in colatitude and
       longitude.
-    \note \a nrings must be an even number.
     \note The sphere is pixelized in a way that the colatitude of the first ring
       is \a 0.5*(pi/nrings) and the colatitude of the last ring is
       \a pi-0.5*(pi/nrings). There are no pixel centers at the poles.

@@ -158,21 +158,6 @@ static void gauss_legendre_tbl(int n, double* x, double* w)
     }
   }
 
-static void makeweights (int bw, double *weights)
-  {
-  const double pi = 3.141592653589793238462643383279502884197;
-  const double fudge = pi/(4*bw);
-  for (int j=0; j<2*bw; ++j)
-    {
-    double tmpsum = 0;
-    for (int k=0; k<bw; ++k)
-      tmpsum += 1./(2*k+1) * sin((2*j+1)*(2*k+1)*fudge);
-    tmpsum *= sin((2*j+1)*fudge);
-    tmpsum *= 2./bw;
-    weights[j] = tmpsum;
-    }
-  }
-
 void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
@@ -207,7 +192,8 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
   DEALLOC(stride_);
   }
 
-void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
+/* Weights from Waldvogel 2006: BIT Numerical Mathematics 46, p. 195 */
+void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
   const double pi=3.141592653589793238462643383279502884197;
@@ -219,17 +205,21 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
-  UTIL_ASSERT((nrings&1)==0,
-    "Even number of rings needed for equidistant grid!");
-  makeweights(nrings/2,weight);
-  for (int m=0; m<nrings; ++m)
+  for (int m=0; m<(nrings+1)/2; ++m)
     {
-    theta[m] = (m+0.5)*pi/nrings;
-    nph[m]=nphi;
-    phi0_[m]=phi0;
+    theta[m]=pi*(m+0.5)/nrings;
+    theta[nrings-1-m]=pi-theta[m];
+    nph[m]=nph[nrings-1-m]=ppring;
+    phi0_[m]=phi0_[nrings-1-m]=phi0;
     ofs[m]=(ptrdiff_t)m*stride_lat;
-    stride_[m]=stride_lon;
-    weight[m]*=2*pi/nphi;
+    ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
+    stride_[m]=stride_[nrings-1-m]=stride_lon;
+    double wgt=0;
+    int n=nrings;
+    for (int j=1; j<=n/2; ++j)
+      wgt += cos(((j*(2*m+1))%(2*n))*(pi/nrings))/(4.*j*j-1.);
+    wgt = 2./n*(1.-2*wgt)*2*pi/nph[m];
+    weight[m]=weight[nrings-1-m]=wgt;
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
@@ -241,13 +231,6 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   DEALLOC(phi0_);
   DEALLOC(ofs);
   DEALLOC(stride_);
-  }
-
-static inline double eps(int j, int J)
-  {
-  if ((j==0)||(j==J)) return 0.5;
-  if ((j>0)&&(j<J)) return 1.;
-  return 0.;
   }
 
 /* Weights from Waldvogel 2006: BIT Numerical Mathematics 46, p. 195 */
@@ -263,7 +246,7 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
-  for (int m=0; m<=nrings/2; ++m)
+  for (int m=0; m<(nrings+1)/2; ++m)
     {
     theta[m]=pi*m/(nrings-1.);
     if (theta[m]<1e-15) theta[m]=1e-15;
