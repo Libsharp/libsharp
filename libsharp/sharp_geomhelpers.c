@@ -31,8 +31,10 @@
  */
 
 #include <math.h>
+#include <complex.h>
 #include "sharp_geomhelpers.h"
 #include "c_utils.h"
+#include "ls_fft.h"
 
 void sharp_make_healpix_geom_info (int nside, int stride,
   sharp_geom_info **geom_info)
@@ -101,7 +103,7 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   }
 
 static inline double one_minus_x2 (double x)
-  { return (fabs(x)>0.1) ? (1+x)*(1-x) : 1.-x*x; }
+  { return (fabs(x)>0.1) ? (1.+x)*(1.-x) : 1.-x*x; }
 
 /* Function adapted from GNU GSL file glfixed.c
    Original author: Pavel Holoborodko (http://www.holoborodko.com)
@@ -204,6 +206,18 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
   double *phi0_=RALLOC(double,nrings);
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
+  complex double *cwgt=RALLOC(complex double, nrings);
+
+  cwgt[0]=2.;
+  for (int k=1; k<=(nrings-1)/2; ++k)
+    {
+    cwgt[k]=2./(1.-4.*k*k)*cexp(_Complex_I*((k*pi)/nrings));
+    cwgt[nrings-k]=conj(cwgt[k]);
+    }
+  if ((nrings&1)==0) cwgt[nrings/2]=0.;
+  complex_plan plan = make_complex_plan(nrings);
+  complex_plan_backward(plan,(double *)cwgt);
+  kill_complex_plan(plan);
 
   for (int m=0; m<(nrings+1)/2; ++m)
     {
@@ -214,17 +228,13 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
     ofs[m]=(ptrdiff_t)m*stride_lat;
     ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
     stride_[m]=stride_[nrings-1-m]=stride_lon;
-    double wgt=0;
-    int n=nrings;
-    for (int j=1; j<=n/2; ++j)
-      wgt += cos(((j*(2*m+1))%(2*n))*(pi/nrings))/(4.*j*j-1.);
-    wgt = 2./n*(1.-2*wgt)*2*pi/nph[m];
-    weight[m]=weight[nrings-1-m]=wgt;
+    weight[m]=weight[nrings-1-m]=creal(cwgt[m])*(2*pi/(nrings*nph[m]));
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
     geom_info);
 
+  DEALLOC(cwgt);
   DEALLOC(theta);
   DEALLOC(weight);
   DEALLOC(nph);
