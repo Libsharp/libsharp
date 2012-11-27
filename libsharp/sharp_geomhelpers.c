@@ -31,7 +31,6 @@
  */
 
 #include <math.h>
-#include <complex.h>
 #include "sharp_geomhelpers.h"
 #include "c_utils.h"
 #include "ls_fft.h"
@@ -206,18 +205,17 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
   double *phi0_=RALLOC(double,nrings);
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
-  complex double *cwgt=RALLOC(complex double, nrings);
 
-  cwgt[0]=2.;
+  weight[0]=2.;
   for (int k=1; k<=(nrings-1)/2; ++k)
     {
-    cwgt[k]=2./(1.-4.*k*k)*cexp(_Complex_I*((k*pi)/nrings));
-    cwgt[nrings-k]=conj(cwgt[k]);
+    weight[2*k-1]=2./(1.-4.*k*k)*cos((k*pi)/nrings);
+    weight[2*k  ]=2./(1.-4.*k*k)*sin((k*pi)/nrings);
     }
-  if ((nrings&1)==0) cwgt[nrings/2]=0.;
-  complex_plan plan = make_complex_plan(nrings);
-  complex_plan_backward(plan,(double *)cwgt);
-  kill_complex_plan(plan);
+  if ((nrings&1)==0) weight[nrings-1]=0.;
+  real_plan plan = make_real_plan(nrings);
+  real_plan_backward_fftpack(plan,weight);
+  kill_real_plan(plan);
 
   for (int m=0; m<(nrings+1)/2; ++m)
     {
@@ -228,13 +226,12 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
     ofs[m]=(ptrdiff_t)m*stride_lat;
     ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
     stride_[m]=stride_[nrings-1-m]=stride_lon;
-    weight[m]=weight[nrings-1-m]=creal(cwgt[m])*(2*pi/(nrings*nph[m]));
+    weight[m]=weight[nrings-1-m]=weight[m]*2*pi/(nrings*nph[m]);
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
     geom_info);
 
-  DEALLOC(cwgt);
   DEALLOC(theta);
   DEALLOC(weight);
   DEALLOC(nph);
@@ -256,6 +253,18 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
 
+  int n=nrings-1;
+  SET_ARRAY(weight,0,nrings,0.);
+  double dw=-1./(n*n-1.+(n&1));
+  weight[0]=2.+dw;
+  for (int k=1; k<=(n/2-1); ++k)
+    weight[2*k-1]=2./(1.-4.*k*k) + dw;
+  weight[2*(n/2)-1]=(n-3.)/(2*(n/2)-1) -1. -dw*((2-(n&1))*n-1);
+  real_plan plan = make_real_plan(n);
+  real_plan_backward_fftpack(plan,weight);
+  kill_real_plan(plan);
+  weight[n]=weight[0];
+
   for (int m=0; m<(nrings+1)/2; ++m)
     {
     theta[m]=pi*m/(nrings-1.);
@@ -266,12 +275,7 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
     ofs[m]=(ptrdiff_t)m*stride_lat;
     ofs[nrings-1-m]=(ptrdiff_t)((nrings-1-m)*stride_lat);
     stride_[m]=stride_[nrings-1-m]=stride_lon;
-    double wgt=0;
-    int n=nrings-1;
-    for (int j=1; j<=n/2; ++j)
-      wgt += ((2*j==n)?1.:2.)/(4.*j*j-1.)*cos(2*j*theta[m]);
-    wgt = ((m%n==0)?1.:2.)/n*(1.-wgt)*2*pi/nph[m];
-    weight[m]=weight[nrings-1-m]=wgt;
+    weight[m]=weight[nrings-1-m]=weight[m]*2*pi/(n*nph[m]);
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
