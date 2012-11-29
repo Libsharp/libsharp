@@ -113,10 +113,10 @@ void util_free_ (void *ptr);
 #define ALLOC2D(ptr,type,num1,num2) \
   do { \
     size_t cnt_, num1_=(num1), num2_=(num2); \
-    ALLOC(ptr,type *,num1_); \
-    ALLOC(ptr[0],type,num1_*num2_); \
+    ALLOC((ptr),type *,num1_); \
+    ALLOC((ptr)[0],type,num1_*num2_); \
     for (cnt_=1; cnt_<num1_; ++cnt_) \
-      ptr[cnt_]=ptr[cnt_-1]+num2_; \
+      (ptr)[cnt_]=(ptr)[cnt_-1]+num2_; \
     } while(0)
 #define DEALLOC2D(ptr) \
   do { if(ptr) DEALLOC((ptr)[0]); DEALLOC(ptr); } while(0)
