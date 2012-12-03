@@ -794,6 +794,11 @@ static void Y(inner_loop) (sharp_job *job, const int *ispair,
         }
       break;
       }
+    default:
+      {
+      UTIL_FAIL("must not happen");
+      break;
+      }
     }
   }
 

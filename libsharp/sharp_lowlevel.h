@@ -42,7 +42,7 @@ extern "C" {
     Helper type containing information about a single ring. */
 typedef struct
   {
-  double theta, phi0, w_a2m, w_m2a, cth, sth;
+  double theta, phi0, weight, cth, sth;
   ptrdiff_t ofs;
   int nph, stride;
   } sharp_ringinfo;
@@ -127,15 +127,14 @@ void sharp_destroy_alm_info (sharp_alm_info *info);
     \param stride the stride between consecutive pixels
     \param phi0 the azimuth (in radians) of the first pixel in each ring
     \param theta the colatitude (in radians) of each ring
-    \param wgt_a2m the pixel weight to be used for the ring in alm2map
-      transforms. Pass NULL to use 1.0 as weight for all rings.
-    \param wgt_m2a the pixel weight to be used for the ring in map2alm
-      transforms. Pass NULL to use 1.0 as weight for all rings.
+    \param wgt the pixel weight to be used for the ring in map2alm
+      and adjoint map2alm transforms.
+      Pass NULL to use 1.0 as weight for all rings.
     \param geom_info will hold a pointer to the newly created data structure
  */
 void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
   const int *stride, const double *phi0, const double *theta,
-  const double *wgt_a2m, const double *wgt_m2a, sharp_geom_info **geom_info);
+  const double *wgt, sharp_geom_info **geom_info);
 
 /*! Deallocates the geometry information in \a info. */
 void sharp_destroy_geom_info (sharp_geom_info *info);
@@ -146,16 +145,23 @@ void sharp_destroy_geom_info (sharp_geom_info *info);
 /*! \{ */
 
 /*! Enumeration of SHARP job types. */
-typedef enum { SHARP_MAP2ALM,       /*!< analysis */
-               SHARP_ALM2MAP,       /*!< synthesis */
-               SHARP_ALM2MAP_DERIV1 /*!< synthesis of first derivatives */
+typedef enum { SHARP_YtW=0,               /*!< analysis */
+               SHARP_MAP2ALM=SHARP_YtW,   /*!< analysis */
+               SHARP_Y=1,                 /*!< synthesis */
+               SHARP_ALM2MAP=SHARP_Y,     /*!< synthesis */
+               SHARP_Yt=2,                /*!< adjoint synthesis */
+               SHARP_WY=3,                /*!< adjoint analysis */
+               SHARP_ALM2MAP_DERIV1=4     /*!< synthesis of first derivatives */
              } sharp_jobtype;
 
 /*! Job flags */
-typedef enum { SHARP_DP = 1<<4, /*!< map and a_lm are in double precision */
-               SHARP_ADD= 1<<5, /*!< results are added to the output arrays,
-                                     instead of overwriting them */
-               SHARP_NVMAX = (1<<4)-1 /* internal use only */
+typedef enum { SHARP_DP              = 1<<4,
+               /*!< map and a_lm are in double precision */
+               SHARP_ADD             = 1<<5,
+               /*!< results are added to the output arrays, instead of
+                    overwriting them */
+               SHARP_USE_WEIGHTS     = 1<<6,    /* internal use only */
+               SHARP_NVMAX           = (1<<4)-1 /* internal use only */
              } sharp_jobflags;
 
 /*! Performs a libsharp SHT job. The interface deliberately does not use

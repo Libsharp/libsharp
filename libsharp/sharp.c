@@ -162,7 +162,7 @@ void sharp_destroy_alm_info (sharp_alm_info *info)
 
 void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
   const int *stride, const double *phi0, const double *theta,
-  const double *wgt_a2m, const double *wgt_m2a, sharp_geom_info **geom_info)
+  const double *wgt, sharp_geom_info **geom_info)
   {
   sharp_geom_info *info = RALLOC(sharp_geom_info,1);
   sharp_ringinfo *infos = RALLOC(sharp_ringinfo,nrings);
@@ -177,8 +177,7 @@ void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
     infos[m].theta = theta[m];
     infos[m].cth = cos(theta[m]);
     infos[m].sth = sin(theta[m]);
-    infos[m].w_a2m = (wgt_a2m != NULL) ? wgt_a2m[m] : 1.;
-    infos[m].w_m2a = (wgt_m2a != NULL) ? wgt_m2a[m] : 1.;
+    infos[m].weight = (wgt != NULL) ? wgt[m] : 1.;
     infos[m].phi0 = phi0[m];
     infos[m].ofs = ofs[m];
     infos[m].stride = stride[m];
@@ -275,13 +274,13 @@ static void ringhelper_phase2ring (ringhelper *self,
     }
 #endif
   real_plan_backward_c (self->plan, (double *)(self->work));
+  double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
-      ((double *)data)[m*stride+info->ofs]+=creal(self->work[m])*info->w_a2m;
+      ((double *)data)[m*stride+info->ofs]+=creal(self->work[m])*wgt;
   else
     for (int m=0; m<nph; ++m)
-      ((float *)data)[m*stride+info->ofs] +=
-        (float)(creal(self->work[m])*info->w_a2m);
+      ((float *)data)[m*stride+info->ofs] += (float)(creal(self->work[m])*wgt);
   }
 
 static void ringhelper_ring2phase (ringhelper *self,
@@ -296,12 +295,13 @@ static void ringhelper_ring2phase (ringhelper *self,
 #endif
 
   ringhelper_update (self, nph, mmax, -info->phi0);
+  double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
-      self->work[m] = ((double *)data)[info->ofs+m*info->stride]*info->w_m2a;
+      self->work[m] = ((double *)data)[info->ofs+m*info->stride]*wgt;
   else
     for (int m=0; m<nph; ++m)
-      self->work[m] = ((float *)data)[info->ofs+m*info->stride]*info->w_m2a;
+      self->work[m] = ((float *)data)[info->ofs+m*info->stride]*wgt;
 
   real_plan_forward_c (self->plan, (double *)self->work);
 
@@ -598,6 +598,10 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   UTIL_ASSERT((ntrans>0)&&(ntrans<=SHARP_MAXTRANS),
     "bad number of simultaneous transforms");
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
+  if (type==SHARP_MAP2ALM) flags|=SHARP_USE_WEIGHTS;
+  if (type==SHARP_Yt) type=SHARP_MAP2ALM;
+  if (type==SHARP_WY) { type=SHARP_ALM2MAP; flags|=SHARP_USE_WEIGHTS; }
+
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   job->type = type;
   job->spin = spin;

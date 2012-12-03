@@ -90,7 +90,7 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
     weight_[m]=4.*pi/npix*weight[northring-1];
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, NULL, weight_,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, weight_,
     geom_info);
 
   DEALLOC(theta);
@@ -182,7 +182,7 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
     weight[m]*=2*pi/nphi;
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, weight,
     geom_info);
 
   DEALLOC(theta);
@@ -229,7 +229,7 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
     weight[m]=weight[nrings-1-m]=weight[m]*2*pi/(nrings*nph[m]);
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, weight,
     geom_info);
 
   DEALLOC(theta);
@@ -278,7 +278,7 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
     weight[m]=weight[nrings-1-m]=weight[m]*2*pi/(n*nph[m]);
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, weight,
     geom_info);
 
   DEALLOC(theta);
@@ -326,7 +326,7 @@ void sharp_make_fejer2_geom_info (int nrings, int ppring, double phi0,
     weight[m]=weight[nrings-1-m]=weight[m]*2*pi/(n*nph[m]);
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, weight,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, weight,
     geom_info);
 
   DEALLOC(theta);
@@ -336,6 +336,7 @@ void sharp_make_fejer2_geom_info (int nrings, int ppring, double phi0,
   DEALLOC(ofs);
   DEALLOC(stride_);
   }
+
 void sharp_make_mw_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
@@ -357,7 +358,7 @@ void sharp_make_mw_geom_info (int nrings, int ppring, double phi0,
     stride_[m]=stride_lon;
     }
 
-  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL, NULL,
+  sharp_make_geom_info (nrings, nph, ofs, stride_, phi0_, theta, NULL,
     geom_info);
 
   DEALLOC(theta);
