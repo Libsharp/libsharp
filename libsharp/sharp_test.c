@@ -193,7 +193,8 @@ int main(int argc, char **argv)
   MPI_Init(NULL,NULL);
 #endif
   sharp_module_startup("sharp_test",argc,7,
-    "<healpix|ecp|gauss|hw> <lmax> <nside|nphi> <niter> <spin> <ntrans>",1);
+    "<healpix|ecp|gauss|hw|fejer2> <lmax> <nside|nphi> <niter> <spin> <ntrans>",
+    1);
 
   int lmax=atoi(argv[2]);
   int niter=atoi(argv[4]);
@@ -217,7 +218,7 @@ int main(int argc, char **argv)
     }
   else if (strcmp(argv[1],"ecp")==0)
     {
-    int nrings=2*lmax+2;
+    int nrings=2*lmax+1;
     int ppring=atoi(argv[3]);
     ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
     printf("\nTesting ECP grid (%d rings, %d pixels/ring, %ld pixels)\n",
@@ -245,6 +246,17 @@ int main(int argc, char **argv)
     printf("\nTesting HW grid (%d rings, %d pixels/ring, %ld pixels)\n",
           nrings,ppring,(long)npix);
     sharp_make_hw_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
+    check_accuracy(tinfo,lmax,lmax,npix,spin,ntrans,niter);
+    sharp_destroy_geom_info(tinfo);
+    }
+  else if (strcmp(argv[1],"fejer2")==0)
+    {
+    int nrings=2*lmax+1;
+    int ppring=atoi(argv[3]);
+    ptrdiff_t npix=(ptrdiff_t)nrings*ppring;
+    printf("\nTesting Fejer2 grid (%d rings, %d pixels/ring, %ld pixels)\n",
+          nrings,ppring,(long)npix);
+    sharp_make_fejer2_geom_info (nrings, ppring, 0., 1, ppring, &tinfo);
     check_accuracy(tinfo,lmax,lmax,npix,spin,ntrans,niter);
     sharp_destroy_geom_info(tinfo);
     }
