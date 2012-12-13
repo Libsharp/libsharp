@@ -53,11 +53,10 @@ class sharp_base
 
     void set_general_geometry (int nrings, const int *nph, const ptrdiff_t *ofs,
       const int *stride, const double *phi0, const double *theta,
-      const double *wgt_a2m, const double *wgt_m2a)
+      const double *wgt)
       {
       if (ginfo) sharp_destroy_geom_info(ginfo);
-      sharp_make_geom_info (nrings, nph, ofs, stride, phi0, theta, wgt_a2m,
-        wgt_m2a, &ginfo);
+      sharp_make_geom_info (nrings, nph, ofs, stride, phi0, theta, wgt, &ginfo);
       }
 
     void set_ECP_geometry (int nrings, int nphi)
