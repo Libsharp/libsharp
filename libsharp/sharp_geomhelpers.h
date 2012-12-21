@@ -72,9 +72,18 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
     \note The sphere is pixelized in a way that the colatitude of the first ring
       is \a 0.5*(pi/nrings) and the colatitude of the last ring is
       \a pi-0.5*(pi/nrings). There are no pixel centers at the poles.
+    \note This grid corresponds to Fejer's first rule.
     \ingroup geominfogroup */
-void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
+void sharp_make_fejer1_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);
+
+/*! Old name for sharp_make_fejer1_geom_info() */
+static inline void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
+  int stride_lon, int stride_lat, sharp_geom_info **geom_info)
+  {
+  sharp_make_fejer1_geom_info (nrings, nphi, phi0, stride_lon, stride_lat,
+  geom_info);
+  }
 
 /*! Creates a geometry information describing an ECP map with \a nrings
     iso-latitude rings and \a nphi pixels per ring. The azimuth of the first
@@ -86,9 +95,9 @@ void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
       longitude.
     \note The sphere is pixelized in a way that the colatitude of the first ring
       is \a 0 and that of the last ring is \a pi.
-    \note This is the grid used by Huffenberger & Wandelt 2010.
+    \note This grid corresponds to Clenshaw-Curtis integration.
     \ingroup geominfogroup */
-void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
+void sharp_make_cc_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);
 
 /*! Creates a geometry information describing an ECP map with \a nrings
@@ -101,7 +110,7 @@ void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
       longitude.
     \note The sphere is pixelized in a way that the colatitude of the first ring
       is \a pi/(nrings+1) and that of the last ring is \a pi-pi/(nrings+1).
-    \note This is the grid used by Huffenberger & Wandelt 2010.
+    \note This grid corresponds to Fejer's second rule.
     \ingroup geominfogroup */
 void sharp_make_fejer2_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);

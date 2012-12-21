@@ -699,15 +699,16 @@ static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
 int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   {
   static const int maxtr = 6;
-  static int nv_opt[6][2][3] = {
-    {{0,0,0},{0,0,0}},
-    {{0,0,0},{0,0,0}},
-    {{0,0,0},{0,0,0}},
-    {{0,0,0},{0,0,0}},
-    {{0,0,0},{0,0,0}},
-    {{0,0,0},{0,0,0}} };
+  static int nv_opt[6][2][5] = {
+    {{0,0,0,0,0},{0,0,0,0,0}},
+    {{0,0,0,0,0},{0,0,0,0,0}},
+    {{0,0,0,0,0},{0,0,0,0,0}},
+    {{0,0,0,0,0},{0,0,0,0,0}},
+    {{0,0,0,0,0},{0,0,0,0,0}},
+    {{0,0,0,0,0},{0,0,0,0,0}} };
 
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
+  UTIL_ASSERT(type<5,"bad type");
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
   UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
   ntrans=IMIN(ntrans,maxtr);

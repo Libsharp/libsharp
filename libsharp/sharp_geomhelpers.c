@@ -111,7 +111,7 @@ static inline double one_minus_x2 (double x)
     - adjusted interface (keep epsilon internal, return full number of points)
     - removed precomputed tables
     - tweaked Newton iteration to obtain higher accuracy */
-static void gauss_legendre_tbl(int n, double* x, double* w)
+static void gauss_legendre_tbl(int n, double *x, double *w)
   {
   const double pi = 3.141592653589793238462643383279502884197;
   const double eps = 3e-14;
@@ -194,7 +194,7 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
   }
 
 /* Weights from Waldvogel 2006: BIT Numerical Mathematics 46, p. 195 */
-void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
+void sharp_make_fejer1_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
   const double pi=3.141592653589793238462643383279502884197;
@@ -241,7 +241,7 @@ void sharp_make_ecp_geom_info (int nrings, int ppring, double phi0,
   }
 
 /* Weights from Waldvogel 2006: BIT Numerical Mathematics 46, p. 195 */
-void sharp_make_hw_geom_info (int nrings, int ppring, double phi0,
+void sharp_make_cc_geom_info (int nrings, int ppring, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
   const double pi=3.141592653589793238462643383279502884197;
