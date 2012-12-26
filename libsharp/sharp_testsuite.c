@@ -432,7 +432,8 @@ static void sharp_acctest(void)
 
 static void sharp_test (int argc, const char **argv)
   {
-  UTIL_ASSERT(argc>=9,"need at least 8 command line arguments");
+  if (mytask==0) sharp_announce("sharp_test");
+  UTIL_ASSERT(argc>=9,"usage: grid lmax mmax geom1 geom2 spin ntrans");
   int lmax=atoi(argv[3]);
   int mmax=atoi(argv[4]);
   int gpar1=atoi(argv[5]);
@@ -483,7 +484,6 @@ int main(int argc, const char **argv)
 #else
   mytask=0; ntasks=1;
 #endif
-  if (mytask==0) sharp_announce("sharp_testsuite");
 
   UTIL_ASSERT(argc>=2,"need at least one command line argument");
 
