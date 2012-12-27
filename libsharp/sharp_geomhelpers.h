@@ -39,17 +39,19 @@ extern "C" {
 #endif
 
 /*! Creates a geometry information describing a HEALPix map with an
-    Nside parameter \a nside.
-    \ingroup geominfogroup */
-void sharp_make_healpix_geom_info (int nside, int stride,
-  sharp_geom_info **geom_info);
-
-/*! Creates a geometry information describing a HEALPix map with an
     Nside parameter \a nside. \a weight contains the relative ring
     weights and must have \a 2*nside entries.
+    \note if \a weight is a null pointer, all weights are assumed to be 1.
     \ingroup geominfogroup */
 void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   const double *weight, sharp_geom_info **geom_info);
+
+/*! Creates a geometry information describing a HEALPix map with an
+    Nside parameter \a nside.
+    \ingroup geominfogroup */
+static inline void sharp_make_healpix_geom_info (int nside, int stride,
+  sharp_geom_info **geom_info)
+  { sharp_make_weighted_healpix_geom_info (nside, stride, NULL, geom_info); }
 
 /*! Creates a geometry information describing a Gaussian map with \a nrings
     iso-latitude rings and \a nphi pixels per ring. The azimuth of the first

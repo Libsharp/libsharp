@@ -35,15 +35,6 @@
 #include "c_utils.h"
 #include "ls_fft.h"
 
-void sharp_make_healpix_geom_info (int nside, int stride,
-  sharp_geom_info **geom_info)
-  {
-  double *weight=RALLOC(double,2*nside);
-  SET_ARRAY(weight,0,2*nside,1);
-  sharp_make_weighted_healpix_geom_info (nside, stride, weight, geom_info);
-  DEALLOC(weight);
-  }
-
 void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   const double *weight, sharp_geom_info **geom_info)
   {
@@ -87,7 +78,7 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
       theta[m] = pi-theta[m];
       ofs[m] = (npix - nph[m])*stride - ofs[m];
       }
-    weight_[m]=4.*pi/npix*weight[northring-1];
+    weight_[m]=4.*pi/npix*((weight==NULL) ? 1. : weight[northring-1]);
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, weight_,
