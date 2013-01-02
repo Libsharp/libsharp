@@ -38,18 +38,18 @@ hdrcopy: | $(INCDIR)_mkdir
 $(notdir $(all_cbin)) : % : $(BINDIR)/%
 
 test: compile_all
-	$(BINDIR)/sharp_acctest && \
-	$(BINDIR)/sharp_test healpix 2048 1024 1 0 1 && \
-	$(BINDIR)/sharp_test ecp 2047 4096 0 2 1 && \
-	$(BINDIR)/sharp_test gauss 2047 4096 0 0 2
+	$(BINDIR)/sharp_testsuite acctest && \
+	$(BINDIR)/sharp_testsuite test healpix 2048 -1 1024 -1 0 1 && \
+	$(BINDIR)/sharp_testsuite test fejer1 2047 -1 -1 4096 2 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 2047 -1 -1 4096 0 2
 
 perftest: compile_all
-	$(BINDIR)/sharp_test healpix 2048 1024 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 63 128 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 127 256 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 255 512 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 511 1024 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 1023 2048 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 2047 4096 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 4095 8192 0 0 1 && \
-	$(BINDIR)/sharp_test gauss 8191 16384 0 0 1
+	$(BINDIR)/sharp_testsuite test healpix 2048 -1 1024 -1 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 63 -1 -1 128 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 127 -1 -1 256 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 255 -1 -1 512 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 511 -1 -1 1024 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 1023 -1 -1 2048 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 2047 -1 -1 4096 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 4095 -1 -1 8192 0 1 && \
+	$(BINDIR)/sharp_testsuite test gauss 8191 -1 -1 16384 0 1
