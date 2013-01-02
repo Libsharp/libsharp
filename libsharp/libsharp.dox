@@ -82,12 +82,4 @@
   single-precision transforms will most likely not be faster than their
   double-precision counterparts, but they will require significantly less
   memory.
-
-  Two example and benchmark programs are distributed with libsharp:
-  <ul>
-  <li>sharp_test.c checks the accuracy of the (iterative) map analysis
-      algorithm</li>
-  <li>sharp_bench.c determines the quickest transform strategy for a given
-      SHT</li>
-  </ul>
 */
