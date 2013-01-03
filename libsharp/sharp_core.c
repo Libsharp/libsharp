@@ -50,27 +50,27 @@ typedef complex double dcmplx;
 #define CONCAT3(a,b,c) XCONCAT3(a,b,c)
 
 #define nvec 1
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 #define nvec 2
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 #define nvec 3
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 #define nvec 4
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 #define nvec 5
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 #define nvec 6
-#include "sharp_inchelper1.inc.c"
+#include "sharp_core_inchelper.c"
 #undef nvec
 
 void inner_loop (sharp_job *job, const int *ispair,const double *cth,

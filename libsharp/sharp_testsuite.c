@@ -154,11 +154,12 @@ static void get_errors (dcmplx **alm, ptrdiff_t nalms, int ncomp, double *sqsum,
     double sum=0, maxdiff=0, sumtot, sqsumtot, maxdifftot;
     for (ptrdiff_t j=0; j<nalms; ++j)
       {
-      sum+=creal(alm[i][j])*creal(alm[i][j])
-          +cimag(alm[i][j])*cimag(alm[i][j]);
-      if (fabs(creal(alm[i][j]))>maxdiff) maxdiff=fabs(creal(alm[i][j]));
-      if (fabs(cimag(alm[i][j]))>maxdiff) maxdiff=fabs(cimag(alm[i][j]));
+      double sqr=creal(alm[i][j])*creal(alm[i][j])
+                +cimag(alm[i][j])*cimag(alm[i][j]);
+      sum+=sqr;
+      if (sqr>maxdiff) maxdiff=sqr;
       }
+   maxdiff=sqrt(maxdiff);
 
 #ifdef USE_MPI
     MPI_Allreduce(&sum,&sumtot,1,MPI_DOUBLE,MPI_SUM,MPI_COMM_WORLD);

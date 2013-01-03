@@ -70,7 +70,7 @@ static inline Tb Y(Tbprod)(Tb a, Tb b)
 static inline void Y(Tbmuleq)(Tb * restrict a, Tb b)
   { for (int i=0; i<nvec; ++i) vmuleq(a->v[i],b.v[i]); }
 
-static inline void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
+static void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
   double maxval)
   {
   const Tv vfsmall=vload(sharp_fsmall), vfbig=vload(sharp_fbig);
@@ -94,7 +94,7 @@ static inline void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
     }
   }
 
-static inline void Y(mypow) (Tb val, int npow, Tb * restrict resd,
+static void Y(mypow) (Tb val, int npow, Tb * restrict resd,
   Tb * restrict ress)
   {
   Tb scale=Y(Tbconst)(0.), scaleint=Y(Tbconst)(0.), res=Y(Tbconst)(1.);
@@ -168,7 +168,7 @@ static inline int Y(TballGe)(Tb a,double b)
   return vallTrue(res);
   }
 
-static inline void Y(getCorfac)(Tb scale, Tb * restrict corfac,
+static void Y(getCorfac)(Tb scale, Tb * restrict corfac,
   const double * restrict cf)
   {
   Y(Tbu) sc, corf;

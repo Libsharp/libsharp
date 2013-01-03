@@ -79,7 +79,8 @@ void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
 void sharp_make_fejer1_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info);
 
-/*! Old name for sharp_make_fejer1_geom_info() */
+/*! Old name for sharp_make_fejer1_geom_info()
+    \ingroup geominfogroup */
 static inline void sharp_make_ecp_geom_info (int nrings, int nphi, double phi0,
   int stride_lon, int stride_lat, sharp_geom_info **geom_info)
   {
