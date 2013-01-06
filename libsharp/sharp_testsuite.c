@@ -358,6 +358,8 @@ static void do_sht (sharp_geom_info *ginfo, sharp_alm_info *ainfo,
   size_t npix = get_npix(ginfo);
   double **map;
   ALLOC2D(map,double,ncomp,npix);
+  for (int i=0; i<ncomp; ++i)
+    SET_ARRAY(map[i],0,(int)npix,0);
 
   srand(4);
   dcmplx **alm;
@@ -367,7 +369,7 @@ static void do_sht (sharp_geom_info *ginfo, sharp_alm_info *ainfo,
 
 #ifdef USE_MPI
   sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,&alm[0],&map[0],ginfo,
-    ainfo,ntrans, SHARP_DP|nv,t_a2m,op_a2m);
+    ainfo,ntrans, SHARP_DP|SHARP_ADD|nv,t_a2m,op_a2m);
 #else
   sharp_execute(SHARP_ALM2MAP,spin,&alm[0],&map[0],ginfo,ainfo,ntrans,
     SHARP_DP|nv,t_a2m,op_a2m);
@@ -468,12 +470,17 @@ static void sharp_test (int argc, const char **argv)
   DEALLOC(err_abs);
   DEALLOC(err_rel);
 
+  double iosize = ncomp*(16.*get_nalms(ainfo) + 8.*get_npix(ginfo));
+
   sharp_destroy_alm_info(ainfo);
   sharp_destroy_geom_info(ginfo);
 
   double tmem=totalMem();
   if (mytask==0)
     printf("\nMemory high water mark: %.2f MB\n",tmem/(1<<20));
+  if (mytask==0)
+    printf("Memory overhead: %.2f MB (%.2f%% of working set)\n",
+      (tmem-iosize)/(1<<20),100.*(1.-iosize/tmem));
   }
 
 int main(int argc, const char **argv)
