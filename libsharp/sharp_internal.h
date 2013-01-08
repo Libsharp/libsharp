@@ -44,7 +44,6 @@ typedef struct
   {
   sharp_jobtype type;
   int spin;
-  int add_output;
   int nmaps, nalm;
   int flags;
   void **map;
