@@ -124,7 +124,7 @@ static int ringpair_compare (const void *xa, const void *xb)
   }
 
 void sharp_make_general_alm_info (int lmax, int nm, int stride, const int *mval,
-  const ptrdiff_t *mstart, sharp_alm_info **alm_info)
+  const ptrdiff_t *mstart, int flags, sharp_alm_info **alm_info)
   {
   sharp_alm_info *info = RALLOC(sharp_alm_info,1);
   info->lmax = lmax;
@@ -132,6 +132,7 @@ void sharp_make_general_alm_info (int lmax, int nm, int stride, const int *mval,
   info->mval = RALLOC(int,nm);
   info->mvstart = RALLOC(ptrdiff_t,nm);
   info->stride = stride;
+  info->flags = flags;
   for (int mi=0; mi<nm; ++mi)
     {
     info->mval[mi] = mval[mi];
@@ -146,12 +147,16 @@ void sharp_make_alm_info (int lmax, int mmax, int stride,
   int *mval=RALLOC(int,mmax+1);
   for (int i=0; i<=mmax; ++i)
     mval[i]=i;
-  sharp_make_general_alm_info (lmax, mmax+1, stride, mval, mstart, alm_info);
+  sharp_make_general_alm_info (lmax, mmax+1, stride, mval, mstart, 0, alm_info);
   DEALLOC(mval);
   }
 
 ptrdiff_t sharp_alm_index (const sharp_alm_info *self, int l, int mi)
-  { return self->mvstart[mi]+self->stride*l; }
+  {
+  UTIL_ASSERT(!(self->flags & SHARP_PACKED),
+              "sharp_alm_index not applicable with SHARP_PACKED alms");
+  return self->mvstart[mi]+self->stride*l; 
+  }
 
 void sharp_destroy_alm_info (sharp_alm_info *info)
   {
@@ -358,17 +363,40 @@ static void fill_map (const sharp_geom_info *ginfo, void *map, double value,
     }
   }
 
-static void fill_alm (const sharp_alm_info *ainfo, void *alm, dcmplx value,
-  int flags)
+static void clear_alm (const sharp_alm_info *ainfo, void *alm, int flags)
   {
-  if (flags&SHARP_DP)
-    for (int mi=0;mi<ainfo->nm;++mi)
-      for (int l=ainfo->mval[mi];l<=ainfo->lmax;++l)
-        ((dcmplx *)alm)[sharp_alm_index(ainfo,l,mi)] = value;
-  else
-    for (int mi=0;mi<ainfo->nm;++mi)
-      for (int l=ainfo->mval[mi];l<=ainfo->lmax;++l)
-        ((fcmplx *)alm)[sharp_alm_index(ainfo,l,mi)] = (fcmplx)value;
+#define CLEARLOOP(real_t,body)             \
+      {                                    \
+        real_t *talm = (real_t *)alm;      \
+          for (int l=m;l<=ainfo->lmax;++l) \
+            body                           \
+      }
+
+  for (int mi=0;mi<ainfo->nm;++mi)
+    {
+      int m=ainfo->mval[mi];
+      ptrdiff_t mvstart = ainfo->mvstart[mi];
+      ptrdiff_t stride = ainfo->stride;
+      if (!(ainfo->flags&SHARP_PACKED))
+        mvstart*=2;
+      if ((ainfo->flags&SHARP_PACKED)&&(m==0))
+        {
+        if (flags&SHARP_DP)
+          CLEARLOOP(double, talm[mvstart+l*stride] = 0.;)
+        else
+          CLEARLOOP(float, talm[mvstart+l*stride] = 0.;)
+        }
+      else
+        {
+        stride*=2;
+        if (flags&SHARP_DP)
+          CLEARLOOP(double, talm[mvstart+l*stride] = talm[mvstart+l*stride+1] = 0.;)
+        else
+          CLEARLOOP(float, talm[mvstart+l*stride] = talm[mvstart+l*stride+1] = 0.;)
+        }
+
+#undef CLEARLOOP
+    }
   }
 
 static void init_output (sharp_job *job)
@@ -376,7 +404,7 @@ static void init_output (sharp_job *job)
   if (job->flags&SHARP_ADD) return;
   if (job->type == SHARP_MAP2ALM)
     for (int i=0; i<job->ntrans*job->nalm; ++i)
-      fill_alm (job->ainfo,job->alm[i],0.,job->flags);
+      clear_alm (job->ainfo,job->alm[i],job->flags);
   else
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
       fill_map (job->ginfo,job->map[i],0.,job->flags);
@@ -418,11 +446,11 @@ static void dealloc_almtmp (sharp_job *job)
 static void alm2almtmp (sharp_job *job, int lmax, int mi)
   {
 
-#define COPY_LOOP(source_t, expr_of_x)                      \
+#define COPY_LOOP(real_t, source_t, expr_of_x)                      \
   for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)            \
     for (int i=0; i<job->ntrans*job->nalm; ++i)             \
       {                                                     \
-        source_t x = ((source_t *)job->alm[i])[ofs+l*stride]; \
+        source_t x = *(source_t *)(((real_t *)job->alm[i])+ofs+l*stride); \
         job->almtmp[job->ntrans*job->nalm*l+i] = expr_of_x; \
       }
 
@@ -430,19 +458,44 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
     {
     ptrdiff_t ofs=job->ainfo->mvstart[mi];
     int stride=job->ainfo->stride;
+    int packed_m0=(job->ainfo->flags&SHARP_PACKED)&&(job->ainfo->mval[mi]==0);
+    if (!(job->ainfo->flags&SHARP_PACKED))
+      ofs *= 2;
+    if (!packed_m0)
+      stride *= 2;
     if (job->spin==0)
       {
-      if (job->flags&SHARP_DP)
-        COPY_LOOP(dcmplx, x)
+      if (packed_m0)
+        {
+        if (job->flags&SHARP_DP)
+          COPY_LOOP(double, double, x)
+        else
+          COPY_LOOP(float, float, x)
+        }
       else
-        COPY_LOOP(fcmplx, x)
+        {
+        if (job->flags&SHARP_DP)
+          COPY_LOOP(double, dcmplx, x)
+        else
+          COPY_LOOP(float, fcmplx, x)
+        }
       }
     else
       {
-      if (job->flags&SHARP_DP)
-        COPY_LOOP(dcmplx, x*job->norm_l[l])
+      if (packed_m0)
+        {
+        if (job->flags&SHARP_DP)
+          COPY_LOOP(double, double, x*job->norm_l[l])
+        else
+          COPY_LOOP(float, float, x*job->norm_l[l])
+        }
       else
-        COPY_LOOP(fcmplx, x*job->norm_l[l])
+        {
+        if (job->flags&SHARP_DP)
+          COPY_LOOP(double, dcmplx, x*job->norm_l[l])
+        else
+          COPY_LOOP(float, fcmplx, x*job->norm_l[l])
+        }
       }
     }
   else
@@ -455,30 +508,55 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
 static void almtmp2alm (sharp_job *job, int lmax, int mi)
   {
 
-#define COPY_LOOP(target_t, expr_of_x)                       \
+#define COPY_LOOP(real_t, target_t, expr_of_x)               \
   for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)             \
     for (int i=0; i<job->ntrans*job->nalm; ++i)              \
       {                                                      \
         dcmplx x = job->almtmp[job->ntrans*job->nalm*l+i];   \
-        ((target_t *)job->alm[i])[ofs+l*stride] += expr_of_x; \
+        *(target_t *)(((real_t *)job->alm[i])+ofs+l*stride) += expr_of_x; \
       }
 
   if (job->type != SHARP_MAP2ALM) return;
   ptrdiff_t ofs=job->ainfo->mvstart[mi];
   int stride=job->ainfo->stride;
+  int packed_m0=(job->ainfo->flags&SHARP_PACKED)&&(job->ainfo->mval[mi]==0);
+  if (!(job->ainfo->flags&SHARP_PACKED))
+    ofs *= 2;
+  if (!packed_m0)
+    stride *= 2;
   if (job->spin==0)
     {
-    if (job->flags&SHARP_DP)
-      COPY_LOOP(dcmplx, x)
+    if (packed_m0)
+      {
+      if (job->flags&SHARP_DP)
+        COPY_LOOP(double, double, creal(x))
+      else
+        COPY_LOOP(float, float, crealf(x))
+      }
     else
-      COPY_LOOP(fcmplx, (fcmplx)x)
+      {
+      if (job->flags&SHARP_DP)
+        COPY_LOOP(double, dcmplx, x)
+      else
+        COPY_LOOP(float, fcmplx, (fcmplx)x)
+      }
     }
   else
     {
-    if (job->flags&SHARP_DP)
-      COPY_LOOP(dcmplx, x * job->norm_l[l])
+    if (packed_m0)
+      {
+      if (job->flags&SHARP_DP)
+        COPY_LOOP(double, double, creal(x) * job->norm_l[l])
+      else
+        COPY_LOOP(float, fcmplx, (float)(creal(x) * job->norm_l[l]))
+      }
     else
-      COPY_LOOP(fcmplx, (fcmplx)(x * job->norm_l[l]))
+      {
+      if (job->flags&SHARP_DP)
+        COPY_LOOP(double, dcmplx, x * job->norm_l[l])
+      else
+        COPY_LOOP(float, fcmplx, (fcmplx)(x * job->norm_l[l]))
+      }
     }
 
 #undef COPY_LOOP
