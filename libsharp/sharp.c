@@ -43,6 +43,9 @@
 typedef complex double dcmplx;
 typedef complex float  fcmplx;
 
+static const double sqrt_one_half = 0.707106781186547572737310929369;
+static const double sqrt_two = 1.414213562373095145474621858739;
+
 static int chunksize_min=500, nchunks_max=10;
 
 static void get_chunk_info (int ndata, int nmult, int *nchunks, int *chunksize)
@@ -280,6 +283,8 @@ static void ringhelper_phase2ring (ringhelper *self,
 #endif
   real_plan_backward_c (self->plan, (double *)(self->work));
   double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
+  if (flags&SHARP_REAL_HARMONICS)
+    wgt *= sqrt_one_half;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
       ((double *)data)[m*stride+info->ofs]+=creal(self->work[m])*wgt;
@@ -301,6 +306,8 @@ static void ringhelper_ring2phase (ringhelper *self,
 
   ringhelper_update (self, nph, mmax, -info->phi0);
   double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1;
+  if (flags&SHARP_REAL_HARMONICS)
+    wgt *= sqrt_two;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
       self->work[m] = ((double *)data)[info->ofs+m*info->stride]*wgt;
@@ -458,19 +465,23 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
     {
     ptrdiff_t ofs=job->ainfo->mvstart[mi];
     int stride=job->ainfo->stride;
-    int packed_m0=(job->ainfo->flags&SHARP_PACKED)&&(job->ainfo->mval[mi]==0);
+    int m=job->ainfo->mval[mi];
+    /* in the case of SHARP_REAL_HARMONICS, phase2ring scales all the
+       coefficients by sqrt_one_half; here we must compensate to avoid scaling
+       m=0 */
+    double norm_m0=(job->flags&SHARP_REAL_HARMONICS) ? sqrt_two : 1.;
     if (!(job->ainfo->flags&SHARP_PACKED))
       ofs *= 2;
-    if (!packed_m0)
+    if (!((job->ainfo->flags&SHARP_PACKED)&&(m==0)))
       stride *= 2;
     if (job->spin==0)
       {
-      if (packed_m0)
+      if (m==0)
         {
         if (job->flags&SHARP_DP)
-          COPY_LOOP(double, double, x)
+          COPY_LOOP(double, double, x*norm_m0)
         else
-          COPY_LOOP(float, float, x)
+          COPY_LOOP(float, float, x*norm_m0)
         }
       else
         {
@@ -482,12 +493,12 @@ static void alm2almtmp (sharp_job *job, int lmax, int mi)
       }
     else
       {
-      if (packed_m0)
+      if (m==0)
         {
         if (job->flags&SHARP_DP)
-          COPY_LOOP(double, double, x*job->norm_l[l])
+          COPY_LOOP(double, double, x*job->norm_l[l]*norm_m0)
         else
-          COPY_LOOP(float, float, x*job->norm_l[l])
+          COPY_LOOP(float, float, x*job->norm_l[l]*norm_m0)
         }
       else
         {
@@ -519,19 +530,23 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
   if (job->type != SHARP_MAP2ALM) return;
   ptrdiff_t ofs=job->ainfo->mvstart[mi];
   int stride=job->ainfo->stride;
-  int packed_m0=(job->ainfo->flags&SHARP_PACKED)&&(job->ainfo->mval[mi]==0);
+  int m=job->ainfo->mval[mi];
+  /* in the case of SHARP_REAL_HARMONICS, ring2phase scales all the
+     coefficients by sqrt_two; here we must compensate to avoid scaling
+     m=0 */
+  double norm_m0=(job->flags&SHARP_REAL_HARMONICS) ? sqrt_one_half : 1.;
   if (!(job->ainfo->flags&SHARP_PACKED))
     ofs *= 2;
-  if (!packed_m0)
+  if (!((job->ainfo->flags&SHARP_PACKED)&&(m==0)))
     stride *= 2;
   if (job->spin==0)
     {
-    if (packed_m0)
+    if (m==0)
       {
       if (job->flags&SHARP_DP)
-        COPY_LOOP(double, double, creal(x))
+        COPY_LOOP(double, double, creal(x)*norm_m0)
       else
-        COPY_LOOP(float, float, crealf(x))
+        COPY_LOOP(float, float, crealf(x)*norm_m0)
       }
     else
       {
@@ -543,19 +558,19 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
     }
   else
     {
-    if (packed_m0)
+    if (m==0)
       {
       if (job->flags&SHARP_DP)
-        COPY_LOOP(double, double, creal(x) * job->norm_l[l])
+        COPY_LOOP(double, double, creal(x)*job->norm_l[l]*norm_m0)
       else
-        COPY_LOOP(float, fcmplx, (float)(creal(x) * job->norm_l[l]))
+        COPY_LOOP(float, fcmplx, (float)(creal(x)*job->norm_l[l]*norm_m0))
       }
     else
       {
       if (job->flags&SHARP_DP)
-        COPY_LOOP(double, dcmplx, x * job->norm_l[l])
+        COPY_LOOP(double, dcmplx, x*job->norm_l[l])
       else
-        COPY_LOOP(float, fcmplx, (fcmplx)(x * job->norm_l[l]))
+        COPY_LOOP(float, fcmplx, (fcmplx)(x*job->norm_l[l]))
       }
     }
 

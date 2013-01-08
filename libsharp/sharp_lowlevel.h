@@ -172,7 +172,19 @@ typedef enum { SHARP_DP              = 1<<4,
                SHARP_ADD             = 1<<5,
                /*!< results are added to the output arrays, instead of
                     overwriting them */
-               SHARP_USE_WEIGHTS     = 1<<6,    /* internal use only */
+               SHARP_REAL_HARMONICS  = 1<<6,
+               /*!< Use the real spherical harmonic convention. For
+                    m==0, the alm are treated exactly the same as in
+                    the complex case.  For m!=0, alm[i] represent a
+                    pair (+abs(m), -abs(m)) instead of (real, imag),
+                    and the coefficients are scaled by a factor of
+                    sqrt(2) relative to the complex case.  In other
+                    words, (sqrt(.5) * alm[i]) recovers the
+                    corresponding complex coefficient (when accessed
+                    as complex).
+                */
+
+               SHARP_USE_WEIGHTS     = 1<<20,    /* internal use only */
                SHARP_NVMAX           = (1<<4)-1 /* internal use only */
              } sharp_jobflags;
 
