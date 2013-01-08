@@ -55,16 +55,17 @@ static void get_chunk_info (int ndata, int nmult, int *nchunks, int *chunksize)
   *nchunks = (ndata+*chunksize-1) / *chunksize;
   }
 
-typedef struct
+static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
+  double ofs)
   {
-  double s;
-  int i;
-  } idxhelper;
-
-static int idx_compare (const void *xa, const void *xb)
-  {
-  const idxhelper *a=xa, *b=xb;
-  return (a->s > b->s) ? -1 : (a->s < b->s) ? 1 : 0;
+  double b = -2*spin*fabs(cth);
+  double t1 = lmax*sth+ofs;
+  double c = spin*spin-t1*t1;
+  double discr = b*b-4*c;
+  if (discr<=0) return lmax;
+  double res=(-b+sqrt(discr))/2.;
+  if (res>lmax) res=lmax;
+  return (int)(res+0.5);
   }
 
 typedef struct
@@ -249,38 +250,34 @@ static void ringhelper_phase2ring (ringhelper *self,
 
   ringhelper_update (self, nph, mmax, info->phi0);
   self->work[0]=phase[0];
-  SET_ARRAY(self->work,1,nph,0.);
 
-#if 0
-  if (self->norot)
+  if (nph>=2*mmax+1)
+    {
     for (int m=1; m<=mmax; ++m)
       {
-      int idx1 = m%nph;
-      int idx2 = nph-1-((m-1)%nph);
-      self->work[idx1]+=phase[m*pstride];
-      self->work[idx2]+=conj(phase[m*pstride]);
+      dcmplx tmp = phase[m*pstride];
+      if(!self->norot) tmp*=self->shiftarr[m];
+      self->work[m]=tmp;
+      self->work[nph-m]=conj(tmp);
       }
+    for (int m=mmax+1; m<(nph-mmax); ++m)
+      self->work[m]=0.;
+    }
   else
+    {
+    SET_ARRAY(self->work,1,nph,0.);
+
+    int idx1=1, idx2=nph-1;
     for (int m=1; m<=mmax; ++m)
       {
-      int idx1 = m%nph;
-      int idx2 = nph-1-((m-1)%nph);
-      dcmplx tmp = phase[m*pstride]*self->shiftarr[m];
+      dcmplx tmp = phase[m*pstride];
+      if(!self->norot) tmp*=self->shiftarr[m];
       self->work[idx1]+=tmp;
       self->work[idx2]+=conj(tmp);
+      if (++idx1>=nph) idx1=0;
+      if (--idx2<0) idx2=nph-1;
       }
-#else
-  int idx1=1, idx2=nph-1;
-  for (int m=1; m<=mmax; ++m)
-    {
-    dcmplx tmp = phase[m*pstride];
-    if(!self->norot) tmp*=self->shiftarr[m];
-    self->work[idx1]+=tmp;
-    self->work[idx2]+=conj(tmp);
-    if (++idx1>=nph) idx1=0;
-    if (--idx2<0) idx2=nph-1;
     }
-#endif
   real_plan_backward_c (self->plan, (double *)(self->work));
   double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
   if (flags&SHARP_REAL_HARMONICS)
@@ -317,12 +314,24 @@ static void ringhelper_ring2phase (ringhelper *self,
 
   real_plan_forward_c (self->plan, (double *)self->work);
 
-  if (self->norot)
-    for (int m=0; m<=maxidx; ++m)
-      phase[m*pstride] = self->work[m%nph];
+  if (maxidx<nph)
+    {
+    if (self->norot)
+      for (int m=0; m<=maxidx; ++m)
+        phase[m*pstride] = self->work[m];
+    else
+      for (int m=0; m<=maxidx; ++m)
+        phase[m*pstride]=self->work[m]*self->shiftarr[m];
+    }
   else
-    for (int m=0; m<=maxidx; ++m)
-      phase[m*pstride]=self->work[m%nph]*self->shiftarr[m];
+    {
+    if (self->norot)
+      for (int m=0; m<=maxidx; ++m)
+        phase[m*pstride] = self->work[m%nph];
+    else
+      for (int m=0; m<=maxidx; ++m)
+        phase[m*pstride]=self->work[m%nph]*self->shiftarr[m];
+    }
 
   for (int m=maxidx+1;m<=mmax; ++m)
     phase[m*pstride]=0.;
@@ -622,21 +631,15 @@ static void sharp_execute_job (sharp_job *job)
     {
     int llim=chunk*chunksize, ulim=IMIN(llim+chunksize,job->ginfo->npairs);
     int *ispair = RALLOC(int,ulim-llim);
+    int *mlim = RALLOC(int,ulim-llim);
     double *cth = RALLOC(double,ulim-llim), *sth = RALLOC(double,ulim-llim);
-    idxhelper *stmp = RALLOC(idxhelper,ulim-llim);
     for (int i=0; i<ulim-llim; ++i)
       {
       ispair[i] = job->ginfo->pair[i+llim].r2.nph>0;
       cth[i] = job->ginfo->pair[i+llim].r1.cth;
       sth[i] = job->ginfo->pair[i+llim].r1.sth;
-      stmp[i].s=sth[i];
-      stmp[i].i=i;
+      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
       }
-    qsort (stmp,ulim-llim,sizeof(idxhelper),idx_compare);
-    int *idx = RALLOC(int,ulim-llim);
-    for (int i=0; i<ulim-llim; ++i)
-      idx[i]=stmp[i].i;
-    DEALLOC(stmp);
 
 /* map->phase where necessary */
     map2phase (job, mmax, llim, ulim);
@@ -655,7 +658,7 @@ static void sharp_execute_job (sharp_job *job)
 /* alm->alm_tmp where necessary */
       alm2almtmp (&ljob, lmax, mi);
 
-      inner_loop (&ljob, ispair, cth, sth, llim, ulim, &generator, mi, idx);
+      inner_loop (&ljob, ispair, cth, sth, llim, ulim, &generator, mi, mlim);
 
 /* alm_tmp->alm where necessary */
       almtmp2alm (&ljob, lmax, mi);
@@ -672,9 +675,9 @@ static void sharp_execute_job (sharp_job *job)
     phase2map (job, mmax, llim, ulim);
 
     DEALLOC(ispair);
+    DEALLOC(mlim);
     DEALLOC(cth);
     DEALLOC(sth);
-    DEALLOC(idx);
     } /* end of chunk loop */
 
   DEALLOC(job->norm_l);
@@ -693,7 +696,7 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   if (type==SHARP_Yt) type=SHARP_MAP2ALM;
   if (type==SHARP_WY) { type=SHARP_ALM2MAP; flags|=SHARP_USE_WEIGHTS; }
 
-  UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
+  UTIL_ASSERT((spin>=0)&&(spin<=alm_info->lmax), "bad spin");
   job->type = type;
   job->spin = spin;
   job->norm_l = NULL;
@@ -801,7 +804,7 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
   if (type==SHARP_ALM2MAP_DERIV1) spin=1;
   UTIL_ASSERT(type<5,"bad type");
   UTIL_ASSERT((ntrans>0),"bad number of simultaneous transforms");
-  UTIL_ASSERT((spin>=0)&&(spin<=30), "bad spin");
+  UTIL_ASSERT(spin>=0, "bad spin");
   ntrans=IMIN(ntrans,maxtr);
 
   if (nv_opt[ntrans-1][spin!=0][type]==0)

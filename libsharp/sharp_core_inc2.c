@@ -163,13 +163,13 @@ static void Z(map2alm_kernel) (const Tb cth, const Y(Tbri) * restrict p1,
 
 static void Z(calc_alm2map) (const Tb cth, const Tb sth,
   const sharp_Ylmgen_C *gen, sharp_job *job, Y(Tbri) * restrict p1,
-  Y(Tbri) * restrict p2 NJ1, int *done)
+  Y(Tbri) * restrict p2 NJ1)
   {
   int l,lmax=gen->lmax;
   Tb lam_1,lam_2,scale;
   Y(iter_to_ieee) (sth,cth,&l,&lam_1,&lam_2,&scale,gen);
   job->opcnt += (l-gen->m) * 4*VLEN*nvec;
-  if (l>lmax) { *done=1; return; }
+  if (l>lmax) return;
   job->opcnt += (lmax+1-l) * (4+4*njobs)*VLEN*nvec;
 
   Tb corfac;
@@ -213,7 +213,7 @@ static void Z(calc_alm2map) (const Tb cth, const Tb sth,
       full_ieee = Y(TballGe)(scale,sharp_minscale);
       }
     }
-  if (l>lmax) { *done=1; return; }
+  if (l>lmax) return;
 
   Y(Tbmuleq)(&lam_1,corfac); Y(Tbmuleq)(&lam_2,corfac);
   Z(alm2map_kernel) (cth, p1, p2, lam_1, lam_2, rf, alm, l, lmax NJ2);
@@ -221,14 +221,14 @@ static void Z(calc_alm2map) (const Tb cth, const Tb sth,
 
 static void Z(calc_map2alm) (const Tb cth, const Tb sth,
   const sharp_Ylmgen_C *gen, sharp_job *job, const Y(Tbri) * restrict p1,
-  const Y(Tbri) * restrict p2 NJ1, int *done)
+  const Y(Tbri) * restrict p2 NJ1)
   {
   int lmax=gen->lmax;
   Tb lam_1,lam_2,scale;
   int l=gen->m;
   Y(iter_to_ieee) (sth,cth,&l,&lam_1,&lam_2,&scale,gen);
   job->opcnt += (l-gen->m) * 4*VLEN*nvec;
-  if (l>lmax) { *done=1; return; }
+  if (l>lmax) return;
   job->opcnt += (lmax+1-l) * (4+4*njobs)*VLEN*nvec;
 
   const sharp_ylmgen_dbl2 * restrict rf = gen->rf;
@@ -249,7 +249,7 @@ static void Z(calc_map2alm) (const Tb cth, const Tb sth,
         }
       alm[l*njobs+j]+=vhsum_cmplx(tre,tim);
       }
-    if (++l>lmax) { *done=1; return; }
+    if (++l>lmax) return;
     Tv r0=vload(rf[l-1].f[0]),r1=vload(rf[l-1].f[1]);
     for (int i=0; i<nvec; ++i)
       lam_1.v[i] = vsub(vmul(vmul(cth.v[i],lam_2.v[i]),r0),vmul(lam_1.v[i],r1));
@@ -264,7 +264,7 @@ static void Z(calc_map2alm) (const Tb cth, const Tb sth,
         }
       alm[l*njobs+j]+=vhsum_cmplx(tre,tim);
       }
-    if (++l>lmax) { *done=1; return; }
+    if (++l>lmax) return;
     r0=vload(rf[l-1].f[0]); r1=vload(rf[l-1].f[1]);
     for (int i=0; i<nvec; ++i)
       lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
@@ -379,18 +379,8 @@ static void Z(alm2map_spin_kernel) (Tb cth, Y(Tbqu) * restrict p1,
       rec1m.v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rec2m.v[i])),
                         vmul(fx2,rec1m.v[i]));
       }
-#ifdef njobs
-#if (njobs>1)
     Z(saddstepb)(p1,p2,rec1p,rec1m,rec2p,rec2m,&alm[2*njobs*l],
       &alm[2*njobs*(l+1)] NJ2);
-#else
-    Z(saddstep)(p1, p2, rec2p, rec2m, &alm[2*njobs*l] NJ2);
-    Z(saddstep)(p2, p1, rec1p, rec1m, &alm[2*njobs*(l+1)] NJ2);
-#endif
-#else
-    Z(saddstepb)(p1,p2,rec1p,rec1m,rec2p,rec2m,&alm[2*njobs*l],
-      &alm[2*njobs*(l+1)] NJ2);
-#endif
     fx0=vload(fx[l+2].f[0]);fx1=vload(fx[l+2].f[1]);
     fx2=vload(fx[l+2].f[2]);
     for (int i=0; i<nvec; ++i)
@@ -440,15 +430,13 @@ static void Z(map2alm_spin_kernel) (Tb cth, const Y(Tbqu) * restrict p1,
   }
 
 static void Z(calc_alm2map_spin) (const Tb cth, const sharp_Ylmgen_C *gen,
-  sharp_job *job, Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2 NJ1,
-  int *done)
+  sharp_job *job, Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2 NJ1)
   {
   int l, lmax=gen->lmax;
   Tb rec1p, rec1m, rec2p, rec2m, scalem, scalep;
   Y(iter_to_ieee_spin) (cth,&l,&rec1p,&rec1m,&rec2p,&rec2m,&scalep,&scalem,gen);
   job->opcnt += (l-gen->m) * 10*VLEN*nvec;
-  if (l>lmax)
-   { *done=1; return; }
+  if (l>lmax) return;
   job->opcnt += (lmax+1-l) * (12+16*njobs)*VLEN*nvec;
 
   const sharp_ylmgen_dbl3 * restrict fx = gen->fx;
@@ -477,8 +465,7 @@ static void Z(calc_alm2map_spin) (const Tb cth, const sharp_Ylmgen_C *gen,
       }
     }
 
-  if (l>lmax)
-    { *done=1; return; }
+  if (l>lmax) return;
 
   Y(Tbmuleq)(&rec1p,corfacp); Y(Tbmuleq)(&rec2p,corfacp);
   Y(Tbmuleq)(&rec1m,corfacm); Y(Tbmuleq)(&rec2m,corfacm);
@@ -487,14 +474,13 @@ static void Z(calc_alm2map_spin) (const Tb cth, const sharp_Ylmgen_C *gen,
   }
 
 static void Z(calc_map2alm_spin) (Tb cth, const sharp_Ylmgen_C * restrict gen,
-  sharp_job *job, const Y(Tbqu) * restrict p1, const Y(Tbqu) * restrict p2
-  NJ1, int *done)
+  sharp_job *job, const Y(Tbqu) * restrict p1, const Y(Tbqu) * restrict p2 NJ1)
   {
   int l, lmax=gen->lmax;
   Tb rec1p, rec1m, rec2p, rec2m, scalem, scalep;
   Y(iter_to_ieee_spin) (cth,&l,&rec1p,&rec1m,&rec2p,&rec2m,&scalep,&scalem,gen);
   job->opcnt += (l-gen->m) * 10*VLEN*nvec;
-  if (l>lmax) { *done=1; return; }
+  if (l>lmax) return;
   job->opcnt += (lmax+1-l) * (12+16*njobs)*VLEN*nvec;
 
   const sharp_ylmgen_dbl3 * restrict fx = gen->fx;
@@ -508,11 +494,11 @@ static void Z(calc_map2alm_spin) (Tb cth, const sharp_Ylmgen_C * restrict gen,
     {
     Tb t1=Y(Tbprod)(rec2p,corfacp), t2=Y(Tbprod)(rec2m,corfacm);
     Z(saddstep2)(p1, p2, &t1, &t2, &alm[2*njobs*l] NJ2);
-    if (++l>lmax) { *done=1; return; }
+    if (++l>lmax) return;
     Y(rec_step)(&rec1p,&rec1m,&rec2p,&rec2m,cth,fx[l]);
     t1=Y(Tbprod)(rec1p,corfacp); t2=Y(Tbprod)(rec1m,corfacm);
     Z(saddstep2)(p2, p1, &t1, &t2, &alm[2*njobs*l] NJ2);
-    if (++l>lmax) { *done=1; return; }
+    if (++l>lmax) return;
     Y(rec_step)(&rec2p,&rec2m,&rec1p,&rec1m,cth,fx[l]);
     if (Y(rescale)(&rec1p,&rec2p,&scalep) | Y(rescale)(&rec1m,&rec2m,&scalem))
       {
@@ -583,15 +569,13 @@ static void Z(alm2map_deriv1_kernel) (Tb cth, Y(Tbqu) * restrict p1,
   }
 
 static void Z(calc_alm2map_deriv1) (const Tb cth, const sharp_Ylmgen_C *gen,
-  sharp_job *job, Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2 NJ1,
-  int *done)
+  sharp_job *job, Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2 NJ1)
   {
   int l, lmax=gen->lmax;
   Tb rec1p, rec1m, rec2p, rec2m, scalem, scalep;
   Y(iter_to_ieee_spin) (cth,&l,&rec1p,&rec1m,&rec2p,&rec2m,&scalep,&scalem,gen);
   job->opcnt += (l-gen->m) * 10*VLEN*nvec;
-  if (l>lmax)
-   { *done=1; return; }
+  if (l>lmax) return;
   job->opcnt += (lmax+1-l) * (12+8*njobs)*VLEN*nvec;
 
   const sharp_ylmgen_dbl3 * restrict fx = gen->fx;
@@ -620,8 +604,7 @@ static void Z(calc_alm2map_deriv1) (const Tb cth, const sharp_Ylmgen_C *gen,
       }
     }
 
-  if (l>lmax)
-    { *done=1; return; }
+  if (l>lmax) return;
 
   Y(Tbmuleq)(&rec1p,corfacp); Y(Tbmuleq)(&rec2p,corfacp);
   Y(Tbmuleq)(&rec1m,corfacm); Y(Tbmuleq)(&rec2m,corfacm);
@@ -634,7 +617,7 @@ static void Z(calc_alm2map_deriv1) (const Tb cth, const sharp_Ylmgen_C *gen,
 
 static void Z(inner_loop) (sharp_job *job, const int *ispair,
   const double *cth_, const double *sth_, int llim, int ulim,
-  sharp_Ylmgen_C *gen, int mi, const int *idx NJ1)
+  sharp_Ylmgen_C *gen, int mi, const int *mlim NJ1)
   {
   const int nval=nvec*VLEN;
   const int m = job->ainfo->mval[mi];
@@ -647,30 +630,27 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
       {
       if (job->spin==0)
         {
-        int done=0;
         for (int ith=0; ith<ulim-llim; ith+=nval)
           {
           Y(Tburi) p1[njobs],p2[njobs]; VZERO(p1); VZERO(p2);
-          if (!done)
-            {
-            Y(Tbu) cth, sth;
+          Y(Tbu) cth, sth;
 
-            for (int i=0; i<nval; ++i)
-              {
-              int itot=i+ith;
-              if (itot>=ulim-llim) itot=ulim-llim-1;
-              itot=idx[itot];
-              cth.s[i]=cth_[itot]; sth.s[i]=sth_[itot];
-              }
-            Z(calc_alm2map) (cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b NJ2,&done);
+          int skip=1;
+          for (int i=0; i<nval; ++i)
+            {
+            int itot=i+ith;
+            if (itot>=ulim-llim) itot=ulim-llim-1;
+            if (mlim[itot]>=m) skip=0;
+            cth.s[i]=cth_[itot]; sth.s[i]=sth_[itot];
             }
+          if (!skip)
+            Z(calc_alm2map) (cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b NJ2);
 
           for (int i=0; i<nval; ++i)
             {
             int itot=i+ith;
             if (itot<ulim-llim)
               {
-              itot=idx[itot];
               for (int j=0; j<njobs; ++j)
                 {
                 int phas_idx = 2*(j+njobs*(itot*job->ainfo->nm+mi));
@@ -686,34 +666,31 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
         }
       else
         {
-        int done=0;
         for (int ith=0; ith<ulim-llim; ith+=nval)
           {
           Y(Tbuqu) p1[njobs],p2[njobs]; VZERO(p1); VZERO(p2);
-          if (!done)
-            {
-            Y(Tbu) cth;
+          Y(Tbu) cth;
+          int skip=1;
 
-            for (int i=0; i<nval; ++i)
-              {
-              int itot=i+ith;
-              if (itot>=ulim-llim) itot=ulim-llim-1;
-              itot=idx[itot];
-              cth.s[i]=cth_[itot];
-              }
+          for (int i=0; i<nval; ++i)
+            {
+            int itot=i+ith;
+            if (itot>=ulim-llim) itot=ulim-llim-1;
+            if (mlim[itot]>=m) skip=0;
+            cth.s[i]=cth_[itot];
+            }
+          if (!skip)
             (job->type==SHARP_ALM2MAP) ?
               Z(calc_alm2map_spin  )
-                (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2,&done) :
+                (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2) :
               Z(calc_alm2map_deriv1)
-                (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2,&done);
-            }
+                (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2);
 
           for (int i=0; i<nval; ++i)
             {
             int itot=i+ith;
             if (itot<ulim-llim)
               {
-              itot=idx[itot];
               for (int j=0; j<njobs; ++j)
                 {
                 int phas_idx = 4*(j+njobs*(itot*job->ainfo->nm+mi));
@@ -743,19 +720,19 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
       {
       if (job->spin==0)
         {
-        int done=0;
-        for (int ith=0; (ith<ulim-llim)&&(!done); ith+=nval)
+        for (int ith=0; ith<ulim-llim; ith+=nval)
           {
           Y(Tburi) p1[njobs], p2[njobs]; VZERO(p1); VZERO(p2);
           Y(Tbu) cth, sth;
+          int skip=1;
 
           for (int i=0; i<nval; ++i)
             {
             int itot=i+ith;
             if (itot>=ulim-llim) itot=ulim-llim-1;
-            itot=idx[itot];
+            if (mlim[itot]>=m) skip=0;
             cth.s[i]=cth_[itot]; sth.s[i]=sth_[itot];
-            if (i+ith<ulim-llim)
+            if ((i+ith<ulim-llim)&&(mlim[itot]>=m))
               {
               for (int j=0; j<njobs; ++j)
                 {
@@ -767,22 +744,23 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
                 }
               }
             }
-          Z(calc_map2alm)(cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b NJ2,&done);
+          if (!skip)
+            Z(calc_map2alm)(cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b NJ2);
           }
         }
       else
         {
-        int done=0;
-        for (int ith=0; (ith<ulim-llim)&&(!done); ith+=nval)
+        for (int ith=0; ith<ulim-llim; ith+=nval)
           {
           Y(Tbuqu) p1[njobs], p2[njobs]; VZERO(p1); VZERO(p2);
           Y(Tbu) cth;
+          int skip=1;
 
           for (int i=0; i<nval; ++i)
             {
             int itot=i+ith;
             if (itot>=ulim-llim) itot=ulim-llim-1;
-            itot=idx[itot];
+            if (mlim[itot]>=m) skip=0;
             cth.s[i]=cth_[itot];
             if (i+ith<ulim-llim)
               {
@@ -802,7 +780,8 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
                 }
               }
             }
-          Z(calc_map2alm_spin) (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2,&done);
+          if (!skip)
+            Z(calc_map2alm_spin) (cth.b,gen,job,&p1[0].b,&p2[0].b NJ2);
           }
         }
       break;
