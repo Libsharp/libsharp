@@ -222,19 +222,13 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 
   double *cth = RALLOC(double,minfo.npairtotal),
          *sth = RALLOC(double,minfo.npairtotal);
-  idxhelper *stmp = RALLOC(idxhelper,minfo.npairtotal);
+  int *mlim = RALLOC(int,minfo.npairtotal);
   for (int i=0; i<minfo.npairtotal; ++i)
     {
     cth[i] = cos(minfo.theta[i]);
     sth[i] = sin(minfo.theta[i]);
-    stmp[i].s=sth[i];
-    stmp[i].i=i;
+    mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
     }
-  qsort (stmp,minfo.npairtotal,sizeof(idxhelper),idx_compare);
-  int *idx = RALLOC(int,minfo.npairtotal);
-  for (int i=0; i<minfo.npairtotal; ++i)
-    idx[i]=stmp[i].i;
-  DEALLOC(stmp);
 
 /* map->phase where necessary */
   map2phase (job, minfo.mmax, 0, job->ginfo->npairs);
@@ -256,7 +250,7 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 
 /* inner conversion loop */
     inner_loop (&ljob, minfo.ispair, cth, sth, 0, minfo.npairtotal,
-      &generator, mi, idx);
+      &generator, mi, mlim);
 
 /* alm_tmp->alm where necessary */
     almtmp2alm (&ljob, lmax, mi);
@@ -274,9 +268,9 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 /* phase->map where necessary */
   phase2map (job, minfo.mmax, 0, job->ginfo->npairs);
 
+  DEALLOC(mlim);
   DEALLOC(cth);
   DEALLOC(sth);
-  DEALLOC(idx);
   DEALLOC(job->norm_l);
   dealloc_phase (job);
   sharp_destroy_mpi_info(&minfo);

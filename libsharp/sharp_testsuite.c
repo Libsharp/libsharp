@@ -63,6 +63,17 @@ static double maxTime (double val)
 #endif
   }
 
+static double allreduceSumDouble (double val)
+  {
+#ifdef USE_MPI
+  double tmp;
+  MPI_Allreduce (&val, &tmp,1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+  return tmp;
+#else
+  return val;
+#endif
+  }
+
 static double totalMem()
   {
 #ifdef USE_MPI
@@ -471,6 +482,7 @@ static void sharp_test (int argc, const char **argv)
   DEALLOC(err_rel);
 
   double iosize = ncomp*(16.*get_nalms(ainfo) + 8.*get_npix(ginfo));
+  iosize = allreduceSumDouble(iosize);
 
   sharp_destroy_alm_info(ainfo);
   sharp_destroy_geom_info(ginfo);
@@ -481,6 +493,66 @@ static void sharp_test (int argc, const char **argv)
   if (mytask==0)
     printf("Memory overhead: %.2f MB (%.2f%% of working set)\n",
       (tmem-iosize)/(1<<20),100.*(1.-iosize/tmem));
+  }
+
+static void sharp_bench (int argc, const char **argv)
+  {
+  if (mytask==0) sharp_announce("sharp_bench");
+  UTIL_ASSERT(argc>=9,"usage: grid lmax mmax geom1 geom2 spin ntrans");
+  int lmax=atoi(argv[3]);
+  int mmax=atoi(argv[4]);
+  int gpar1=atoi(argv[5]);
+  int gpar2=atoi(argv[6]);
+  int spin=atoi(argv[7]);
+  int ntrans=atoi(argv[8]);
+
+  if (mytask==0) printf("Testing map analysis accuracy.\n");
+  if (mytask==0) printf("spin=%d, ntrans=%d\n", spin, ntrans);
+
+  sharp_geom_info *ginfo;
+  sharp_alm_info *ainfo;
+  get_infos (argv[2], lmax, mmax, gpar1, gpar2, &ginfo, &ainfo);
+
+  double ta2m_auto=1e30, tm2a_auto=1e30, ta2m_min=1e30, tm2a_min=1e30;
+  int nvmin_a2m=-1, nvmin_m2a=-1;
+  for (int nv=0; nv<=6; ++nv)
+    {
+    int ntries=0;
+    double tacc=0;
+    do
+      {
+      double t_a2m, t_m2a;
+      unsigned long long op_a2m, op_m2a;
+      double *err_abs,*err_rel;
+      do_sht (ginfo, ainfo, spin, ntrans, nv, &err_abs, &err_rel,
+        &t_a2m, &t_m2a, &op_a2m, &op_m2a);
+
+      DEALLOC(err_abs);
+      DEALLOC(err_rel);
+      tacc+=t_a2m+t_m2a;
+      ++ntries;
+      if (nv==0)
+        {
+        if (t_a2m<ta2m_auto) ta2m_auto=t_a2m;
+        if (t_m2a<tm2a_auto) tm2a_auto=t_m2a;
+        }
+      else
+        {
+        if (t_a2m<ta2m_min) { nvmin_a2m=nv; ta2m_min=t_a2m; }
+        if (t_m2a<tm2a_min) { nvmin_m2a=nv; tm2a_min=t_m2a; }
+        }
+      } while((ntries<2)||(tacc<3.));
+    }
+  if (mytask==0)
+    {
+    printf("%d %e %e %e\n",nvmin_a2m,ta2m_auto,ta2m_min,
+      100.*(ta2m_auto-ta2m_min)/ta2m_auto);
+    printf("%d %e %e %e\n",nvmin_m2a,tm2a_auto,tm2a_min,
+      100.*(tm2a_auto-tm2a_min)/tm2a_auto);
+    }
+
+  sharp_destroy_alm_info(ainfo);
+  sharp_destroy_geom_info(ginfo);
   }
 
 int main(int argc, const char **argv)
@@ -499,6 +571,8 @@ int main(int argc, const char **argv)
     sharp_acctest();
   else if (strcmp(argv[1],"test")==0)
     sharp_test(argc,argv);
+  else if (strcmp(argv[1],"bench")==0)
+    sharp_bench(argc,argv);
   else
     UTIL_FAIL("unknown command");
 
