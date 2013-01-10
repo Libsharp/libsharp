@@ -653,7 +653,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               {
               for (int j=0; j<njobs; ++j)
                 {
-                int phas_idx = 2*(j+njobs*(itot*job->ainfo->nm+mi));
+                int phas_idx = itot*job->s_th + mi*job->s_m + 2*j;
                 complex double r1 = p1[j].s.r[i] + p1[j].s.i[i]*_Complex_I,
                                r2 = p2[j].s.r[i] + p2[j].s.i[i]*_Complex_I;
                 job->phase[phas_idx] = r1+r2;
@@ -693,7 +693,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               {
               for (int j=0; j<njobs; ++j)
                 {
-                int phas_idx = 4*(j+njobs*(itot*job->ainfo->nm+mi));
+                int phas_idx = itot*job->s_th + mi*job->s_m + 4*j;
                 complex double q1 = p1[j].s.qr[i] + p1[j].s.qi[i]*_Complex_I,
                                q2 = p2[j].s.qr[i] + p2[j].s.qi[i]*_Complex_I,
                                u1 = p1[j].s.ur[i] + p1[j].s.ui[i]*_Complex_I,
@@ -736,7 +736,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               {
               for (int j=0; j<njobs; ++j)
                 {
-                int phas_idx = 2*(j+njobs*(itot*job->ainfo->nm+mi));
+                int phas_idx = itot*job->s_th + mi*job->s_m + 2*j;
                 dcmplx ph1=job->phase[phas_idx];
                 dcmplx ph2=ispair[itot] ? job->phase[phas_idx+1] : 0.;
                 p1[j].s.r[i]=creal(ph1+ph2); p1[j].s.i[i]=cimag(ph1+ph2);
@@ -766,7 +766,7 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               {
               for (int j=0; j<njobs; ++j)
                 {
-                int phas_idx = 4*(j+njobs*(itot*job->ainfo->nm+mi));
+                int phas_idx = itot*job->s_th + mi*job->s_m + 4*j;
                 dcmplx p1Q=job->phase[phas_idx],
                        p1U=job->phase[phas_idx+2],
                        p2Q=ispair[itot] ? job->phase[phas_idx+1]:0.,

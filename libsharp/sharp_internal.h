@@ -48,6 +48,7 @@ typedef struct
   int flags;
   void **map;
   void **alm;
+  int s_m, s_th; // strides in m and theta direction
   complex double *phase;
   double *norm_l;
   complex double *almtmp;

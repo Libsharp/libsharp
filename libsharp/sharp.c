@@ -427,7 +427,12 @@ static void init_output (sharp_job *job)
   }
 
 static void alloc_phase (sharp_job *job, int nm, int ntheta)
-  { job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*nm*ntheta); }
+  {
+  if ((nm&1023)==0) nm+=3; // hack to avoid critical strides
+  job->s_m=2*job->ntrans*job->nmaps;
+  job->s_th=job->s_m*nm;
+  job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*nm*ntheta);
+  }
 
 static void dealloc_phase (sharp_job *job)
   { DEALLOC(job->phase); }
@@ -436,7 +441,7 @@ static void dealloc_phase (sharp_job *job)
 static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type != SHARP_MAP2ALM) return;
-  int pstride = 2*job->ntrans*job->nmaps;
+  int pstride = job->s_m;
 #pragma omp parallel
 {
   ringhelper helper;
@@ -444,7 +449,7 @@ static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
 #pragma omp for schedule(dynamic,1)
   for (int ith=llim; ith<ulim; ++ith)
     {
-    int dim2 = pstride*(ith-llim)*(mmax+1);
+    int dim2 = job->s_th*(ith-llim);
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
       ringhelper_pair2phase(&helper,mmax,&job->ginfo->pair[ith], job->map[i],
         &job->phase[dim2+2*i], &job->phase[dim2+2*i+1], pstride, job->flags);
@@ -589,7 +594,7 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
 static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type == SHARP_MAP2ALM) return;
-  int pstride = 2*job->ntrans*job->nmaps;
+  int pstride = job->s_m;
 #pragma omp parallel
 {
   ringhelper helper;
@@ -597,7 +602,7 @@ static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
 #pragma omp for schedule(dynamic,1)
   for (int ith=llim; ith<ulim; ++ith)
     {
-    int dim2 = pstride*(ith-llim)*(mmax+1);
+    int dim2 = job->s_th*(ith-llim);
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
       ringhelper_phase2pair(&helper,mmax,&job->phase[dim2+2*i],
         &job->phase[dim2+2*i+1],pstride,&job->ginfo->pair[ith],job->map[i],
