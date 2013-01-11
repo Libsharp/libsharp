@@ -188,6 +188,32 @@ static void get_errors (dcmplx **alm, ptrdiff_t nalms, int ncomp, double *sqsum,
     }
   }
 
+static int good_fft_size(int n)
+  {
+  if (n<=6) return n;
+  int bestfac=2*n;
+
+  for (int f2=1; f2<bestfac; f2*=2)
+    for (int f23=f2; f23<bestfac; f23*=3)
+      for (int f235=f23; f235<bestfac; f235*=5)
+        if (f235>=n) bestfac=f235;
+
+  return bestfac;
+  }
+
+static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
+  double ofs)
+  {
+  double b = -2*spin*fabs(cth);
+  double t1 = lmax*sth+ofs;
+  double c = spin*spin-t1*t1;
+  double discr = b*b-4*c;
+  if (discr<=0) return lmax;
+  double res=(-b+sqrt(discr))/2.;
+  if (res>lmax) res=lmax;
+  return (int)(res+0.5);
+  }
+
 static void get_infos (const char *gname, int lmax, int mmax, int gpar1,
   int gpar2, sharp_geom_info **ginfo, sharp_alm_info **ainfo)
   {
@@ -241,6 +267,39 @@ static void get_infos (const char *gname, int lmax, int mmax, int gpar1,
     if (nlon<1) nlon=2*mmax+1;
     sharp_make_fejer1_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
     if (mytask==0) printf("Clenshaw-Curtis grid, nlat=%d, nlon=%d\n",nlat,nlon);
+    }
+  else if (strcmp(gname,"smallgauss")==0)
+    {
+    int nlat=gpar1, nlon=gpar2;
+    if (nlat<1) nlat=lmax+1;
+    if (nlon<1) nlon=2*mmax+1;
+    sharp_make_gauss_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
+    ptrdiff_t npix_o=get_npix(*ginfo);
+    size_t ofs=0;
+    for (int i=0; i<(*ginfo)->npairs; ++i)
+      {
+      sharp_ringpair *pair=&((*ginfo)->pair[i]);
+      int pring=1+2*sharp_get_mlim(lmax,0,pair->r1.sth,pair->r1.cth,100.);
+      if (pring>nlon) pring=nlon;
+      pring=good_fft_size(pring);
+      pair->r1.nph=pring;
+      pair->r1.weight*=nlon*1./pring;
+      pair->r1.ofs=ofs;
+      ofs+=pring;
+      if (pair->r2.nph>0)
+        {
+        pair->r2.nph=pring;
+        pair->r2.weight*=nlon*1./pring;
+        pair->r2.ofs=ofs;
+        ofs+=pring;
+        }
+      }
+    if (mytask==0)
+      {
+      ptrdiff_t npix=get_npix(*ginfo);
+      printf("Small Gauss grid, nlat=%d, npix=%ld, savings=%.2f%%\n",
+        nlat,(long)npix,(npix_o-npix)*100./npix_o);
+      }
     }
   else
     UTIL_FAIL("unknown grid geometry");
