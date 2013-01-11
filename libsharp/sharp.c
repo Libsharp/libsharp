@@ -50,9 +50,19 @@ static int chunksize_min=500, nchunks_max=10;
 
 static void get_chunk_info (int ndata, int nmult, int *nchunks, int *chunksize)
   {
-  *chunksize = IMAX(chunksize_min,(ndata+nchunks_max-1)/nchunks_max);
-  *chunksize = ((*chunksize+nmult-1)/nmult)*nmult;
-  *nchunks = (ndata+*chunksize-1) / *chunksize;
+  *chunksize = (ndata+nchunks_max-1)/nchunks_max;
+  if (*chunksize>=chunksize_min) // use max number of chunks
+    {
+    *chunksize = ((*chunksize+nmult-1)/nmult)*nmult;
+    *nchunks = nchunks_max;
+    }
+  else // need to adjust chunksize and nchunks
+    {
+    *nchunks = (ndata+chunksize_min-1)/chunksize_min;
+    *chunksize = (ndata+(*nchunks)-1)/(*nchunks);
+    if (*nchunks>1)
+      *chunksize = ((*chunksize+nmult-1)/nmult)*nmult;
+    }
   }
 
 static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
