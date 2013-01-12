@@ -185,18 +185,26 @@ static void alloc_phase_mpi (sharp_job *job, int nm, int ntheta,
   ptrdiff_t phase_size = (job->type==SHARP_MAP2ALM) ?
     (ptrdiff_t)(nmfull)*ntheta : (ptrdiff_t)(nm)*nthetafull;
   job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*phase_size);
+  job->s_m=2*job->ntrans*job->nmaps;
+  job->s_th = job->s_m * ((job->type==SHARP_MAP2ALM) ? nmfull : nm);
   }
 
 static void alm2map_comm (sharp_job *job, const sharp_mpi_info *minfo)
   {
   if (job->type != SHARP_MAP2ALM)
+    {
     sharp_communicate_alm2map (minfo,&job->phase);
+    job->s_th=job->s_m*minfo->nmtotal;
+    }
   }
 
 static void map2alm_comm (sharp_job *job, const sharp_mpi_info *minfo)
   {
   if (job->type == SHARP_MAP2ALM)
+    {
     sharp_communicate_map2alm (minfo,&job->phase);
+    job->s_th=job->s_m*minfo->nm[minfo->mytask];
+    }
   }
 
 static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
