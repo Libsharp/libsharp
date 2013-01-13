@@ -25,7 +25,7 @@
 /*! \file sharp.c
  *  Spherical transform library
  *
- *  Copyright (C) 2006-2012 Max-Planck-Society
+ *  Copyright (C) 2006-2013 Max-Planck-Society
  *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
@@ -414,9 +414,9 @@ static void clear_alm (const sharp_alm_info *ainfo, void *alm, int flags)
         {
         stride*=2;
         if (flags&SHARP_DP)
-          CLEARLOOP(double, talm[mvstart+l*stride] = talm[mvstart+l*stride+1] = 0.;)
+          CLEARLOOP(double,talm[mvstart+l*stride]=talm[mvstart+l*stride+1]=0.;)
         else
-          CLEARLOOP(float, talm[mvstart+l*stride] = talm[mvstart+l*stride+1] = 0.;)
+          CLEARLOOP(float,talm[mvstart+l*stride]=talm[mvstart+l*stride+1]=0.;)
         }
 
 #undef CLEARLOOP

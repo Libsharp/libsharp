@@ -25,7 +25,7 @@
 /*! \file sharp_core.c
  *  Computational core
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012-2013 Max-Planck-Society
  *  \author Martin Reinecke
  */
 

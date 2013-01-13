@@ -25,7 +25,7 @@
 /*! \file sharp_geomhelpers.h
  *  SHARP helper function for the creation of grid geometries
  *
- *  Copyright (C) 2006-2012 Max-Planck-Society
+ *  Copyright (C) 2006-2013 Max-Planck-Society
  *  \author Martin Reinecke
  */
 

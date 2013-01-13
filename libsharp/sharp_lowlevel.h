@@ -25,7 +25,7 @@
 /*! \file sharp_lowlevel.h
  *  Low-level, portable interface for the spherical transform library.
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012-2013 Max-Planck-Society
  *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
