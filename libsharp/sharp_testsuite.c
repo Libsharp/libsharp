@@ -603,6 +603,7 @@ static void sharp_bench (int argc, const char **argv)
   get_infos (argv[2], lmax, mmax, gpar1, gpar2, &ginfo, &ainfo);
 
   double ta2m_auto=1e30, tm2a_auto=1e30, ta2m_min=1e30, tm2a_min=1e30;
+  unsigned long long opa2m_min=0, opm2a_min=0;
   int nvmin_a2m=-1, nvmin_m2a=-1;
   for (int nv=0; nv<=6; ++nv)
     {
@@ -627,17 +628,19 @@ static void sharp_bench (int argc, const char **argv)
         }
       else
         {
-        if (t_a2m<ta2m_min) { nvmin_a2m=nv; ta2m_min=t_a2m; }
-        if (t_m2a<tm2a_min) { nvmin_m2a=nv; tm2a_min=t_m2a; }
+        if (t_a2m<ta2m_min) { nvmin_a2m=nv; ta2m_min=t_a2m; opa2m_min=op_a2m; }
+        if (t_m2a<tm2a_min) { nvmin_m2a=nv; tm2a_min=t_m2a; opm2a_min=op_m2a; }
         }
       } while((ntries<2)||(tacc<3.));
     }
   if (mytask==0)
     {
-    printf("%d %e %e %e\n",nvmin_a2m,ta2m_auto,ta2m_min,
-      100.*(ta2m_auto-ta2m_min)/ta2m_auto);
-    printf("%d %e %e %e\n",nvmin_m2a,tm2a_auto,tm2a_min,
-      100.*(tm2a_auto-tm2a_min)/tm2a_auto);
+    printf("a2m: nvmin=%d tmin=%fs speedup=%.2f%% perf=%.2fGFlops/s\n",
+      nvmin_a2m,ta2m_min,100.*(ta2m_auto-ta2m_min)/ta2m_auto,
+      1e-9*opa2m_min/ta2m_min);
+    printf("m2a: nvmin=%d tmin=%fs speedup=%.2f%% perf=%.2fGFlops/s\n",
+      nvmin_m2a,tm2a_min,100.*(tm2a_auto-tm2a_min)/tm2a_auto,
+      1e-9*opm2a_min/tm2a_min);
     }
 
   sharp_destroy_alm_info(ainfo);
