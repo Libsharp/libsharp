@@ -209,12 +209,13 @@ static void map2alm_comm (sharp_job *job, const sharp_mpi_info *minfo)
 
 static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
   {
-  double timer=wallTime();
   int ntasks;
   MPI_Comm_size(comm, &ntasks);
   if (ntasks==1) /* fall back to scalar implementation */
     { sharp_execute_job (job); return; }
 
+  MPI_Barrier(comm);
+  double timer=wallTime();
   int lmax = job->ainfo->lmax;
 
   job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
