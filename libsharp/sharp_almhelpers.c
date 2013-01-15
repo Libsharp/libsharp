@@ -42,7 +42,7 @@ void sharp_make_triangular_alm_info (int lmax, int mmax, int stride,
   info->mvstart = RALLOC(ptrdiff_t,mmax+1);
   info->stride = stride;
   info->flags = 0;
-  int tval = 2*lmax+1;
+  ptrdiff_t tval = 2*lmax+1;
   for (ptrdiff_t m=0; m<=mmax; ++m)
     {
     info->mval[m] = m;

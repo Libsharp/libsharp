@@ -68,7 +68,7 @@ static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
   {
   double b = -2*spin*fabs(cth);
   double t1 = lmax*sth+ofs;
-  double c = spin*spin-t1*t1;
+  double c = (double)spin*spin-t1*t1;
   double discr = b*b-4*c;
   if (discr<=0) return lmax;
   double res=(-b+sqrt(discr))/2.;
@@ -370,17 +370,17 @@ static void fill_map (const sharp_geom_info *ginfo, void *map, double value,
     {
     if (flags&SHARP_DP)
       {
-      for (int i=0;i<ginfo->pair[j].r1.nph;++i)
+      for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
         ((double *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]=value;
-      for (int i=0;i<ginfo->pair[j].r2.nph;++i)
+      for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
         ((double *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]=value;
       }
     else
       {
-      for (int i=0;i<ginfo->pair[j].r1.nph;++i)
+      for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
         ((float *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
           =(float)value;
-      for (int i=0;i<ginfo->pair[j].r2.nph;++i)
+      for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
         ((float *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
           =(float)value;
       }
@@ -450,7 +450,7 @@ static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type != SHARP_MAP2ALM) return;
   int pstride = job->s_m;
-#pragma omp parallel
+#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
 {
   ringhelper helper;
   ringhelper_init(&helper);
@@ -603,7 +603,7 @@ static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type == SHARP_MAP2ALM) return;
   int pstride = job->s_m;
-#pragma omp parallel
+#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
 {
   ringhelper helper;
   ringhelper_init(&helper);
@@ -657,7 +657,7 @@ static void sharp_execute_job (sharp_job *job)
 /* map->phase where necessary */
     map2phase (job, mmax, llim, ulim);
 
-#pragma omp parallel
+#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
 {
     sharp_job ljob = *job;
     ljob.opcnt=0;
@@ -785,8 +785,8 @@ static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
     int ntries=0;
     do
       {
-      sharp_execute(type,spin,&alm[0],&map[0],tinfo,alms,ntrans,nv|SHARP_DP,
-        &jtime,NULL);
+      sharp_execute(type,spin,&alm[0],&map[0],tinfo,alms,ntrans,
+        nv|SHARP_DP|SHARP_NO_OPENMP,&jtime,NULL);
 
       if (jtime<time) { time=jtime; nvbest=nv; }
       time_acc+=jtime;
