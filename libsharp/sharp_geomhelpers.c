@@ -106,11 +106,15 @@ static void gauss_legendre_tbl(int n, double *x, double *w)
   {
   const double pi = 3.141592653589793238462643383279502884197;
   const double eps = 3e-14;
-  int i, k, m = (n+1)>>1;
+  int m = (n+1)>>1;
 
   double t0 = 1 - (1-1./n) / (8.*n*n);
   double t1 = 1./(4.*n+2.);
 
+#pragma omp parallel
+{
+  int i;
+#pragma omp for schedule(dynamic,100) 
   for (i=1; i<=m; ++i)
     {
     double x0 = cos(pi * ((i<<2)-1) * t1) * t0;
@@ -124,7 +128,7 @@ static void gauss_legendre_tbl(int n, double *x, double *w)
       double P0 = x0;
       double dx, x1;
 
-      for (k=2; k<=n; k++)
+      for (int k=2; k<=n; k++)
         {
         double P_2 = P_1;
         P_1 = P0;
@@ -148,6 +152,7 @@ static void gauss_legendre_tbl(int n, double *x, double *w)
     x[n-i] = x0;
     w[i-1] = w[n-i] = 2. / (one_minus_x2(x0) * dpdx * dpdx);
     }
+} // end of parallel region
   }
 
 void sharp_make_gauss_geom_info (int nrings, int nphi, double phi0,
