@@ -46,29 +46,37 @@ typedef complex double dcmplx;
 
 int ntasks, mytask;
 
-static double drand (double min, double max)
-  { return min + (max-min)*rand()/(RAND_MAX+1.0); }
+static double drand (double min, double max, int *state)
+  {
+  *state = (((*state) * 1103515245) + 12345) & 0x7fffffff;
+  return min + (max-min)*(*state)/(0x7fffffff+1.0);
+  }
 
 static void random_alm (dcmplx *alm, sharp_alm_info *helper, int spin)
   {
   static int cnt=0;
   ++cnt;
-  for (int mi=0;mi<helper->nm; ++mi)
+#pragma omp parallel
+{
+  int mi;
+#pragma omp for schedule (dynamic,100)
+  for (mi=0;mi<helper->nm; ++mi)
     {
     int m=helper->mval[mi];
-    srand(1234567*cnt+8912*m);
+    int state=1234567*cnt+8912*m; // random seed
     for (int l=m;l<=helper->lmax; ++l)
       {
       if ((l<spin)&&(m<spin))
         alm[sharp_alm_index(helper,l,mi)] = 0.;
       else
         {
-        double rv = drand(-1,1);
-        double iv = (m==0) ? 0 : drand(-1,1);
+        double rv = drand(-1,1,&state);
+        double iv = (m==0) ? 0 : drand(-1,1,&state);
         alm[sharp_alm_index(helper,l,mi)] = rv+_Complex_I*iv;
         }
       }
     }
+} // end of parallel region
   }
 
 static unsigned long long totalops (unsigned long long val)
