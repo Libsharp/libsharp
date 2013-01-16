@@ -216,72 +216,96 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
 
   MPI_Barrier(comm);
   double timer=wallTime();
-  int lmax = job->ainfo->lmax;
-
-  job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
-
+  job->opcnt=0;
   sharp_mpi_info minfo;
   sharp_make_mpi_info(comm, job, &minfo);
 
-/* clear output arrays if requested */
-  init_output (job);
-
-  alloc_phase_mpi (job,job->ainfo->nm,job->ginfo->npairs,minfo.mmax+1,
-    minfo.npairtotal);
-
-  double *cth = RALLOC(double,minfo.npairtotal),
-         *sth = RALLOC(double,minfo.npairtotal);
-  int *mlim = RALLOC(int,minfo.npairtotal);
-  for (int i=0; i<minfo.npairtotal; ++i)
+  if (minfo.npairtotal>minfo.ntasks*300)
     {
-    cth[i] = cos(minfo.theta[i]);
-    sth[i] = sin(minfo.theta[i]);
-    mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
+    int nsub=(minfo.npairtotal+minfo.ntasks*200-1)/(minfo.ntasks*200);
+    for (int isub=0; isub<nsub; ++isub)
+      {
+      sharp_job ljob=*job;
+      if ((isub>0)&&(job->type==SHARP_MAP2ALM)) ljob.flags|=SHARP_ADD;
+      sharp_geom_info lginfo;
+      lginfo.pair=RALLOC(sharp_ringpair,(job->ginfo->npairs/nsub)+1);
+      lginfo.npairs=0;
+      while (lginfo.npairs*nsub+isub<job->ginfo->npairs)
+        {
+        lginfo.pair[lginfo.npairs]=job->ginfo->pair[lginfo.npairs*nsub+isub];
+        ++lginfo.npairs;
+        }
+      ljob.ginfo=&lginfo;
+      sharp_execute_job_mpi (&ljob,comm);
+      job->opcnt+=ljob.opcnt;
+      DEALLOC(lginfo.pair);
+      }
     }
+  else
+    {
+    int lmax = job->ainfo->lmax;
+    job->norm_l = sharp_Ylmgen_get_norm (lmax, job->spin);
 
-/* map->phase where necessary */
-  map2phase (job, minfo.mmax, 0, job->ginfo->npairs);
+    /* clear output arrays if requested */
+    init_output (job);
 
-  map2alm_comm (job, &minfo);
+    alloc_phase_mpi (job,job->ainfo->nm,job->ginfo->npairs,minfo.mmax+1,
+      minfo.npairtotal);
+
+    double *cth = RALLOC(double,minfo.npairtotal),
+          *sth = RALLOC(double,minfo.npairtotal);
+    int *mlim = RALLOC(int,minfo.npairtotal);
+    for (int i=0; i<minfo.npairtotal; ++i)
+      {
+      cth[i] = cos(minfo.theta[i]);
+      sth[i] = sin(minfo.theta[i]);
+      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
+      }
+
+    /* map->phase where necessary */
+    map2phase (job, minfo.mmax, 0, job->ginfo->npairs);
+
+    map2alm_comm (job, &minfo);
 
 #pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
 {
-  sharp_job ljob = *job;
-  sharp_Ylmgen_C generator;
-  sharp_Ylmgen_init (&generator,lmax,minfo.mmax,ljob.spin);
-  alloc_almtmp(&ljob,lmax);
+    sharp_job ljob = *job;
+    sharp_Ylmgen_C generator;
+    sharp_Ylmgen_init (&generator,lmax,minfo.mmax,ljob.spin);
+    alloc_almtmp(&ljob,lmax);
 
 #pragma omp for schedule(dynamic,1)
-  for (int mi=0; mi<job->ainfo->nm; ++mi)
-    {
-/* alm->alm_tmp where necessary */
-    alm2almtmp (&ljob, lmax, mi);
+    for (int mi=0; mi<job->ainfo->nm; ++mi)
+      {
+  /* alm->alm_tmp where necessary */
+      alm2almtmp (&ljob, lmax, mi);
 
-/* inner conversion loop */
-    inner_loop (&ljob, minfo.ispair, cth, sth, 0, minfo.npairtotal,
-      &generator, mi, mlim);
+  /* inner conversion loop */
+      inner_loop (&ljob, minfo.ispair, cth, sth, 0, minfo.npairtotal,
+        &generator, mi, mlim);
 
-/* alm_tmp->alm where necessary */
-    almtmp2alm (&ljob, lmax, mi);
-    }
+  /* alm_tmp->alm where necessary */
+      almtmp2alm (&ljob, lmax, mi);
+      }
 
-  sharp_Ylmgen_destroy(&generator);
-  dealloc_almtmp(&ljob);
+    sharp_Ylmgen_destroy(&generator);
+    dealloc_almtmp(&ljob);
 
 #pragma omp critical
-  job->opcnt+=ljob.opcnt;
+    job->opcnt+=ljob.opcnt;
 } /* end of parallel region */
 
-  alm2map_comm (job, &minfo);
+    alm2map_comm (job, &minfo);
 
-/* phase->map where necessary */
-  phase2map (job, minfo.mmax, 0, job->ginfo->npairs);
+  /* phase->map where necessary */
+    phase2map (job, minfo.mmax, 0, job->ginfo->npairs);
 
-  DEALLOC(mlim);
-  DEALLOC(cth);
-  DEALLOC(sth);
-  DEALLOC(job->norm_l);
-  dealloc_phase (job);
+    DEALLOC(mlim);
+    DEALLOC(cth);
+    DEALLOC(sth);
+    DEALLOC(job->norm_l);
+    dealloc_phase (job);
+    }
   sharp_destroy_mpi_info(&minfo);
   job->time=wallTime()-timer;
   }
