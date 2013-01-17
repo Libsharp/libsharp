@@ -599,14 +599,14 @@ static void sharp_test (int argc, const char **argv)
 
   double maxerel=0., maxeabs=0.;
   for (int i=0; i<ncomp; ++i)
-    {printf("%e %e\n",err_rel[i],err_abs[i]);
+    {
     if (maxerel<err_rel[i]) maxerel=err_rel[i];
     if (maxeabs<err_abs[i]) maxeabs=err_abs[i];
     }
 
   if (mytask==0)
     printf("%-12s %-10s %2d %d %2d %3d %6d %6d %6d %6d %2d %.2e %7.2f %.2e %7.2f"
-           " %9.2f %2.2f %.2e %.2e\n",
+           " %9.2f %6.2f %.2e %.2e\n",
       getenv("HOST"),argv[2],spin,VLEN,nomp,ntasks,lmax,mmax,gpar1,gpar2,
       ntrans,t_a2m,1e-9*op_a2m/t_a2m,t_m2a,1e-9*op_m2a/t_m2a,tmem/(1<<20),
       100.*(1.-iosize/tmem),maxerel,maxeabs);
