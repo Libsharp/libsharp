@@ -226,6 +226,8 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
     for (int isub=0; isub<nsub; ++isub)
       {
       sharp_job ljob=*job;
+      // When creating a_lm, every sub-job produces a complete set of
+      // coefficients; they need to be added up.
       if ((isub>0)&&(job->type==SHARP_MAP2ALM)) ljob.flags|=SHARP_ADD;
       sharp_geom_info lginfo;
       lginfo.pair=RALLOC(sharp_ringpair,(job->ginfo->npairs/nsub)+1);
