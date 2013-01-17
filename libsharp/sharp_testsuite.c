@@ -34,6 +34,9 @@
 #include "mpi.h"
 #include "sharp_mpi.h"
 #endif
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 #include "sharp.h"
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
@@ -41,6 +44,7 @@
 #include "sharp_announce.h"
 #include "sharp_core.h"
 #include "memusage.h"
+#include "sharp_vecsupport.h"
 
 typedef complex double dcmplx;
 
@@ -252,65 +256,63 @@ static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
   return (int)(res+0.5);
   }
 
-static void get_infos (const char *gname, int lmax, int mmax, int gpar1,
-  int gpar2, sharp_geom_info **ginfo, sharp_alm_info **ainfo)
+static void get_infos (const char *gname, int lmax, int *mmax, int *gpar1,
+  int *gpar2, sharp_geom_info **ginfo, sharp_alm_info **ainfo)
   {
   UTIL_ASSERT(lmax>=0,"lmax must not be negative");
-  if (mmax<0) mmax=lmax;
-  UTIL_ASSERT(mmax<=lmax,"mmax larger than lmax");
+  if (*mmax<0) *mmax=lmax;
+  UTIL_ASSERT(*mmax<=lmax,"mmax larger than lmax");
 
-  if (mytask==0) printf ("lmax: %d, mmax: %d\n",lmax,mmax);
+  if (mytask==0) printf ("lmax: %d, mmax: %d\n",lmax,*mmax);
 
-  sharp_make_triangular_alm_info(lmax,mmax,1,ainfo);
+  sharp_make_triangular_alm_info(lmax,*mmax,1,ainfo);
 #ifdef USE_MPI
   reduce_alm_info(*ainfo);
 #endif
 
   if (strcmp(gname,"healpix")==0)
     {
-    int nside=gpar1;
-    if (nside<1) nside=lmax/2;
-    if (nside==0) ++nside;
-    sharp_make_healpix_geom_info (nside, 1, ginfo);
-    if (mytask==0) printf ("HEALPix grid, nside=%d\n",nside);
+    if (*gpar1<1) *gpar1=lmax/2;
+    if (*gpar1==0) ++(*gpar1);
+    sharp_make_healpix_geom_info (*gpar1, 1, ginfo);
+    if (mytask==0) printf ("HEALPix grid, nside=%d\n",*gpar1);
     }
   else if (strcmp(gname,"gauss")==0)
     {
-    int nlat=gpar1, nlon=gpar2;
-    if (nlat<1) nlat=lmax+1;
-    if (nlon<1) nlon=2*mmax+1;
-    sharp_make_gauss_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
-    if (mytask==0) printf ("Gauss-Legendre grid, nlat=%d, nlon=%d\n",nlat,nlon);
+    if (*gpar1<1) *gpar1=lmax+1;
+    if (*gpar2<1) *gpar2=2*(*mmax)+1;
+    sharp_make_gauss_geom_info (*gpar1, *gpar2, 0., 1, *gpar2, ginfo);
+    if (mytask==0)
+      printf ("Gauss-Legendre grid, nlat=%d, nlon=%d\n",*gpar1,*gpar2);
     }
   else if (strcmp(gname,"fejer1")==0)
     {
-    int nlat=gpar1, nlon=gpar2;
-    if (nlat<1) nlat=2*lmax+1;
-    if (nlon<1) nlon=2*mmax+1;
-    sharp_make_fejer1_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
-    if (mytask==0) printf ("Fejer1 grid, nlat=%d, nlon=%d\n",nlat,nlon);
+    if (*gpar1<1) *gpar1=2*lmax+1;
+    if (*gpar2<1) *gpar2=2*(*mmax)+1;
+    sharp_make_fejer1_geom_info (*gpar1, *gpar2, 0., 1, *gpar2, ginfo);
+    if (mytask==0) printf ("Fejer1 grid, nlat=%d, nlon=%d\n",*gpar1,*gpar2);
     }
   else if (strcmp(gname,"fejer2")==0)
     {
-    int nlat=gpar1, nlon=gpar2;
-    if (nlat<1) nlat=2*lmax+1;
-    if (nlon<1) nlon=2*mmax+1;
-    sharp_make_fejer2_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
-    if (mytask==0) printf ("Fejer2 grid, nlat=%d, nlon=%d\n",nlat,nlon);
+    if (*gpar1<1) *gpar1=2*lmax+1;
+    if (*gpar2<1) *gpar2=2*(*mmax)+1;
+    sharp_make_fejer2_geom_info (*gpar1, *gpar2, 0., 1, *gpar2, ginfo);
+    if (mytask==0) printf ("Fejer2 grid, nlat=%d, nlon=%d\n",*gpar1,*gpar2);
     }
   else if (strcmp(gname,"cc")==0)
     {
-    int nlat=gpar1, nlon=gpar2;
-    if (nlat<1) nlat=2*lmax+1;
-    if (nlon<1) nlon=2*mmax+1;
-    sharp_make_fejer1_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
-    if (mytask==0) printf("Clenshaw-Curtis grid, nlat=%d, nlon=%d\n",nlat,nlon);
+    if (*gpar1<1) *gpar1=2*lmax+1;
+    if (*gpar2<1) *gpar2=2*(*mmax)+1;
+    sharp_make_cc_geom_info (*gpar1, *gpar2, 0., 1, *gpar2, ginfo);
+    if (mytask==0)
+      printf("Clenshaw-Curtis grid, nlat=%d, nlon=%d\n",*gpar1,*gpar2);
     }
   else if (strcmp(gname,"smallgauss")==0)
     {
-    int nlat=gpar1, nlon=gpar2;
+    int nlat=*gpar1, nlon=*gpar2;
     if (nlat<1) nlat=lmax+1;
-    if (nlon<1) nlon=2*mmax+1;
+    if (nlon<1) nlon=2*(*mmax)+1;
+    *gpar1=nlat; *gpar2=nlon;
     sharp_make_gauss_geom_info (nlat, nlon, 0., 1, nlon, ginfo);
     ptrdiff_t npix_o=get_npix(*ginfo);
     size_t ofs=0;
@@ -526,7 +528,8 @@ static void sharp_acctest(void)
 
   sharp_geom_info *ginfo;
   sharp_alm_info *ainfo;
-  get_infos ("gauss", 127, 127, 128, 256, &ginfo, &ainfo);
+  int lmax=127, mmax=127, nlat=128, nlon=256;
+  get_infos ("gauss", lmax, &mmax, &nlat, &nlon, &ginfo, &ainfo);
   for (int nv=1; nv<=6; ++nv)
     for (int ntrans=1; ntrans<=6; ++ntrans)
       {
@@ -557,7 +560,7 @@ static void sharp_test (int argc, const char **argv)
 
   sharp_geom_info *ginfo;
   sharp_alm_info *ainfo;
-  get_infos (argv[2], lmax, mmax, gpar1, gpar2, &ginfo, &ainfo);
+  get_infos (argv[2], lmax, &mmax, &gpar1, &gpar2, &ginfo, &ainfo);
 
   int ncomp = ntrans*((spin==0) ? 1 : 2);
   double t_a2m, t_m2a;
@@ -575,9 +578,6 @@ static void sharp_test (int argc, const char **argv)
     for (int i=0; i<ncomp; ++i)
       printf("component %i: rms %e, maxerr %e\n",i,err_rel[i], err_abs[i]);
 
-  DEALLOC(err_abs);
-  DEALLOC(err_rel);
-
   double iosize = ncomp*(16.*get_nalms(ainfo) + 8.*get_npix(ginfo));
   iosize = allreduceSumDouble(iosize);
 
@@ -590,6 +590,29 @@ static void sharp_test (int argc, const char **argv)
   if (mytask==0)
     printf("Memory overhead: %.2f MB (%.2f%% of working set)\n",
       (tmem-iosize)/(1<<20),100.*(1.-iosize/tmem));
+
+#ifdef _OPENMP
+  int nomp=omp_get_max_threads();
+#else
+  int nomp=1;
+#endif
+
+  double maxerel=0., maxeabs=0.;
+  for (int i=0; i<ncomp; ++i)
+    {printf("%e %e\n",err_rel[i],err_abs[i]);
+    if (maxerel<err_rel[i]) maxerel=err_rel[i];
+    if (maxeabs<err_abs[i]) maxeabs=err_abs[i];
+    }
+
+  if (mytask==0)
+    printf("%-12s %-10s %2d %d %2d %3d %6d %6d %6d %6d %2d %.2e %7.2f %.2e %7.2f"
+           " %9.2f %2.2f %.2e %.2e\n",
+      getenv("HOST"),argv[2],spin,VLEN,nomp,ntasks,lmax,mmax,gpar1,gpar2,
+      ntrans,t_a2m,1e-9*op_a2m/t_a2m,t_m2a,1e-9*op_m2a/t_m2a,tmem/(1<<20),
+      100.*(1.-iosize/tmem),maxerel,maxeabs);
+
+  DEALLOC(err_abs);
+  DEALLOC(err_rel);
   }
 
 static void sharp_bench (int argc, const char **argv)
@@ -608,7 +631,7 @@ static void sharp_bench (int argc, const char **argv)
 
   sharp_geom_info *ginfo;
   sharp_alm_info *ainfo;
-  get_infos (argv[2], lmax, mmax, gpar1, gpar2, &ginfo, &ainfo);
+  get_infos (argv[2], lmax, &mmax, &gpar1, &gpar2, &ginfo, &ainfo);
 
   double ta2m_auto=1e30, tm2a_auto=1e30, ta2m_min=1e30, tm2a_min=1e30;
   unsigned long long opa2m_min=0, opm2a_min=0;
