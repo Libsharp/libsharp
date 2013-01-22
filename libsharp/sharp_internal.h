@@ -61,5 +61,6 @@ typedef struct
 
 int sharp_get_nv_max (void);
 int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans);
+int sharp_get_mlim (int lmax, int spin, double sth, double cth);
 
 #endif

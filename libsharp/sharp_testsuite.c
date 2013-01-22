@@ -38,6 +38,7 @@
 #include <omp.h>
 #endif
 #include "sharp.h"
+#include "sharp_internal.h"
 #include "sharp_geomhelpers.h"
 #include "sharp_almhelpers.h"
 #include "c_utils.h"
@@ -243,19 +244,6 @@ static int good_fft_size(int n)
   return bestfac;
   }
 
-static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
-  double ofs)
-  {
-  double b = -2*spin*fabs(cth);
-  double t1 = lmax*sth+ofs;
-  double c = spin*spin-t1*t1;
-  double discr = b*b-4*c;
-  if (discr<=0) return lmax;
-  double res=(-b+sqrt(discr))/2.;
-  if (res>lmax) res=lmax;
-  return (int)(res+0.5);
-  }
-
 static void get_infos (const char *gname, int lmax, int *mmax, int *gpar1,
   int *gpar2, sharp_geom_info **ginfo, sharp_alm_info **ainfo)
   {
@@ -319,7 +307,7 @@ static void get_infos (const char *gname, int lmax, int *mmax, int *gpar1,
     for (int i=0; i<(*ginfo)->npairs; ++i)
       {
       sharp_ringpair *pair=&((*ginfo)->pair[i]);
-      int pring=1+2*sharp_get_mlim(lmax,0,pair->r1.sth,pair->r1.cth,100.);
+      int pring=1+2*sharp_get_mlim(lmax,0,pair->r1.sth,pair->r1.cth);
       if (pring>nlon) pring=nlon;
       pring=good_fft_size(pring);
       pair->r1.nph=pring;

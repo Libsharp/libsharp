@@ -261,7 +261,7 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
       {
       cth[i] = cos(minfo.theta[i]);
       sth[i] = sin(minfo.theta[i]);
-      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
+      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i]);
       }
 
     /* map->phase where necessary */

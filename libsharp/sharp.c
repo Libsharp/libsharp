@@ -63,9 +63,10 @@ static void get_chunk_info (int ndata, int nmult, int *nchunks, int *chunksize)
   *nchunks = (ndata+(*chunksize)-1)/(*chunksize);
   }
 
-static int sharp_get_mlim (int lmax, int spin, double sth, double cth,
-  double ofs)
+int sharp_get_mlim (int lmax, int spin, double sth, double cth)
   {
+  double ofs=lmax*0.01;
+  if (ofs<100.) ofs=100.;
   double b = -2*spin*fabs(cth);
   double t1 = lmax*sth+ofs;
   double c = (double)spin*spin-t1*t1;
@@ -651,7 +652,7 @@ static void sharp_execute_job (sharp_job *job)
       ispair[i] = job->ginfo->pair[i+llim].r2.nph>0;
       cth[i] = job->ginfo->pair[i+llim].r1.cth;
       sth[i] = job->ginfo->pair[i+llim].r1.sth;
-      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i], 100.);
+      mlim[i] = sharp_get_mlim(lmax, job->spin, sth[i], cth[i]);
       }
 
 /* map->phase where necessary */
@@ -750,7 +751,7 @@ int sharp_get_nv_max (void)
 
 static int sharp_oracle (sharp_jobtype type, int spin, int ntrans)
   {
-  int lmax=127;
+  int lmax=511;
   int mmax=(lmax+1)/2;
   int nrings=(lmax+1)/4;
   int ppring=1;
