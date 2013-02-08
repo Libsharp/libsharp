@@ -57,10 +57,8 @@ static double drand (double min, double max, int *state)
   return min + (max-min)*(*state)/(0x7fffffff+1.0);
   }
 
-static void random_alm (dcmplx *alm, sharp_alm_info *helper, int spin)
+static void random_alm (dcmplx *alm, sharp_alm_info *helper, int spin, int cnt)
   {
-  static int cnt=0;
-  ++cnt;
 #pragma omp parallel
 {
   int mi;
@@ -459,11 +457,10 @@ static void do_sht (sharp_geom_info *ginfo, sharp_alm_info *ainfo,
   for (int i=0; i<ncomp; ++i)
     SET_ARRAY(map[i],0,(int)npix,0);
 
-  srand(4);
   dcmplx **alm;
   ALLOC2D(alm,dcmplx,ncomp,nalms);
   for (int i=0; i<ncomp; ++i)
-    random_alm(alm[i],ainfo,spin);
+    random_alm(alm[i],ainfo,spin,i+1);
 
 #ifdef USE_MPI
   sharp_execute_mpi(MPI_COMM_WORLD,SHARP_ALM2MAP,spin,&alm[0],&map[0],ginfo,
@@ -551,11 +548,29 @@ static void sharp_test (int argc, const char **argv)
   get_infos (argv[2], lmax, &mmax, &gpar1, &gpar2, &ginfo, &ainfo);
 
   int ncomp = ntrans*((spin==0) ? 1 : 2);
-  double t_a2m, t_m2a;
+  double t_a2m=1e30, t_m2a=1e30;
   unsigned long long op_a2m, op_m2a;
   double *err_abs,*err_rel;
-  do_sht (ginfo, ainfo, spin, ntrans, 0, &err_abs, &err_rel, &t_a2m, &t_m2a,
-    &op_a2m, &op_m2a);
+
+  double t_acc=0;
+  int nrpt=0;
+  while(1)
+    {
+    ++nrpt;
+    double ta2m2, tm2a2;
+    do_sht (ginfo, ainfo, spin, ntrans, 0, &err_abs, &err_rel, &ta2m2, &tm2a2,
+      &op_a2m, &op_m2a);
+    if (ta2m2<t_a2m) t_a2m=ta2m2;
+    if (tm2a2<t_m2a) t_m2a=tm2a2;
+    t_acc+=t_a2m+t_m2a;
+    if (t_acc>2.)
+      {
+      if (mytask==0) printf("Best of %d runs\n",nrpt);
+      break;
+      }
+    DEALLOC(err_abs);
+    DEALLOC(err_rel);
+    }
 
   if (mytask==0) printf("wall time for alm2map: %fs\n",t_a2m);
   if (mytask==0) printf("Performance: %fGFLOPs/s\n",1e-9*op_a2m/t_a2m);
