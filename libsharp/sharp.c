@@ -437,9 +437,18 @@ static void init_output (sharp_job *job)
 
 static void alloc_phase (sharp_job *job, int nm, int ntheta)
   {
-  if ((nm&1023)==0) nm+=3; // hack to avoid critical strides
-  job->s_m=2*job->ntrans*job->nmaps;
-  job->s_th=job->s_m*nm;
+  if (job->type==SHARP_MAP2ALM)
+    {
+    if ((nm&1023)==0) nm+=3; // hack to avoid critical strides
+    job->s_m=2*job->ntrans*job->nmaps;
+    job->s_th=job->s_m*nm;
+    }
+  else
+    {
+    if ((ntheta&1023)==0) ntheta+=3; // hack to avoid critical strides
+    job->s_th=2*job->ntrans*job->nmaps;
+    job->s_m=job->s_th*ntheta;
+    }
   job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*nm*ntheta);
   }
 
