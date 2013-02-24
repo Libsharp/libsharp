@@ -220,7 +220,7 @@ static inline void Y(rec_step) (Tb * restrict rxp, Tb * restrict rxm,
     }
   }
 
-static void Y(iter_to_ieee_spin) (const Tb cth, int *l_,
+static void Y(iter_to_ieee_spin) (const Tb cth, const Tb sth, int *l_,
   Tb * rec1p_, Tb * rec1m_, Tb * rec2p_, Tb * rec2m_,
   Tb * scalep_, Tb * scalem_, const sharp_Ylmgen_C * restrict gen)
   {
@@ -232,6 +232,11 @@ static void Y(iter_to_ieee_spin) (const Tb cth, int *l_,
     cth2.v[i]=vmax(cth2.v[i],vload(1e-15));
     sth2.v[i]=vsqrt(vmul(vsub(vone,cth.v[i]),vload(0.5)));
     sth2.v[i]=vmax(sth2.v[i],vload(1e-15));
+    Tv mask=vlt(sth.v[i],vzero);
+    Tv cfct=vblend(vand(mask,vlt(cth.v[i],vzero)),vload(-1.),vone);
+    cth2.v[i]=vmul(cth2.v[i],cfct);
+    Tv sfct=vblend(vand(mask,vgt(cth.v[i],vzero)),vload(-1.),vone);
+    sth2.v[i]=vmul(sth2.v[i],sfct);
     }
 
   Tb ccp, ccps, ssp, ssps, csp, csps, scp, scps;
