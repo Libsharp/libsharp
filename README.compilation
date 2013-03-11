@@ -1,4 +1,12 @@
-GNU make and GNU gcc (version 4.x) are required for compilation.
+GNU make is required for compilation.
+
+Libsharp compilation has been successfully tested with GNU and Intel compilers.
+When using gcc, version 4.x is required.
+NOTE: Some versions of the gcc 4.4.x release series contain a bug which causes
+the compiler to crash during libsharp compilation. This appears to be fixed
+in the gcc 4.4.7 release.
+Since libsharp was written in standard C99, other compilers should work fine,
+but SSE2/AVX support will most likely be deactivated.
 
 If you obtained libsharp directly from the git repository, you will also
 need a copy of the GNU autotools. In this case, run "autoconf" in libsharp's
