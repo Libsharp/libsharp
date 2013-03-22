@@ -43,7 +43,6 @@
 #include "sharp_almhelpers.h"
 #include "c_utils.h"
 #include "sharp_announce.h"
-#include "sharp_core.h"
 #include "memusage.h"
 #include "sharp_vecsupport.h"
 
