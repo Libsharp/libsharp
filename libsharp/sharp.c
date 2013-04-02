@@ -80,7 +80,8 @@ int sharp_get_mlim (int lmax, int spin, double sth, double cth)
 typedef struct
   {
   double phi0_;
-  dcmplx *shiftarr, *work;
+  dcmplx *shiftarr;
+  double *work;
   int s_shift, s_work;
   real_plan plan;
   int norot;
@@ -118,7 +119,7 @@ static void ringhelper_update (ringhelper *self, int nph, int mmax, double phi0)
     kill_real_plan(self->plan);
     self->plan=make_real_plan(nph);
     }
-  GROW(self->work,dcmplx,self->s_work,nph);
+  GROW(self->work,double,self->s_work,nph+2);
   }
 
 static int ringinfo_compare (const void *xa, const void *xb)
@@ -168,7 +169,7 @@ ptrdiff_t sharp_alm_index (const sharp_alm_info *self, int l, int mi)
   {
   UTIL_ASSERT(!(self->flags & SHARP_PACKED),
               "sharp_alm_index not applicable with SHARP_PACKED alms");
-  return self->mvstart[mi]+self->stride*l; 
+  return self->mvstart[mi]+self->stride*l;
   }
 
 void sharp_destroy_alm_info (sharp_alm_info *info)
@@ -258,45 +259,54 @@ static void ringhelper_phase2ring (ringhelper *self,
   int stride = info->stride;
 
   ringhelper_update (self, nph, mmax, info->phi0);
-  self->work[0]=phase[0];
 
   if (nph>=2*mmax+1)
     {
-    for (int m=1; m<=mmax; ++m)
+    for (int m=0; m<=mmax; ++m)
       {
       dcmplx tmp = phase[m*pstride];
       if(!self->norot) tmp*=self->shiftarr[m];
-      self->work[m]=tmp;
-      self->work[nph-m]=conj(tmp);
+      self->work[2*m]=creal(tmp);
+      self->work[2*m+1]=cimag(tmp);
       }
-    for (int m=mmax+1; m<(nph-mmax); ++m)
+    for (int m=2*(mmax+1); m<nph+2; ++m)
       self->work[m]=0.;
     }
   else
     {
-    SET_ARRAY(self->work,1,nph,0.);
+    self->work[0]=creal(phase[0]);
+    SET_ARRAY(self->work,1,nph+2,0.);
 
     int idx1=1, idx2=nph-1;
     for (int m=1; m<=mmax; ++m)
       {
       dcmplx tmp = phase[m*pstride];
       if(!self->norot) tmp*=self->shiftarr[m];
-      self->work[idx1]+=tmp;
-      self->work[idx2]+=conj(tmp);
+      if (idx1<(nph+2)/2)
+        {
+        self->work[2*idx1]+=creal(tmp);
+        self->work[2*idx1+1]+=cimag(tmp);
+        }
+      if (idx2<(nph+2)/2)
+        {
+        self->work[2*idx2]+=creal(tmp);
+        self->work[2*idx2+1]-=cimag(tmp);
+        }
       if (++idx1>=nph) idx1=0;
       if (--idx2<0) idx2=nph-1;
       }
     }
-  real_plan_backward_c (self->plan, (double *)(self->work));
+  self->work[1]=self->work[0];
+  real_plan_backward_fftpack (self->plan, &(self->work[1]));
   double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
   if (flags&SHARP_REAL_HARMONICS)
     wgt *= sqrt_one_half;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
-      ((double *)data)[m*stride+info->ofs]+=creal(self->work[m])*wgt;
+      ((double *)data)[m*stride+info->ofs]+=self->work[m+1]*wgt;
   else
     for (int m=0; m<nph; ++m)
-      ((float *)data)[m*stride+info->ofs] += (float)(creal(self->work[m])*wgt);
+      ((float *)data)[m*stride+info->ofs] += (float)(self->work[m+1]*wgt);
   }
 
 static void ringhelper_ring2phase (ringhelper *self,
@@ -316,30 +326,39 @@ static void ringhelper_ring2phase (ringhelper *self,
     wgt *= sqrt_two;
   if (flags&SHARP_DP)
     for (int m=0; m<nph; ++m)
-      self->work[m] = ((double *)data)[info->ofs+m*info->stride]*wgt;
+      self->work[m+1] = ((double *)data)[info->ofs+m*info->stride]*wgt;
   else
     for (int m=0; m<nph; ++m)
-      self->work[m] = ((float *)data)[info->ofs+m*info->stride]*wgt;
+      self->work[m+1] = ((float *)data)[info->ofs+m*info->stride]*wgt;
 
-  real_plan_forward_c (self->plan, (double *)self->work);
+  real_plan_forward_fftpack (self->plan, &(self->work[1]));
+  self->work[0]=self->work[1];
+  self->work[1]=self->work[nph+1]=0.;
 
-  if (maxidx<nph)
+  if (maxidx<=nph/2)
     {
     if (self->norot)
       for (int m=0; m<=maxidx; ++m)
-        phase[m*pstride] = self->work[m];
+        phase[m*pstride] = self->work[2*m] + _Complex_I*self->work[2*m+1];
     else
       for (int m=0; m<=maxidx; ++m)
-        phase[m*pstride]=self->work[m]*self->shiftarr[m];
+        phase[m*pstride] =
+          (self->work[2*m] + _Complex_I*self->work[2*m+1]) * self->shiftarr[m];
     }
   else
     {
-    if (self->norot)
-      for (int m=0; m<=maxidx; ++m)
-        phase[m*pstride] = self->work[m%nph];
-    else
-      for (int m=0; m<=maxidx; ++m)
-        phase[m*pstride]=self->work[m%nph]*self->shiftarr[m];
+    for (int m=0; m<=maxidx; ++m)
+      {
+      int idx=m%nph;
+      dcmplx val;
+      if (idx<(nph-idx))
+        val = self->work[2*idx] + _Complex_I*self->work[2*idx+1];
+      else
+        val = self->work[2*(nph-idx)] - _Complex_I*self->work[2*(nph-idx)+1];
+      if (!self->norot)
+        val *= self->shiftarr[m];
+      phase[m*pstride]=val;
+      }
     }
 
   for (int m=maxidx+1;m<=mmax; ++m)
