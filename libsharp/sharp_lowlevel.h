@@ -60,7 +60,7 @@ typedef struct
 typedef struct
   {
   sharp_ringpair *pair;
-  int npairs;
+  int npairs, nphmax;
   } sharp_geom_info;
 
 /*! \defgroup almgroup Helpers for dealing with a_lm */

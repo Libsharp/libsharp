@@ -81,15 +81,14 @@ typedef struct
   {
   double phi0_;
   dcmplx *shiftarr;
-  double *work;
-  int s_shift, s_work;
+  int s_shift;
   real_plan plan;
   int norot;
   } ringhelper;
 
 static void ringhelper_init (ringhelper *self)
   {
-  static ringhelper rh_null = { 0, NULL, NULL, 0, 0, NULL, 0 };
+  static ringhelper rh_null = { 0, NULL, 0, NULL, 0 };
   *self = rh_null;
   }
 
@@ -97,7 +96,6 @@ static void ringhelper_destroy (ringhelper *self)
   {
   if (self->plan) kill_real_plan(self->plan);
   DEALLOC(self->shiftarr);
-  DEALLOC(self->work);
   ringhelper_init(self);
   }
 
@@ -119,7 +117,6 @@ static void ringhelper_update (ringhelper *self, int nph, int mmax, double phi0)
     kill_real_plan(self->plan);
     self->plan=make_real_plan(nph);
     }
-  GROW(self->work,double,self->s_work,nph+2);
   }
 
 static int ringinfo_compare (const void *xa, const void *xb)
@@ -261,53 +258,52 @@ static void ringhelper_phase2ring (ringhelper *self,
 
   ringhelper_update (self, nph, mmax, info->phi0);
 
+  double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
+  if (flags&SHARP_REAL_HARMONICS)
+    wgt *= sqrt_one_half;
+
   if (nph>=2*mmax+1)
     {
     for (int m=0; m<=mmax; ++m)
       {
-      dcmplx tmp = phase[m*pstride];
+      dcmplx tmp = phase[m*pstride]*wgt;
       if(!self->norot) tmp*=self->shiftarr[m];
-      self->work[2*m]=creal(tmp);
-      self->work[2*m+1]=cimag(tmp);
+      data[2*m]=creal(tmp);
+      data[2*m+1]=cimag(tmp);
       }
     for (int m=2*(mmax+1); m<nph+2; ++m)
-      self->work[m]=0.;
+      data[m]=0.;
     }
   else
     {
-    self->work[0]=creal(phase[0]);
-    SET_ARRAY(self->work,1,nph+2,0.);
+    data[0]=creal(phase[0])*wgt;
+    SET_ARRAY(data,1,nph+2,0.);
 
     int idx1=1, idx2=nph-1;
     for (int m=1; m<=mmax; ++m)
       {
-      dcmplx tmp = phase[m*pstride];
+      dcmplx tmp = phase[m*pstride]*wgt;
       if(!self->norot) tmp*=self->shiftarr[m];
       if (idx1<(nph+2)/2)
         {
-        self->work[2*idx1]+=creal(tmp);
-        self->work[2*idx1+1]+=cimag(tmp);
+        data[2*idx1]+=creal(tmp);
+        data[2*idx1+1]+=cimag(tmp);
         }
       if (idx2<(nph+2)/2)
         {
-        self->work[2*idx2]+=creal(tmp);
-        self->work[2*idx2+1]-=cimag(tmp);
+        data[2*idx2]+=creal(tmp);
+        data[2*idx2+1]-=cimag(tmp);
         }
       if (++idx1>=nph) idx1=0;
       if (--idx2<0) idx2=nph-1;
       }
     }
-  self->work[1]=self->work[0];
-  real_plan_backward_fftpack (self->plan, &(self->work[1]));
-  double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1.;
-  if (flags&SHARP_REAL_HARMONICS)
-    wgt *= sqrt_one_half;
-  for (int m=0; m<nph; ++m)
-    data[m]=self->work[m+1]*wgt;
+  data[1]=data[0];
+  real_plan_backward_fftpack (self->plan, &(data[1]));
   }
 
 static void ringhelper_ring2phase (ringhelper *self,
-  const sharp_ringinfo *info, const double *data, int mmax, dcmplx *phase,
+  const sharp_ringinfo *info, double *data, int mmax, dcmplx *phase,
   int pstride, int flags)
   {
   int nph = info->nph;
@@ -321,22 +317,20 @@ static void ringhelper_ring2phase (ringhelper *self,
   double wgt = (flags&SHARP_USE_WEIGHTS) ? info->weight : 1;
   if (flags&SHARP_REAL_HARMONICS)
     wgt *= sqrt_two;
-  for (int m=0; m<nph; ++m)
-    self->work[m+1] = data[m]*wgt;
 
-  real_plan_forward_fftpack (self->plan, &(self->work[1]));
-  self->work[0]=self->work[1];
-  self->work[1]=self->work[nph+1]=0.;
+  real_plan_forward_fftpack (self->plan, &(data[1]));
+  data[0]=data[1];
+  data[1]=data[nph+1]=0.;
 
   if (maxidx<=nph/2)
     {
     if (self->norot)
       for (int m=0; m<=maxidx; ++m)
-        phase[m*pstride] = self->work[2*m] + _Complex_I*self->work[2*m+1];
+        phase[m*pstride] = (data[2*m] + _Complex_I*data[2*m+1]) * wgt;
     else
       for (int m=0; m<=maxidx; ++m)
         phase[m*pstride] =
-          (self->work[2*m] + _Complex_I*self->work[2*m+1]) * self->shiftarr[m];
+          (data[2*m] + _Complex_I*data[2*m+1]) * self->shiftarr[m] * wgt;
     }
   else
     {
@@ -345,9 +339,9 @@ static void ringhelper_ring2phase (ringhelper *self,
       int idx=m%nph;
       dcmplx val;
       if (idx<(nph-idx))
-        val = self->work[2*idx] + _Complex_I*self->work[2*idx+1];
+        val = (data[2*idx] + _Complex_I*data[2*idx+1]) * wgt;
       else
-        val = self->work[2*(nph-idx)] - _Complex_I*self->work[2*(nph-idx)+1];
+        val = (data[2*(nph-idx)] - _Complex_I*data[2*(nph-idx)+1]) * wgt;
       if (!self->norot)
         val *= self->shiftarr[m];
       phase[m*pstride]=val;
@@ -582,23 +576,25 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
 #undef COPY_LOOP
   }
 
-static void ringtmp2ring (sharp_job *job, sharp_ringinfo *ri, double *ringtmp)
+static void ringtmp2ring (sharp_job *job, sharp_ringinfo *ri, double *ringtmp,
+  int rstride)
   {
   double **dmap = (double **)job->map;
   float  **fmap = (float  **)job->map;
   for (int i=0; i<job->ntrans*job->nmaps; ++i)
     for (int m=0; m<ri->nph; ++m)
       if (job->flags & SHARP_DP)
-        dmap[i][ri->ofs+m*ri->stride] += ringtmp[i*job->ginfo->nphmax+m];
+        dmap[i][ri->ofs+m*ri->stride] += ringtmp[i*rstride+m+1];
       else
-        fmap[i][ri->ofs+m*ri->stride] += (float)ringtmp[i*job->ginfo->nphmax+m];
+        fmap[i][ri->ofs+m*ri->stride] += (float)ringtmp[i*rstride+m+1];
   }
 
-static void ring2ringtmp (sharp_job *job, sharp_ringinfo *ri, double *ringtmp)
+static void ring2ringtmp (sharp_job *job, sharp_ringinfo *ri, double *ringtmp,
+  int rstride)
   {
   for (int i=0; i<job->ntrans*job->nmaps; ++i)
     for (int m=0; m<ri->nph; ++m)
-      ringtmp[i*job->ginfo->nphmax+m] = (job->flags & SHARP_DP) ?
+      ringtmp[i*rstride+m+1] = (job->flags & SHARP_DP) ?
         ((double *)(job->map[i]))[ri->ofs+m*ri->stride] :
         ((float  *)(job->map[i]))[ri->ofs+m*ri->stride];
   }
@@ -612,21 +608,22 @@ static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
 {
   ringhelper helper;
   ringhelper_init(&helper);
-  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*job->ginfo->nphmax);
+  int rstride=job->ginfo->nphmax+2;
+  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
 #pragma omp for schedule(dynamic,1)
   for (int ith=llim; ith<ulim; ++ith)
     {
     int dim2 = job->s_th*(ith-llim);
-    ring2ringtmp(job,&(job->ginfo->pair[ith].r1),ringtmp);
+    ring2ringtmp(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
-      ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r1),&ringtmp[i*job->ginfo->nphmax],
-        mmax,&job->phase[dim2+2*i],pstride,job->flags);
+      ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r1),
+        &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
     if (job->ginfo->pair[ith].r2.nph>0)
       {
-      ring2ringtmp(job,&(job->ginfo->pair[ith].r2),ringtmp);
+      ring2ringtmp(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
       for (int i=0; i<job->ntrans*job->nmaps; ++i)
-        ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r2),&ringtmp[i*job->ginfo->nphmax],
-          mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
+        ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r2),
+          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
       }
     }
   DEALLOC(ringtmp);
@@ -642,21 +639,22 @@ static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
 {
   ringhelper helper;
   ringhelper_init(&helper);
-  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*job->ginfo->nphmax);
+  int rstride=job->ginfo->nphmax+2;
+  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
 #pragma omp for schedule(dynamic,1)
   for (int ith=llim; ith<ulim; ++ith)
     {
     int dim2 = job->s_th*(ith-llim);
     for (int i=0; i<job->ntrans*job->nmaps; ++i)
-      ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r1),&ringtmp[i*job->ginfo->nphmax],
-        mmax,&job->phase[dim2+2*i],pstride,job->flags);
-    ringtmp2ring(job,&(job->ginfo->pair[ith].r1),ringtmp);
+      ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r1),
+        &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
+    ringtmp2ring(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
     if (job->ginfo->pair[ith].r2.nph>0)
       {
       for (int i=0; i<job->ntrans*job->nmaps; ++i)
-        ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r2),&ringtmp[i*job->ginfo->nphmax],
-          mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
-      ringtmp2ring(job,&(job->ginfo->pair[ith].r2),ringtmp);
+        ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r2),
+          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
+      ringtmp2ring(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
       }
     }
   DEALLOC(ringtmp);
