@@ -53,18 +53,15 @@ case $CCTYPE in
     GCCVERSION="`$CC -dumpversion 2>&1`"
     echo "Using gcc version $GCCVERSION"
     AC_SUBST(GCCVERSION)
-    case $system in
-      Darwin-*)
-        ;;
-      *)
-        CCFLAGS="$CCFLAGS -ffunction-sections -fdata-sections"
-        ;;
-    esac
     changequote(,)
-    gcc43=`echo $GCCVERSION | grep -c '4\.[3456789]'`
+    gcc43=`echo $GCCVERSION | grep -c '^4\.[3456789]'`
+    gcc44=`echo $GCCVERSION | grep -c '^4\.4'`
     changequote([,])
     if test $gcc43 -gt 0; then
       CCFLAGS="$CCFLAGS -march=native"
+    fi
+    if test $gcc44 -gt 0; then
+      CCFLAGS="$CCFLAGS -fno-tree-fre"
     fi
     ;;
   icc)

@@ -1,10 +1,7 @@
 GNU make is required for compilation.
 
 Libsharp compilation has been successfully tested with GNU and Intel compilers.
-When using gcc, version 4.x is required.
-NOTE: Some versions of the gcc 4.4.x release series contain a bug which causes
-the compiler to crash during libsharp compilation. This appears to be fixed
-in the gcc 4.4.7 release.
+When using gcc, version 4.x is required [1].
 Since libsharp was written in standard C99, other compilers should work fine,
 but SSE2/AVX support will most likely be deactivated.
 
@@ -24,3 +21,10 @@ Documentation can be created by the command "(g)make doc".
 However this requires the doxygen application to be installed
 on your system.
 The documentation will be created in the subdirectory doc/.
+
+
+[1] Some versions of the gcc 4.4.x release series contain a bug which causes
+the compiler to crash during libsharp compilation. This appears to be fixed
+in the gcc 4.4.7 release. It is possible to work around this problem by adding
+the compiler flag "-fno-tree-fre" after the other optimization flags - the
+configure script should do this automatically.
