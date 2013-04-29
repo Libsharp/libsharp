@@ -183,6 +183,7 @@ typedef enum { SHARP_DP              = 1<<4,
                     corresponding complex coefficient (when accessed
                     as complex).
                 */
+               SHARP_NO_FFT          = 1<<7,
 
                SHARP_USE_WEIGHTS     = 1<<20,    /* internal use only */
                SHARP_NO_OPENMP       = 1<<21,    /* internal use only */

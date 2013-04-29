@@ -355,23 +355,52 @@ static void ringhelper_ring2phase (ringhelper *self,
 static void fill_map (const sharp_geom_info *ginfo, void *map, double value,
   int flags)
   {
-  for (int j=0;j<ginfo->npairs;++j)
+  if (flags & SHARP_NO_FFT)
     {
-    if (flags&SHARP_DP)
+    for (int j=0;j<ginfo->npairs;++j)
       {
-      for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
-        ((double *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]=value;
-      for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
-        ((double *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]=value;
+      if (flags&SHARP_DP)
+        {
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
+          ((dcmplx *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
+            =value;
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
+          ((dcmplx *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
+            =value;
+        }
+      else
+        {
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
+          ((fcmplx *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
+            =(float)value;
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
+          ((fcmplx *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
+            =(float)value;
+        }
       }
-    else
+    }
+  else
+    {
+    for (int j=0;j<ginfo->npairs;++j)
       {
-      for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
-        ((float *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
-          =(float)value;
-      for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
-        ((float *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
-          =(float)value;
+      if (flags&SHARP_DP)
+        {
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
+          ((double *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
+            =value;
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
+          ((double *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
+            =value;
+        }
+      else
+        {
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r1.nph;++i)
+          ((float *)map)[ginfo->pair[j].r1.ofs+i*ginfo->pair[j].r1.stride]
+            =(float)value;
+        for (ptrdiff_t i=0;i<ginfo->pair[j].r2.nph;++i)
+          ((float *)map)[ginfo->pair[j].r2.ofs+i*ginfo->pair[j].r2.stride]
+            =(float)value;
+        }
       }
     }
   }
@@ -599,67 +628,135 @@ static void ring2ringtmp (sharp_job *job, sharp_ringinfo *ri, double *ringtmp,
         ((float  *)(job->map[i]))[ri->ofs+m*ri->stride];
   }
 
+static void ring2phase_direct (sharp_job *job, sharp_ringinfo *ri, int mmax,
+  dcmplx *phase)
+  {
+  if (ri->nph<0)
+    {
+    for (int i=0; i<job->ntrans*job->nmaps; ++i)
+      for (int m=0; m<=mmax; ++m)
+        phase[2*i+job->s_m*m]=0.;
+    }
+  else
+    {
+    UTIL_ASSERT(ri->nph==mmax+1,"bad ring size");
+    double wgt = (job->flags&SHARP_USE_WEIGHTS) ? (ri->nph*ri->weight) : 1.;
+    if (job->flags&SHARP_REAL_HARMONICS)
+      wgt *= sqrt_two;
+    for (int i=0; i<job->ntrans*job->nmaps; ++i)
+      for (int m=0; m<=mmax; ++m)
+        phase[2*i+job->s_m*m]= (job->flags & SHARP_DP) ?
+          ((dcmplx *)(job->map[i]))[ri->ofs+m*ri->stride]*wgt :
+          ((fcmplx *)(job->map[i]))[ri->ofs+m*ri->stride]*wgt;
+    }
+  }
+static void phase2ring_direct (sharp_job *job, sharp_ringinfo *ri, int mmax,
+  dcmplx *phase)
+  {
+  if (ri->nph<0) return;
+  UTIL_ASSERT(ri->nph==mmax+1,"bad ring size");
+  dcmplx **dmap = (dcmplx **)job->map;
+  fcmplx **fmap = (fcmplx **)job->map;
+  double wgt = (job->flags&SHARP_USE_WEIGHTS) ? (ri->nph*ri->weight) : 1.;
+  if (job->flags&SHARP_REAL_HARMONICS)
+    wgt *= sqrt_one_half;
+  for (int i=0; i<job->ntrans*job->nmaps; ++i)
+    for (int m=0; m<=mmax; ++m)
+      if (job->flags & SHARP_DP)
+        dmap[i][ri->ofs+m*ri->stride] += wgt*phase[2*i+job->s_m*m];
+      else
+        fmap[i][ri->ofs+m*ri->stride] += (fcmplx)(wgt*phase[2*i+job->s_m*m]);
+  }
+
 //FIXME: set phase to zero if not SHARP_MAP2ALM?
 static void map2phase (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type != SHARP_MAP2ALM) return;
   int pstride = job->s_m;
-#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
-{
-  ringhelper helper;
-  ringhelper_init(&helper);
-  int rstride=job->ginfo->nphmax+2;
-  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
-#pragma omp for schedule(dynamic,1)
-  for (int ith=llim; ith<ulim; ++ith)
+  if (job->flags & SHARP_NO_FFT)
     {
-    int dim2 = job->s_th*(ith-llim);
-    ring2ringtmp(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
-    for (int i=0; i<job->ntrans*job->nmaps; ++i)
-      ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r1),
-        &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
-    if (job->ginfo->pair[ith].r2.nph>0)
+    for (int ith=llim; ith<ulim; ++ith)
       {
-      ring2ringtmp(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
-      for (int i=0; i<job->ntrans*job->nmaps; ++i)
-        ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r2),
-          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
+      int dim2 = job->s_th*(ith-llim);
+      ring2phase_direct(job,&(job->ginfo->pair[ith].r1),mmax,
+        &(job->phase[dim2]));
+      ring2phase_direct(job,&(job->ginfo->pair[ith].r2),mmax,
+        &(job->phase[dim2+1]));
       }
     }
-  DEALLOC(ringtmp);
-  ringhelper_destroy(&helper);
+  else
+    {
+#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
+{
+    ringhelper helper;
+    ringhelper_init(&helper);
+    int rstride=job->ginfo->nphmax+2;
+    double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
+#pragma omp for schedule(dynamic,1)
+    for (int ith=llim; ith<ulim; ++ith)
+      {
+      int dim2 = job->s_th*(ith-llim);
+      ring2ringtmp(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
+      for (int i=0; i<job->ntrans*job->nmaps; ++i)
+        ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r1),
+          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
+      if (job->ginfo->pair[ith].r2.nph>0)
+        {
+        ring2ringtmp(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
+        for (int i=0; i<job->ntrans*job->nmaps; ++i)
+          ringhelper_ring2phase (&helper,&(job->ginfo->pair[ith].r2),
+           &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
+        }
+      }
+    DEALLOC(ringtmp);
+    ringhelper_destroy(&helper);
 } /* end of parallel region */
+    }
   }
 
 static void phase2map (sharp_job *job, int mmax, int llim, int ulim)
   {
   if (job->type == SHARP_MAP2ALM) return;
   int pstride = job->s_m;
-#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
-{
-  ringhelper helper;
-  ringhelper_init(&helper);
-  int rstride=job->ginfo->nphmax+2;
-  double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
-#pragma omp for schedule(dynamic,1)
-  for (int ith=llim; ith<ulim; ++ith)
+  if (job->flags & SHARP_NO_FFT)
     {
-    int dim2 = job->s_th*(ith-llim);
-    for (int i=0; i<job->ntrans*job->nmaps; ++i)
-      ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r1),
-        &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
-    ringtmp2ring(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
-    if (job->ginfo->pair[ith].r2.nph>0)
+    for (int ith=llim; ith<ulim; ++ith)
       {
-      for (int i=0; i<job->ntrans*job->nmaps; ++i)
-        ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r2),
-          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
-      ringtmp2ring(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
+      int dim2 = job->s_th*(ith-llim);
+      phase2ring_direct(job,&(job->ginfo->pair[ith].r1),mmax,
+        &(job->phase[dim2]));
+      phase2ring_direct(job,&(job->ginfo->pair[ith].r2),mmax,
+        &(job->phase[dim2+1]));
       }
     }
-  DEALLOC(ringtmp);
-  ringhelper_destroy(&helper);
+  else
+    {
+#pragma omp parallel if ((job->flags&SHARP_NO_OPENMP)==0)
+{
+    ringhelper helper;
+    ringhelper_init(&helper);
+    int rstride=job->ginfo->nphmax+2;
+    double *ringtmp=RALLOC(double,job->ntrans*job->nmaps*rstride);
+#pragma omp for schedule(dynamic,1)
+    for (int ith=llim; ith<ulim; ++ith)
+      {
+      int dim2 = job->s_th*(ith-llim);
+      for (int i=0; i<job->ntrans*job->nmaps; ++i)
+        ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r1),
+          &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i],pstride,job->flags);
+      ringtmp2ring(job,&(job->ginfo->pair[ith].r1),ringtmp,rstride);
+      if (job->ginfo->pair[ith].r2.nph>0)
+        {
+        for (int i=0; i<job->ntrans*job->nmaps; ++i)
+          ringhelper_phase2ring (&helper,&(job->ginfo->pair[ith].r2),
+            &ringtmp[i*rstride],mmax,&job->phase[dim2+2*i+1],pstride,job->flags);
+        ringtmp2ring(job,&(job->ginfo->pair[ith].r2),ringtmp,rstride);
+        }
+      }
+    DEALLOC(ringtmp);
+    ringhelper_destroy(&helper);
 } /* end of parallel region */
+    }
   }
 
 static void sharp_execute_job (sharp_job *job)
