@@ -33,7 +33,7 @@
 #define PLANCK_SHARP_MPI_H
 
 #include <mpi.h>
-#include "sharp.h"
+#include "sharp_lowlevel.h"
 
 #ifdef __cplusplus
 extern "C" {
