@@ -208,7 +208,7 @@ typedef __mmask8 Tm;
 #define vlt(a,b) _mm512_cmplt_pd_mask(a,b)
 #define vgt(a,b) _mm512_cmpnle_pd_mask(a,b)
 #define vge(a,b) _mm512_cmpnlt_pd_mask(a,b)
-#define vne(a,b) _mm512_cmpne_pd_mask(a,b)
+#define vne(a,b) _mm512_cmpneq_pd_mask(a,b)
 #define vand_mask(a,b) ((a)&(b))
 #define vmin(a,b) _mm512_min_pd(a,b)
 #define vmax(a,b) _mm512_max_pd(a,b)
