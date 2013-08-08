@@ -201,7 +201,7 @@ typedef __mmask8 Tm;
 #define vfmseq(a,b,c) a=_mm512_fnmadd_pd(b,c,a)
 #define vfmaaeq(a,b,c,d,e) a=_mm512_fmadd_pd(d,e,_mm512_fmadd_pd(b,c,a))
 #define vfmaseq(a,b,c,d,e) a=_mm512_fnmadd_pd(d,e,_mm512_fmadd_pd(b,c,a))
-#define vneg(a) _mm512_xor_pd(_mm512_set1_pd(-0.),a)
+#define vneg(a) (__m512d)_mm512_xor_epi64((__m512i)_mm512_set1_pd(-0.),(__m512i)a)
 #define vload(a) _mm512_set1_pd(a)
 #define vabs(a) (__m512d)_mm512_andnot_epi64((__m512i)_mm512_set1_pd(-0.),(__m512i)a)
 #define vsqrt(a) _mm512_sqrt_pd(a)
