@@ -25,7 +25,7 @@
 /*  \file sharp_complex_hacks.h
  *  support for converting vector types and complex numbers
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012,2013 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -128,6 +128,20 @@ static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c, Tv d,
   u.v=tmp1;
   *c1+=u.c[0]; *c2+=u.c[1];
 #endif
+  }
+
+#endif
+
+#if (VLEN==8)
+
+static inline complex double vhsum_cmplx(Tv a, Tv b)
+  { return _mm512_reduce_add_pd(a)+_Complex_I*_mm512_reduce_add_pd(b); }
+
+static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c, Tv d,
+  complex double * restrict c1, complex double * restrict c2)
+  {
+  *c1 += _mm512_reduce_add_pd(a)+_Complex_I*_mm512_reduce_add_pd(b);
+  *c2 += _mm512_reduce_add_pd(c)+_Complex_I*_mm512_reduce_add_pd(d);
   }
 
 #endif
