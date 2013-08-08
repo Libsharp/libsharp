@@ -25,14 +25,16 @@
 /*! \file sharp_vecutil.h
  *  Functionality related to vector instruction support
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012,2013 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
 #ifndef SHARP_VECUTIL_H
 #define SHARP_VECUTIL_H
 
-#if (defined (__AVX__))
+#if (defined (__MIC__))
+#define VLEN 8
+#elif (defined (__AVX__))
 #define VLEN 4
 #elif (defined (__SSE2__))
 #define VLEN 2

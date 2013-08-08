@@ -77,19 +77,19 @@ static void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
   const Tv vfmin=vload(sharp_fsmall*maxval), vfmax=vload(maxval);
   for (int i=0;i<nvec; ++i)
     {
-    Tv mask = vgt(vabs(val->v[i]),vfmax);
+    Tm mask = vgt(vabs(val->v[i]),vfmax);
     while (vanyTrue(mask))
       {
-      vmuleq(val->v[i],vblend(mask,vfsmall,vone));
-      vaddeq(scale->v[i],vblend(mask,vone,vzero));
+      vmuleq_mask(mask,val->v[i],vfsmall);
+      vaddeq_mask(mask,scale->v[i],vone);
       mask = vgt(vabs(val->v[i]),vfmax);
       }
-    mask = vand(vlt(vabs(val->v[i]),vfmin),vne(val->v[i],vzero));
+    mask = vand_mask(vlt(vabs(val->v[i]),vfmin),vne(val->v[i],vzero));
     while (vanyTrue(mask))
       {
-      vmuleq(val->v[i],vblend(mask,vfbig,vone));
-      vsubeq(scale->v[i],vblend(mask,vone,vzero));
-      mask = vand(vlt(vabs(val->v[i]),vfmin),vne(val->v[i],vzero));
+      vmuleq_mask(mask,val->v[i],vfbig);
+      vsubeq_mask(mask,scale->v[i],vone);
+      mask = vand_mask(vlt(vabs(val->v[i]),vfmin),vne(val->v[i],vzero));
       }
     }
   }
@@ -131,13 +131,13 @@ static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
   int did_scale=0;
   for (int i=0;i<nvec; ++i)
     {
-    Tv mask = vgt(vabs(lam2->v[i]),vload(sharp_ftol));
+    Tm mask = vgt(vabs(lam2->v[i]),vload(sharp_ftol));
     if (vanyTrue(mask))
       {
       did_scale=1;
-      Tv fact = vblend(mask,vload(sharp_fsmall),vone);
-      vmuleq(lam1->v[i],fact); vmuleq(lam2->v[i],fact);
-      vaddeq(scale->v[i],vblend(mask,vone,vzero));
+      vmuleq_mask(mask,lam1->v[i],vload(sharp_fsmall));
+      vmuleq_mask(mask,lam2->v[i],vload(sharp_fsmall));
+      vaddeq_mask(mask,scale->v[i],vone);
       }
     }
   return did_scale;
@@ -146,25 +146,25 @@ static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
 static inline int Y(TballLt)(Tb a,double b)
   {
   Tv vb=vload(b);
-  Tv res=vlt(a.v[0],vb);
+  Tm res=vlt(a.v[0],vb);
   for (int i=1; i<nvec; ++i)
-    res=vand(res,vlt(a.v[i],vb));
+    res=vand_mask(res,vlt(a.v[i],vb));
   return vallTrue(res);
   }
 static inline int Y(TballGt)(Tb a,double b)
   {
   Tv vb=vload(b);
-  Tv res=vgt(a.v[0],vb);
+  Tm res=vgt(a.v[0],vb);
   for (int i=1; i<nvec; ++i)
-    res=vand(res,vgt(a.v[i],vb));
+    res=vand_mask(res,vgt(a.v[i],vb));
   return vallTrue(res);
   }
 static inline int Y(TballGe)(Tb a,double b)
   {
   Tv vb=vload(b);
-  Tv res=vge(a.v[0],vb);
+  Tm res=vge(a.v[0],vb);
   for (int i=1; i<nvec; ++i)
-    res=vand(res,vge(a.v[i],vb));
+    res=vand_mask(res,vge(a.v[i],vb));
   return vallTrue(res);
   }
 
@@ -232,11 +232,11 @@ static void Y(iter_to_ieee_spin) (const Tb cth, const Tb sth, int *l_,
     cth2.v[i]=vmax(cth2.v[i],vload(1e-15));
     sth2.v[i]=vsqrt(vmul(vsub(vone,cth.v[i]),vload(0.5)));
     sth2.v[i]=vmax(sth2.v[i],vload(1e-15));
-    Tv mask=vlt(sth.v[i],vzero);
-    Tv cfct=vblend(vand(mask,vlt(cth.v[i],vzero)),vload(-1.),vone);
-    cth2.v[i]=vmul(cth2.v[i],cfct);
-    Tv sfct=vblend(vand(mask,vgt(cth.v[i],vzero)),vload(-1.),vone);
-    sth2.v[i]=vmul(sth2.v[i],sfct);
+    Tm mask=vlt(sth.v[i],vzero);
+    Tm cmask=vand_mask(mask,vlt(cth.v[i],vzero));
+    vmuleq_mask(cmask,cth2.v[i],vload(-1.));
+    Tm smask=vand_mask(mask,vgt(cth.v[i],vzero));
+    vmuleq_mask(smask,sth2.v[i],vload(-1.));
     }
 
   Tb ccp, ccps, ssp, ssps, csp, csps, scp, scps;
