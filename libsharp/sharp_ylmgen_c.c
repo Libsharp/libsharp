@@ -25,7 +25,7 @@
 /*
  *  Helper code for efficient calculation of Y_lm(theta,phi=0)
  *
- *  Copyright (C) 2005-2012 Max-Planck-Society
+ *  Copyright (C) 2005-2014 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -48,7 +48,7 @@ void sharp_Ylmgen_init (sharp_Ylmgen_C *gen, int l_max, int m_max, int spin)
   gen->lmax = l_max;
   gen->mmax = m_max;
   UTIL_ASSERT(spin>=0,"incorrect spin: must be nonnegative");
-  UTIL_ASSERT(m_max>=spin,"incorrect m_max: must be >= spin");
+  UTIL_ASSERT(l_max>=spin,"incorrect l_max: must be >= spin");
   UTIL_ASSERT(l_max>=m_max,"incorrect l_max: must be >= m_max");
   gen->s = spin;
   UTIL_ASSERT((sharp_minscale<=0)&&(sharp_maxscale>0),
