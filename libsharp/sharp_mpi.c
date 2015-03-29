@@ -326,4 +326,19 @@ void sharp_execute_mpi (MPI_Comm comm, sharp_jobtype type, int spin,
   if (opcnt!=NULL) *opcnt = job.opcnt;
   }
 
+/* We declare this only in C file to make symbol available for Fortran wrappers;
+   without declaring it in C header as it should not be available to C code */
+void sharp_execute_mpi_fortran(MPI_Fint comm, sharp_jobtype type, int spin,
+  void *alm, void *map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int flags, double *time,
+  unsigned long long *opcnt);
+void sharp_execute_mpi_fortran(MPI_Fint comm, sharp_jobtype type, int spin,
+  void *alm, void *map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int flags, double *time,
+  unsigned long long *opcnt)
+  {
+  sharp_execute_mpi(MPI_Comm_f2c(comm), type, spin, alm, map, geom_info,
+                    alm_info, ntrans, flags, time, opcnt);
+  }
+
 #endif
