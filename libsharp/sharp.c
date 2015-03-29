@@ -859,6 +859,8 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   job->flags = flags;
   if ((job->flags&SHARP_NVMAX)==0)
     job->flags|=sharp_nv_oracle (type, spin, ntrans);
+  if (alm_info->flags&SHARP_REAL_HARMONICS)
+    job->flags|=SHARP_REAL_HARMONICS;
   job->time = 0.;
   job->opcnt = 0;
   job->ntrans = ntrans;

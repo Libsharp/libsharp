@@ -86,10 +86,21 @@ typedef struct
   } sharp_alm_info;
 
 /*! alm_info flags */
-typedef enum { SHARP_PACKED = 1
-               /*< m=0-coefficients are packed so that the (zero) imaginary part is
-                   not present. mvstart is in units of *real* float/double for all
-                   m; stride is in units of reals for m=0 and complex for m!=0 */
+typedef enum { SHARP_PACKED = 1,
+               /*!< m=0-coefficients are packed so that the (zero) imaginary part is
+                    not present. mvstart is in units of *real* float/double for all
+                    m; stride is in units of reals for m=0 and complex for m!=0 */
+               SHARP_REAL_HARMONICS  = 1<<6
+               /*!< Use the real spherical harmonic convention. For
+                    m==0, the alm are treated exactly the same as in
+                    the complex case.  For m!=0, alm[i] represent a
+                    pair (+abs(m), -abs(m)) instead of (real, imag),
+                    and the coefficients are scaled by a factor of
+                    sqrt(2) relative to the complex case.  In other
+                    words, (sqrt(.5) * alm[i]) recovers the
+                    corresponding complex coefficient (when accessed
+                    as complex).
+                */
              } sharp_almflags;
 
 
@@ -172,17 +183,10 @@ typedef enum { SHARP_DP              = 1<<4,
                SHARP_ADD             = 1<<5,
                /*!< results are added to the output arrays, instead of
                     overwriting them */
-               SHARP_REAL_HARMONICS  = 1<<6,
-               /*!< Use the real spherical harmonic convention. For
-                    m==0, the alm are treated exactly the same as in
-                    the complex case.  For m!=0, alm[i] represent a
-                    pair (+abs(m), -abs(m)) instead of (real, imag),
-                    and the coefficients are scaled by a factor of
-                    sqrt(2) relative to the complex case.  In other
-                    words, (sqrt(.5) * alm[i]) recovers the
-                    corresponding complex coefficient (when accessed
-                    as complex).
-                */
+
+               /* NOTE: SHARP_REAL_HARMONICS, 1<<6, is also available in sharp_jobflags,
+                  but its use here is deprecated in favor of having it in the sharp_alm_info */
+
                SHARP_NO_FFT          = 1<<7,
 
                SHARP_USE_WEIGHTS     = 1<<20,    /* internal use only */
