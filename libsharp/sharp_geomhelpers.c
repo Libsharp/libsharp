@@ -34,14 +34,14 @@
 #include "sharp_geomhelpers.h"
 #include "c_utils.h"
 #include "ls_fft.h"
+#include <stdio.h>
 
-void sharp_make_weighted_healpix_geom_info (int nside, int stride,
-  const double *weight, sharp_geom_info **geom_info)
+void sharp_make_subset_healpix_geom_info (int nside, int stride, int nrings,
+  const int *rings, const double *weight, sharp_geom_info **geom_info)
   {
   const double pi=3.141592653589793238462643383279502884197;
   ptrdiff_t npix=(ptrdiff_t)nside*nside*12;
   ptrdiff_t ncap=2*(ptrdiff_t)nside*(nside-1);
-  int nrings=4*nside-1;
 
   double *theta=RALLOC(double,nrings);
   double *weight_=RALLOC(double,nrings);
@@ -49,9 +49,10 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   double *phi0=RALLOC(double,nrings);
   ptrdiff_t *ofs=RALLOC(ptrdiff_t,nrings);
   int *stride_=RALLOC(int,nrings);
+  ptrdiff_t curofs=0, checkofs; /* checkofs used for assertion introduced when adding rings arg */
   for (int m=0; m<nrings; ++m)
     {
-    int ring=m+1;
+    int ring = (rings==NULL)? (m+1) : rings[m];
     ptrdiff_t northring = (ring>2*nside) ? 4*nside-ring : ring;
     stride_[m] = stride;
     if (northring < nside)
@@ -59,7 +60,7 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
       theta[m] = 2*asin(northring/(sqrt(6.)*nside));
       nph[m] = 4*northring;
       phi0[m] = pi/nph[m];
-      ofs[m] = 2*northring*(northring-1)*stride;
+      checkofs = 2*northring*(northring-1)*stride;
       }
     else
       {
@@ -71,14 +72,21 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
         phi0[m] = 0;
       else
         phi0[m] = pi/nph[m];
-      ofs[m] = (ncap + (northring-nside)*nph[m])*stride;
+      checkofs = (ncap + (northring-nside)*nph[m])*stride;
+      ofs[m] = curofs;
       }
     if (northring != ring) /* southern hemisphere */
       {
       theta[m] = pi-theta[m];
-      ofs[m] = (npix - nph[m])*stride - ofs[m];
+      checkofs = (npix - nph[m])*stride - checkofs;
+      ofs[m] = curofs;
       }
     weight_[m]=4.*pi/npix*((weight==NULL) ? 1. : weight[northring-1]);
+    if (rings==NULL) {
+        UTIL_ASSERT(curofs==checkofs, "Bug in computing ofs[m]");
+    }
+    ofs[m] = curofs;
+    curofs+=nph[m];
     }
 
   sharp_make_geom_info (nrings, nph, ofs, stride_, phi0, theta, weight_,
@@ -90,6 +98,12 @@ void sharp_make_weighted_healpix_geom_info (int nside, int stride,
   DEALLOC(phi0);
   DEALLOC(ofs);
   DEALLOC(stride_);
+  }
+
+void sharp_make_weighted_healpix_geom_info (int nside, int stride,
+  const double *weight, sharp_geom_info **geom_info)
+  {
+  sharp_make_subset_healpix_geom_info(nside, stride, 4 * nside - 1, NULL, weight, geom_info);
   }
 
 static inline double one_minus_x2 (double x)

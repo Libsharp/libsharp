@@ -169,6 +169,19 @@ ptrdiff_t sharp_alm_index (const sharp_alm_info *self, int l, int mi)
   return self->mvstart[mi]+self->stride*l;
   }
 
+ptrdiff_t sharp_alm_count(const sharp_alm_info *self)
+  {
+  ptrdiff_t result=0;
+  for (int im=0; im!=self->nm; ++im)
+    {
+    int m=self->mval[im];
+    ptrdiff_t x=(self->lmax + 1 - m);
+    if ((m!=0)&&((self->flags&SHARP_PACKED)!=0)) result+=2*x;
+    else result+=x;
+    }
+  return result;
+  }
+
 void sharp_destroy_alm_info (sharp_alm_info *info)
   {
   DEALLOC (info->mval);
@@ -224,6 +237,17 @@ void sharp_make_geom_info (int nrings, const int *nph, const ptrdiff_t *ofs,
   DEALLOC(infos);
 
   qsort(info->pair,info->npairs,sizeof(sharp_ringpair),ringpair_compare);
+  }
+
+ptrdiff_t sharp_map_size(const sharp_geom_info *info)
+  {
+  ptrdiff_t result = 0;
+  for (int m=0; m<info->npairs; ++m)
+    {
+      result+=info->pair[m].r1.nph;
+      result+=(info->pair[m].r2.nph>=0) ? (info->pair[m].r2.nph) : 0;
+    }
+  return result;
   }
 
 void sharp_destroy_geom_info (sharp_geom_info *geom_info)
@@ -859,6 +883,8 @@ static void sharp_build_job_common (sharp_job *job, sharp_jobtype type,
   job->flags = flags;
   if ((job->flags&SHARP_NVMAX)==0)
     job->flags|=sharp_nv_oracle (type, spin, ntrans);
+  if (alm_info->flags&SHARP_REAL_HARMONICS)
+    job->flags|=SHARP_REAL_HARMONICS;
   job->time = 0.;
   job->opcnt = 0;
   job->ntrans = ntrans;

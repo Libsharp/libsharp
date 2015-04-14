@@ -40,6 +40,18 @@ extern "C" {
 
 /*! Creates a geometry information describing a HEALPix map with an
     Nside parameter \a nside. \a weight contains the relative ring
+    weights and must have \a 2*nside entries. The rings array contains
+    the indices of the rings, with 1 being the first ring at the north
+    pole; if NULL then we take them to be sequential. Pass 4 * nside - 1
+    as nrings and NULL to rings to get the full HEALPix grid.
+    \note if \a weight is a null pointer, all weights are assumed to be 1.
+    \note if \a rings is a null pointer, take all rings
+    \ingroup geominfogroup */
+void sharp_make_subset_healpix_geom_info (int nside, int stride, int nrings,
+  const int *rings, const double *weight, sharp_geom_info **geom_info);
+
+/*! Creates a geometry information describing a HEALPix map with an
+    Nside parameter \a nside. \a weight contains the relative ring
     weights and must have \a 2*nside entries.
     \note if \a weight is a null pointer, all weights are assumed to be 1.
     \ingroup geominfogroup */
