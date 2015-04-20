@@ -25,7 +25,7 @@
 /*! \file sharp_cxx.h
  *  Spherical transform library
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012-2015 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -88,6 +88,9 @@ class sharp_base
       if (ainfo) sharp_destroy_alm_info(ainfo);
       sharp_make_triangular_alm_info (lmax, mmax, 1, &ainfo);
       }
+
+    const sharp_geom_info* get_geom_info() const { return ginfo; }
+    const sharp_alm_info* get_alm_info() const { return ainfo; }
   };
 
 template<typename T> struct cxxjobhelper__ {};
