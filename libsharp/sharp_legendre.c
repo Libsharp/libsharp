@@ -1,4 +1,4 @@
-/*
+/* DO NOT EDIT. md5sum of source: 88eec944ab6fbfdc7f391fbb58df3bf1 *//*
 
     NOTE NOTE NOTE
 
@@ -1302,4 +1302,6 @@ void sharp_legendre_transform_s(float *bl,
         free(recfac);
     }
 }
+
+
 

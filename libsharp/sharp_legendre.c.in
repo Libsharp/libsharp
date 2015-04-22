@@ -160,4 +160,3 @@ void sharp_legendre_transform{{T}}({{scalar}} *bl,
     }
 }
 /*{ endfor }*/
-
