@@ -53,3 +53,11 @@ perftest: compile_all
 	$(BINDIR)/sharp_testsuite test gauss 2047 -1 -1 4096 0 1 && \
 	$(BINDIR)/sharp_testsuite test gauss 4095 -1 -1 8192 0 1 && \
 	$(BINDIR)/sharp_testsuite test gauss 8191 -1 -1 16384 0 1
+
+# Jinja templates
+
+%.c: %.c.in
+	./runjinja.py < $< > $@
+
+genclean:
+	rm libsharp/sharp_legendre.c || exit 0
