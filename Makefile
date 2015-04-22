@@ -61,3 +61,10 @@ perftest: compile_all
 
 genclean:
 	rm libsharp/sharp_legendre.c || exit 0
+
+pytest:
+	rm python/libsharp/libsharp.so || exit 0
+	cd python && LIBSHARP_INCLUDE=$(INCDIR) LIBSHARP_LIB=$(LIBDIR) python setup.py build_ext --inplace
+	cd python && nosetests libsharp
+
+
