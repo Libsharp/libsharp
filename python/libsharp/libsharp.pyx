@@ -14,7 +14,9 @@ cdef extern from "sharp.h":
 def legendre_transform(x, bl, out=None):
     if out is None:
         out = np.empty_like(x)
-    if x.dtype == np.float64:
+    if out.shape[0] == 0:
+        return out
+    elif x.dtype == np.float64:
         if bl.dtype != np.float64:
             bl = bl.astype(np.float64)
         return _legendre_transform(x, bl, out=out)

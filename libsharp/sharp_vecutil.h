@@ -52,4 +52,12 @@
 #define VLEN_s (2*VLEN)
 #endif
 
+#ifndef USE_FMA4
+#ifdef __FMA4__
+#define USE_FMA4 1
+#else
+#define USE_FMA4 0
+#endif
+#endif
+
 #endif

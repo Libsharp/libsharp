@@ -1,4 +1,4 @@
-/* DO NOT EDIT. md5sum of source: 88eec944ab6fbfdc7f391fbb58df3bf1 *//*
+/* DO NOT EDIT. md5sum of source: d9499375a254cbf1e7903a249a8676ff *//*
 
     NOTE NOTE NOTE
 
@@ -46,6 +46,21 @@
  *  \author Dag Sverre Seljebotn
  */
 
+#ifndef NO_LEGENDRE
+#if (VLEN==8)
+#error This code is not tested with MIC; please compile with -DNO_LEGENDRE
+/* ...or test it (it probably works) and remove this check */
+#endif
+
+#ifndef SHARP_LEGENDRE_CS
+#define SHARP_LEGENDRE_CS 4
+#endif
+
+#define MAX_CS 6
+#if (SHARP_LEGENDRE_CS > MAX_CS)
+#error (SHARP_LEGENDRE_CS > MAX_CS)
+#endif
+
 #include "sharp_legendre.h"
 #include "sharp_vecsupport.h"
 
@@ -66,18 +81,18 @@ static void legendre_transform_vec1(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -87,8 +102,8 @@ static void legendre_transform_vec1(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
 
@@ -113,17 +128,17 @@ static void legendre_transform_vec2(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     x1 = vloadu(xarr + 1 * VLEN);
     Pm1_1 = vload(1.0);
     P_1 = x1;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y1 = vmul(Pm1_1, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
@@ -131,8 +146,8 @@ static void legendre_transform_vec2(double *recfacs, double *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -142,16 +157,16 @@ static void legendre_transform_vec2(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul(x1, Pm1_1);
         W2 = W1;
         W2 = vsub(W2, Pm2_1);
-        vfmaeq(W1, W2, R);
         P_1 = W1;
+        vfmaeq(P_1, W2, R);
         vfmaeq(y1, P_1, b);
         
 
@@ -180,23 +195,23 @@ static void legendre_transform_vec3(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     x1 = vloadu(xarr + 1 * VLEN);
     Pm1_1 = vload(1.0);
     P_1 = x1;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y1 = vmul(Pm1_1, b);
     
     x2 = vloadu(xarr + 2 * VLEN);
     Pm1_2 = vload(1.0);
     P_2 = x2;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y2 = vmul(Pm1_2, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
@@ -206,8 +221,8 @@ static void legendre_transform_vec3(double *recfacs, double *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -217,24 +232,24 @@ static void legendre_transform_vec3(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul(x1, Pm1_1);
         W2 = W1;
         W2 = vsub(W2, Pm2_1);
-        vfmaeq(W1, W2, R);
         P_1 = W1;
+        vfmaeq(P_1, W2, R);
         vfmaeq(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul(x2, Pm1_2);
         W2 = W1;
         W2 = vsub(W2, Pm2_2);
-        vfmaeq(W1, W2, R);
         P_2 = W1;
+        vfmaeq(P_2, W2, R);
         vfmaeq(y2, P_2, b);
         
 
@@ -267,29 +282,29 @@ static void legendre_transform_vec4(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     x1 = vloadu(xarr + 1 * VLEN);
     Pm1_1 = vload(1.0);
     P_1 = x1;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y1 = vmul(Pm1_1, b);
     
     x2 = vloadu(xarr + 2 * VLEN);
     Pm1_2 = vload(1.0);
     P_2 = x2;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y2 = vmul(Pm1_2, b);
     
     x3 = vloadu(xarr + 3 * VLEN);
     Pm1_3 = vload(1.0);
     P_3 = x3;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y3 = vmul(Pm1_3, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
@@ -301,8 +316,8 @@ static void legendre_transform_vec4(double *recfacs, double *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -312,32 +327,32 @@ static void legendre_transform_vec4(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul(x1, Pm1_1);
         W2 = W1;
         W2 = vsub(W2, Pm2_1);
-        vfmaeq(W1, W2, R);
         P_1 = W1;
+        vfmaeq(P_1, W2, R);
         vfmaeq(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul(x2, Pm1_2);
         W2 = W1;
         W2 = vsub(W2, Pm2_2);
-        vfmaeq(W1, W2, R);
         P_2 = W1;
+        vfmaeq(P_2, W2, R);
         vfmaeq(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul(x3, Pm1_3);
         W2 = W1;
         W2 = vsub(W2, Pm2_3);
-        vfmaeq(W1, W2, R);
         P_3 = W1;
+        vfmaeq(P_3, W2, R);
         vfmaeq(y3, P_3, b);
         
 
@@ -374,35 +389,35 @@ static void legendre_transform_vec5(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     x1 = vloadu(xarr + 1 * VLEN);
     Pm1_1 = vload(1.0);
     P_1 = x1;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y1 = vmul(Pm1_1, b);
     
     x2 = vloadu(xarr + 2 * VLEN);
     Pm1_2 = vload(1.0);
     P_2 = x2;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y2 = vmul(Pm1_2, b);
     
     x3 = vloadu(xarr + 3 * VLEN);
     Pm1_3 = vload(1.0);
     P_3 = x3;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y3 = vmul(Pm1_3, b);
     
     x4 = vloadu(xarr + 4 * VLEN);
     Pm1_4 = vload(1.0);
     P_4 = x4;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y4 = vmul(Pm1_4, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
@@ -416,8 +431,8 @@ static void legendre_transform_vec5(double *recfacs, double *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -427,40 +442,40 @@ static void legendre_transform_vec5(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul(x1, Pm1_1);
         W2 = W1;
         W2 = vsub(W2, Pm2_1);
-        vfmaeq(W1, W2, R);
         P_1 = W1;
+        vfmaeq(P_1, W2, R);
         vfmaeq(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul(x2, Pm1_2);
         W2 = W1;
         W2 = vsub(W2, Pm2_2);
-        vfmaeq(W1, W2, R);
         P_2 = W1;
+        vfmaeq(P_2, W2, R);
         vfmaeq(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul(x3, Pm1_3);
         W2 = W1;
         W2 = vsub(W2, Pm2_3);
-        vfmaeq(W1, W2, R);
         P_3 = W1;
+        vfmaeq(P_3, W2, R);
         vfmaeq(y3, P_3, b);
         
         Pm2_4 = Pm1_4; Pm1_4 = P_4;
         W1 = vmul(x4, Pm1_4);
         W2 = W1;
         W2 = vsub(W2, Pm2_4);
-        vfmaeq(W1, W2, R);
         P_4 = W1;
+        vfmaeq(P_4, W2, R);
         vfmaeq(y4, P_4, b);
         
 
@@ -501,41 +516,41 @@ static void legendre_transform_vec6(double *recfacs, double *bl, ptrdiff_t lmax,
     x0 = vloadu(xarr + 0 * VLEN);
     Pm1_0 = vload(1.0);
     P_0 = x0;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y0 = vmul(Pm1_0, b);
     
     x1 = vloadu(xarr + 1 * VLEN);
     Pm1_1 = vload(1.0);
     P_1 = x1;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y1 = vmul(Pm1_1, b);
     
     x2 = vloadu(xarr + 2 * VLEN);
     Pm1_2 = vload(1.0);
     P_2 = x2;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y2 = vmul(Pm1_2, b);
     
     x3 = vloadu(xarr + 3 * VLEN);
     Pm1_3 = vload(1.0);
     P_3 = x3;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y3 = vmul(Pm1_3, b);
     
     x4 = vloadu(xarr + 4 * VLEN);
     Pm1_4 = vload(1.0);
     P_4 = x4;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y4 = vmul(Pm1_4, b);
     
     x5 = vloadu(xarr + 5 * VLEN);
     Pm1_5 = vload(1.0);
     P_5 = x5;
-    b = vbroadcast(bl);
+    b = vload(*bl);
     y5 = vmul(Pm1_5, b);
     
     
-    b = vbroadcast(bl + 1);
+    b = vload(*(bl + 1));
     
     vfmaeq(y0, P_0, b);
     
@@ -551,8 +566,8 @@ static void legendre_transform_vec6(double *recfacs, double *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast(bl + l);
-        R = vbroadcast(recfacs + l);
+        b = vload(*(bl + l));
+        R = vload(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -562,48 +577,48 @@ static void legendre_transform_vec6(double *recfacs, double *bl, ptrdiff_t lmax,
         W1 = vmul(x0, Pm1_0);
         W2 = W1;
         W2 = vsub(W2, Pm2_0);
-        vfmaeq(W1, W2, R);
         P_0 = W1;
+        vfmaeq(P_0, W2, R);
         vfmaeq(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul(x1, Pm1_1);
         W2 = W1;
         W2 = vsub(W2, Pm2_1);
-        vfmaeq(W1, W2, R);
         P_1 = W1;
+        vfmaeq(P_1, W2, R);
         vfmaeq(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul(x2, Pm1_2);
         W2 = W1;
         W2 = vsub(W2, Pm2_2);
-        vfmaeq(W1, W2, R);
         P_2 = W1;
+        vfmaeq(P_2, W2, R);
         vfmaeq(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul(x3, Pm1_3);
         W2 = W1;
         W2 = vsub(W2, Pm2_3);
-        vfmaeq(W1, W2, R);
         P_3 = W1;
+        vfmaeq(P_3, W2, R);
         vfmaeq(y3, P_3, b);
         
         Pm2_4 = Pm1_4; Pm1_4 = P_4;
         W1 = vmul(x4, Pm1_4);
         W2 = W1;
         W2 = vsub(W2, Pm2_4);
-        vfmaeq(W1, W2, R);
         P_4 = W1;
+        vfmaeq(P_4, W2, R);
         vfmaeq(y4, P_4, b);
         
         Pm2_5 = Pm1_5; Pm1_5 = P_5;
         W1 = vmul(x5, Pm1_5);
         W2 = W1;
         W2 = vsub(W2, Pm2_5);
-        vfmaeq(W1, W2, R);
         P_5 = W1;
+        vfmaeq(P_5, W2, R);
         vfmaeq(y5, P_5, b);
         
 
@@ -638,18 +653,18 @@ static void legendre_transform_vec1_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -659,8 +674,8 @@ static void legendre_transform_vec1_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
 
@@ -685,17 +700,17 @@ static void legendre_transform_vec2_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     x1 = vloadu_s(xarr + 1 * VLEN_s);
     Pm1_1 = vload_s(1.0);
     P_1 = x1;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y1 = vmul_s(Pm1_1, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
@@ -703,8 +718,8 @@ static void legendre_transform_vec2_s(float *recfacs, float *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -714,16 +729,16 @@ static void legendre_transform_vec2_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul_s(x1, Pm1_1);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_1);
-        vfmaeq_s(W1, W2, R);
         P_1 = W1;
+        vfmaeq_s(P_1, W2, R);
         vfmaeq_s(y1, P_1, b);
         
 
@@ -752,23 +767,23 @@ static void legendre_transform_vec3_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     x1 = vloadu_s(xarr + 1 * VLEN_s);
     Pm1_1 = vload_s(1.0);
     P_1 = x1;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y1 = vmul_s(Pm1_1, b);
     
     x2 = vloadu_s(xarr + 2 * VLEN_s);
     Pm1_2 = vload_s(1.0);
     P_2 = x2;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y2 = vmul_s(Pm1_2, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
@@ -778,8 +793,8 @@ static void legendre_transform_vec3_s(float *recfacs, float *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -789,24 +804,24 @@ static void legendre_transform_vec3_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul_s(x1, Pm1_1);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_1);
-        vfmaeq_s(W1, W2, R);
         P_1 = W1;
+        vfmaeq_s(P_1, W2, R);
         vfmaeq_s(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul_s(x2, Pm1_2);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_2);
-        vfmaeq_s(W1, W2, R);
         P_2 = W1;
+        vfmaeq_s(P_2, W2, R);
         vfmaeq_s(y2, P_2, b);
         
 
@@ -839,29 +854,29 @@ static void legendre_transform_vec4_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     x1 = vloadu_s(xarr + 1 * VLEN_s);
     Pm1_1 = vload_s(1.0);
     P_1 = x1;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y1 = vmul_s(Pm1_1, b);
     
     x2 = vloadu_s(xarr + 2 * VLEN_s);
     Pm1_2 = vload_s(1.0);
     P_2 = x2;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y2 = vmul_s(Pm1_2, b);
     
     x3 = vloadu_s(xarr + 3 * VLEN_s);
     Pm1_3 = vload_s(1.0);
     P_3 = x3;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y3 = vmul_s(Pm1_3, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
@@ -873,8 +888,8 @@ static void legendre_transform_vec4_s(float *recfacs, float *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -884,32 +899,32 @@ static void legendre_transform_vec4_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul_s(x1, Pm1_1);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_1);
-        vfmaeq_s(W1, W2, R);
         P_1 = W1;
+        vfmaeq_s(P_1, W2, R);
         vfmaeq_s(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul_s(x2, Pm1_2);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_2);
-        vfmaeq_s(W1, W2, R);
         P_2 = W1;
+        vfmaeq_s(P_2, W2, R);
         vfmaeq_s(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul_s(x3, Pm1_3);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_3);
-        vfmaeq_s(W1, W2, R);
         P_3 = W1;
+        vfmaeq_s(P_3, W2, R);
         vfmaeq_s(y3, P_3, b);
         
 
@@ -946,35 +961,35 @@ static void legendre_transform_vec5_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     x1 = vloadu_s(xarr + 1 * VLEN_s);
     Pm1_1 = vload_s(1.0);
     P_1 = x1;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y1 = vmul_s(Pm1_1, b);
     
     x2 = vloadu_s(xarr + 2 * VLEN_s);
     Pm1_2 = vload_s(1.0);
     P_2 = x2;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y2 = vmul_s(Pm1_2, b);
     
     x3 = vloadu_s(xarr + 3 * VLEN_s);
     Pm1_3 = vload_s(1.0);
     P_3 = x3;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y3 = vmul_s(Pm1_3, b);
     
     x4 = vloadu_s(xarr + 4 * VLEN_s);
     Pm1_4 = vload_s(1.0);
     P_4 = x4;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y4 = vmul_s(Pm1_4, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
@@ -988,8 +1003,8 @@ static void legendre_transform_vec5_s(float *recfacs, float *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -999,40 +1014,40 @@ static void legendre_transform_vec5_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul_s(x1, Pm1_1);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_1);
-        vfmaeq_s(W1, W2, R);
         P_1 = W1;
+        vfmaeq_s(P_1, W2, R);
         vfmaeq_s(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul_s(x2, Pm1_2);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_2);
-        vfmaeq_s(W1, W2, R);
         P_2 = W1;
+        vfmaeq_s(P_2, W2, R);
         vfmaeq_s(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul_s(x3, Pm1_3);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_3);
-        vfmaeq_s(W1, W2, R);
         P_3 = W1;
+        vfmaeq_s(P_3, W2, R);
         vfmaeq_s(y3, P_3, b);
         
         Pm2_4 = Pm1_4; Pm1_4 = P_4;
         W1 = vmul_s(x4, Pm1_4);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_4);
-        vfmaeq_s(W1, W2, R);
         P_4 = W1;
+        vfmaeq_s(P_4, W2, R);
         vfmaeq_s(y4, P_4, b);
         
 
@@ -1073,41 +1088,41 @@ static void legendre_transform_vec6_s(float *recfacs, float *bl, ptrdiff_t lmax,
     x0 = vloadu_s(xarr + 0 * VLEN_s);
     Pm1_0 = vload_s(1.0);
     P_0 = x0;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y0 = vmul_s(Pm1_0, b);
     
     x1 = vloadu_s(xarr + 1 * VLEN_s);
     Pm1_1 = vload_s(1.0);
     P_1 = x1;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y1 = vmul_s(Pm1_1, b);
     
     x2 = vloadu_s(xarr + 2 * VLEN_s);
     Pm1_2 = vload_s(1.0);
     P_2 = x2;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y2 = vmul_s(Pm1_2, b);
     
     x3 = vloadu_s(xarr + 3 * VLEN_s);
     Pm1_3 = vload_s(1.0);
     P_3 = x3;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y3 = vmul_s(Pm1_3, b);
     
     x4 = vloadu_s(xarr + 4 * VLEN_s);
     Pm1_4 = vload_s(1.0);
     P_4 = x4;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y4 = vmul_s(Pm1_4, b);
     
     x5 = vloadu_s(xarr + 5 * VLEN_s);
     Pm1_5 = vload_s(1.0);
     P_5 = x5;
-    b = vbroadcast_s(bl);
+    b = vload_s(*bl);
     y5 = vmul_s(Pm1_5, b);
     
     
-    b = vbroadcast_s(bl + 1);
+    b = vload_s(*(bl + 1));
     
     vfmaeq_s(y0, P_0, b);
     
@@ -1123,8 +1138,8 @@ static void legendre_transform_vec6_s(float *recfacs, float *bl, ptrdiff_t lmax,
     
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast_s(bl + l);
-        R = vbroadcast_s(recfacs + l);
+        b = vload_s(*(bl + l));
+        R = vload_s(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -1134,48 +1149,48 @@ static void legendre_transform_vec6_s(float *recfacs, float *bl, ptrdiff_t lmax,
         W1 = vmul_s(x0, Pm1_0);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_0);
-        vfmaeq_s(W1, W2, R);
         P_0 = W1;
+        vfmaeq_s(P_0, W2, R);
         vfmaeq_s(y0, P_0, b);
         
         Pm2_1 = Pm1_1; Pm1_1 = P_1;
         W1 = vmul_s(x1, Pm1_1);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_1);
-        vfmaeq_s(W1, W2, R);
         P_1 = W1;
+        vfmaeq_s(P_1, W2, R);
         vfmaeq_s(y1, P_1, b);
         
         Pm2_2 = Pm1_2; Pm1_2 = P_2;
         W1 = vmul_s(x2, Pm1_2);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_2);
-        vfmaeq_s(W1, W2, R);
         P_2 = W1;
+        vfmaeq_s(P_2, W2, R);
         vfmaeq_s(y2, P_2, b);
         
         Pm2_3 = Pm1_3; Pm1_3 = P_3;
         W1 = vmul_s(x3, Pm1_3);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_3);
-        vfmaeq_s(W1, W2, R);
         P_3 = W1;
+        vfmaeq_s(P_3, W2, R);
         vfmaeq_s(y3, P_3, b);
         
         Pm2_4 = Pm1_4; Pm1_4 = P_4;
         W1 = vmul_s(x4, Pm1_4);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_4);
-        vfmaeq_s(W1, W2, R);
         P_4 = W1;
+        vfmaeq_s(P_4, W2, R);
         vfmaeq_s(y4, P_4, b);
         
         Pm2_5 = Pm1_5; Pm1_5 = P_5;
         W1 = vmul_s(x5, Pm1_5);
         W2 = W1;
         W2 = vsub_s(W2, Pm2_5);
-        vfmaeq_s(W1, W2, R);
         P_5 = W1;
+        vfmaeq_s(P_5, W2, R);
         vfmaeq_s(y5, P_5, b);
         
 
@@ -1224,24 +1239,21 @@ void sharp_legendre_transform_recfac_s(float *r, ptrdiff_t lmax) {
   Compute sum_l b_l P_l(x_i) for all i. 
  */
 
-
-
-#define CS 4
-#define LEN (CS * VLEN)
-#define LEN_s (CS * VLEN_s)
+#define LEN (SHARP_LEGENDRE_CS * VLEN)
+#define LEN_s (SHARP_LEGENDRE_CS * VLEN_s)
 
 
 void sharp_legendre_transform(double *bl,
                                    double *recfac,
                                    ptrdiff_t lmax,
                                    double *x, double *out, ptrdiff_t nx) {
-    double xchunk[LEN], outchunk[LEN];
+    double xchunk[MAX_CS * VLEN], outchunk[MAX_CS * LEN];
     int compute_recfac;
     ptrdiff_t i, j, len;
 
     compute_recfac = (recfac == NULL);
     if (compute_recfac) {
-        recfac = memalign(16, sizeof(double) * (lmax + 1));
+        recfac = malloc(sizeof(double) * (lmax + 1));
         sharp_legendre_transform_recfac(recfac, lmax);
     }
 
@@ -1271,13 +1283,13 @@ void sharp_legendre_transform_s(float *bl,
                                    float *recfac,
                                    ptrdiff_t lmax,
                                    float *x, float *out, ptrdiff_t nx) {
-    float xchunk[LEN_s], outchunk[LEN_s];
+    float xchunk[MAX_CS * VLEN_s], outchunk[MAX_CS * LEN_s];
     int compute_recfac;
     ptrdiff_t i, j, len;
 
     compute_recfac = (recfac == NULL);
     if (compute_recfac) {
-        recfac = memalign(16, sizeof(float) * (lmax + 1));
+        recfac = malloc(sizeof(float) * (lmax + 1));
         sharp_legendre_transform_recfac_s(recfac, lmax);
     }
 
@@ -1304,4 +1316,4 @@ void sharp_legendre_transform_s(float *bl,
 }
 
 
-
+#endif

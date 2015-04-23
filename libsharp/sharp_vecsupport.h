@@ -63,8 +63,8 @@ typedef int Tm;
 #define vneg(a) (-(a))
 #define vload(a) (a)
 #define vload_s(a) (a)
-#define vloadu(p) (*p)
-#define vloadu_s(p) (*p)
+#define vloadu(p) (*(p))
+#define vloadu_s(p) (*(p))
 #define vabs(a) fabs(a)
 #define vsqrt(a) sqrt(a)
 #define vlt(a,b) ((a)<(b))
@@ -72,8 +72,6 @@ typedef int Tm;
 #define vge(a,b) ((a)>=(b))
 #define vne(a,b) ((a)!=(b))
 #define vand_mask(a,b) ((a)&&(b))
-#define vbroadcast(p) (*p)
-#define vbroadcast_s(p) (*p)
 #define vstoreu(p, a) (*(p)=a)
 #define vstoreu_s(p, a) (*(p)=a)
 
@@ -148,15 +146,13 @@ static inline Tv vblend__(Tv m, Tv a, Tv b)
 #define vloadu_s(p) _mm_loadu_ps(p)
 #define vstoreu(p, v) _mm_storeu_pd(p, v)
 #define vstoreu_s(p, v) _mm_storeu_ps(p, v)
-#define vbroadcast(p) _mm_set_pd(*p, *p)
-#define vbroadcast_s(p) _mm_set_ps(*p, *p, *p, *p)
 
 #endif
 
 #if (VLEN==4)
 
 #include <immintrin.h>
-#ifdef __FMA4__
+#if (USE_FMA4)
 #include <x86intrin.h>
 #endif
 
@@ -180,7 +176,7 @@ typedef __m256d Tm;
 #define vmul_s(a,b) _mm256_mul_ps(a,b)
 #define vmuleq(a,b) a=_mm256_mul_pd(a,b)
 #define vmuleq_mask(mask,a,b) a=_mm256_mul_pd(a,vblend__(mask,b,vone))
-#ifdef __FMA4__
+#if (USE_FMA4)
 #define vfmaeq(a,b,c) a=_mm256_macc_pd(b,c,a)
 #define vfmaeq_s(a,b,c) a=_mm256_macc_ps(b,c,a)
 #define vfmseq(a,b,c) a=_mm256_nmacc_pd(b,c,a)
@@ -188,6 +184,7 @@ typedef __m256d Tm;
 #define vfmaseq(a,b,c,d,e) a=_mm256_nmacc_pd(d,e,_mm256_macc_pd(b,c,a))
 #else
 #define vfmaeq(a,b,c) a=_mm256_add_pd(a,_mm256_mul_pd(b,c))
+#define vfmaeq_s(a,b,c) a=_mm256_add_ps(a,_mm256_mul_ps(b,c))
 #define vfmseq(a,b,c) a=_mm256_sub_pd(a,_mm256_mul_pd(b,c))
 #define vfmaaeq(a,b,c,d,e) \
   a=_mm256_add_pd(a,_mm256_add_pd(_mm256_mul_pd(b,c),_mm256_mul_pd(d,e)))
@@ -213,8 +210,6 @@ typedef __m256d Tm;
 #define vloadu_s(p) _mm256_loadu_ps(p)
 #define vstoreu(p, v) _mm256_storeu_pd(p, v)
 #define vstoreu_s(p, v) _mm256_storeu_ps(p, v)
-#define vbroadcast(p) _mm256_broadcast_sd(p)
-#define vbroadcast_s(p) _mm256_broadcast_ss(p)
 
 #endif
 

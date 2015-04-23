@@ -46,6 +46,21 @@
  *  \author Dag Sverre Seljebotn
  */
 
+#ifndef NO_LEGENDRE
+#if (VLEN==8)
+#error This code is not tested with MIC; please compile with -DNO_LEGENDRE
+/* ...or test it (it probably works) and remove this check */
+#endif
+
+#ifndef SHARP_LEGENDRE_CS
+#define SHARP_LEGENDRE_CS 4
+#endif
+
+#define MAX_CS 6
+#if (SHARP_LEGENDRE_CS > MAX_CS)
+#error (SHARP_LEGENDRE_CS > MAX_CS)
+#endif
+
 #include "sharp_legendre.h"
 #include "sharp_vecsupport.h"
 
@@ -66,18 +81,18 @@ static void legendre_transform_vec{{cs}}{{T}}({{scalar}} *recfacs, {{scalar}} *b
     x{{i}} = vloadu{{T}}(xarr + {{i}} * VLEN{{T}});
     Pm1_{{i}} = vload{{T}}(1.0);
     P_{{i}} = x{{i}};
-    b = vbroadcast{{T}}(bl);
+    b = vload{{T}}(*bl);
     y{{i}} = vmul{{T}}(Pm1_{{i}}, b);
     /*{ endfor }*/
     
-    b = vbroadcast{{T}}(bl + 1);
+    b = vload{{T}}(*(bl + 1));
     /*{ for i in range(cs) }*/
     vfmaeq{{T}}(y{{i}}, P_{{i}}, b);
     /*{ endfor }*/
 
     for (l = 2; l <= lmax; ++l) {
-        b = vbroadcast{{T}}(bl + l);
-        R = vbroadcast{{T}}(recfacs + l);
+        b = vload{{T}}(*(bl + l));
+        R = vload{{T}}(*(recfacs + l));
         
         /* 
            P = x * Pm1 + recfacs[l] * (x * Pm1 - Pm2)
@@ -87,8 +102,8 @@ static void legendre_transform_vec{{cs}}{{T}}({{scalar}} *recfacs, {{scalar}} *b
         W1 = vmul{{T}}(x{{i}}, Pm1_{{i}});
         W2 = W1;
         W2 = vsub{{T}}(W2, Pm2_{{i}});
-        vfmaeq{{T}}(W1, W2, R);
         P_{{i}} = W1;
+        vfmaeq{{T}}(P_{{i}}, W2, R);
         vfmaeq{{T}}(y{{i}}, P_{{i}}, b);
         /*{ endfor }*/
 
@@ -117,24 +132,21 @@ void sharp_legendre_transform_recfac{{T}}({{scalar}} *r, ptrdiff_t lmax) {
   Compute sum_l b_l P_l(x_i) for all i. 
  */
 
-/*{set cs=4}*/
-
-#define CS {{cs}}
-#define LEN (CS * VLEN)
-#define LEN_s (CS * VLEN_s)
+#define LEN (SHARP_LEGENDRE_CS * VLEN)
+#define LEN_s (SHARP_LEGENDRE_CS * VLEN_s)
 
 /*{ for scalar, T in [("double", ""), ("float", "_s")] }*/
 void sharp_legendre_transform{{T}}({{scalar}} *bl,
                                    {{scalar}} *recfac,
                                    ptrdiff_t lmax,
                                    {{scalar}} *x, {{scalar}} *out, ptrdiff_t nx) {
-    {{scalar}} xchunk[LEN{{T}}], outchunk[LEN{{T}}];
+    {{scalar}} xchunk[MAX_CS * VLEN{{T}}], outchunk[MAX_CS * LEN{{T}}];
     int compute_recfac;
     ptrdiff_t i, j, len;
 
     compute_recfac = (recfac == NULL);
     if (compute_recfac) {
-        recfac = memalign(16, sizeof({{scalar}}) * (lmax + 1));
+        recfac = malloc(sizeof({{scalar}}) * (lmax + 1));
         sharp_legendre_transform_recfac{{T}}(recfac, lmax);
     }
 
@@ -160,3 +172,5 @@ void sharp_legendre_transform{{T}}({{scalar}} *bl,
     }
 }
 /*{ endfor }*/
+
+#endif
