@@ -54,4 +54,31 @@ program test_sharp
   print *, 'DONE'
   call MPI_Finalize(ierr)
 
+  print *, 'LEGENDRE TRANSFORMS'
+
+  call test_legendre_transforms()
+
+contains
+  subroutine test_legendre_transforms()
+    integer, parameter :: lmax = 20, nx=10
+    real(c_double) :: bl(0:lmax)
+    real(c_double) :: x(nx), out(nx)
+    real(c_float) :: out_s(nx)
+    !--
+    integer :: l, i
+
+    do l = 0, lmax
+       bl(l) = 1.0 / real(l + 1, c_double)
+    end do
+    do i = 1, nx
+       x(i) = 1 / real(i, c_double)
+    end do
+    out = 0
+    call sharp_legendre_transform(bl, x, out)
+    print *, out
+    call sharp_legendre_transform(real(bl, c_float), real(x, c_float), out_s)
+    print *, out_s
+  end subroutine test_legendre_transforms
+
+
 end program test_sharp

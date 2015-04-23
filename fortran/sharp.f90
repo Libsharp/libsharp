@@ -103,11 +103,31 @@ module sharp
        type(c_ptr), intent(in)                      :: alm(*), map(*)
      end subroutine c_sharp_execute_mpi
 
+     ! Legendre transforms
+     subroutine c_sharp_legendre_transform(bl, recfac, lmax, x, out, nx) &
+          bind(c, name='sharp_legendre_transform')
+       use iso_c_binding
+       integer(c_ptrdiff_t), value :: lmax, nx
+       real(c_double) :: bl(lmax + 1), x(nx), out(nx)
+       real(c_double), optional :: recfac(lmax + 1)
+     end subroutine c_sharp_legendre_transform
+
+     subroutine c_sharp_legendre_transform_s(bl, recfac, lmax, x, out, nx) &
+          bind(c, name='sharp_legendre_transform_s')
+       use iso_c_binding
+       integer(c_ptrdiff_t), value :: lmax, nx
+       real(c_float) :: bl(lmax + 1), x(nx), out(nx)
+       real(c_float), optional :: recfac(lmax + 1)
+     end subroutine c_sharp_legendre_transform_s
   end interface
 
   interface sharp_execute
      module procedure sharp_execute_d
   end interface
+
+  interface sharp_legendre_transform
+     module procedure sharp_legendre_transform_d, sharp_legendre_transform_s
+  end interface sharp_legendre_transform
 
 contains
   ! alm info
@@ -240,6 +260,25 @@ contains
    end if
   end subroutine sharp_execute_d
 
+  subroutine sharp_legendre_transform_d(bl, x, out)
+    use iso_c_binding
+    real(c_double) :: bl(:)
+    real(c_double) :: x(:), out(size(x))
+    !--
+    integer(c_ptrdiff_t) :: lmax, nx
+    call c_sharp_legendre_transform(bl, lmax=int(size(bl) - 1, c_ptrdiff_t), &
+                                    x=x, out=out, nx=int(size(x), c_ptrdiff_t))
+  end subroutine sharp_legendre_transform_d
+
+  subroutine sharp_legendre_transform_s(bl, x, out)
+    use iso_c_binding
+    real(c_float) :: bl(:)
+    real(c_float) :: x(:), out(size(x))
+    !--
+    integer(c_ptrdiff_t) :: lmax, nx
+    call c_sharp_legendre_transform_s(bl, lmax=int(size(bl) - 1, c_ptrdiff_t), &
+                                      x=x, out=out, nx=int(size(x), c_ptrdiff_t))
+  end subroutine sharp_legendre_transform_s
 
 
 end module
