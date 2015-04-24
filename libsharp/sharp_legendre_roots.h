@@ -22,24 +22,29 @@
  *  (DLR).
  */
 
-/*! \file sharp.h
- *  Interface for the spherical transform library.
+/*! \file sharp_legendre_roots.h
  *
  *  Copyright (C) 2006-2012 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
-#ifndef PLANCK_SHARP_H
-#define PLANCK_SHARP_H
+#ifndef SHARP_LEGENDRE_ROOTS_H
+#define SHARP_LEGENDRE_ROOTS_H
 
 #ifdef __cplusplus
-#error This header file cannot be included from C++, only from C
+extern "C" {
 #endif
 
-#include <complex.h>
+/*! Computes roots and Gaussian quadrature weights for Legendre polynomial
+    of degree \a n.
+    \param n Order of Legendre polynomial
+    \param x Array of length \a n for output (root position)
+    \param w Array of length \a w for output (weight for Gaussian quadrature)
+ */
+void sharp_legendre_roots(int n, double *x, double *w);
 
-#include "sharp_lowlevel.h"
-#include "sharp_legendre.h"
-#include "sharp_legendre_roots.h"
+#ifdef __cplusplus
+}
+#endif
 
 #endif
