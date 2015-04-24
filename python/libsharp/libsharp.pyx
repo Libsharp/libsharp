@@ -1,5 +1,7 @@
 import numpy as np
 
+__all__ = ['legendre_transform', 'legendre_roots']
+
 cdef extern from "sharp.h":
     ctypedef long ptrdiff_t
 
@@ -9,6 +11,7 @@ cdef extern from "sharp.h":
                                   double *out, ptrdiff_t nx)
     void sharp_legendre_transform_recfac(double *r, ptrdiff_t lmax)
     void sharp_legendre_transform_recfac_s(float *r, ptrdiff_t lmax)
+    void sharp_legendre_roots(int n, double *x, double *w)
 
 
 def legendre_transform(x, bl, out=None):
@@ -41,3 +44,13 @@ def _legendre_transform_s(float[::1] x, float[::1] bl, float[::1] out):
     sharp_legendre_transform_s(&bl[0], NULL, bl.shape[0] - 1, &x[0], &out[0], x.shape[0])
     return np.asarray(out)
 
+
+def legendre_roots(n):
+    x = np.empty(n, np.double)
+    w = np.empty(n, np.double)
+    cdef double[::1] x_buf = x, w_buf = w
+    if not (x_buf.shape[0] == w_buf.shape[0] == n):
+        raise AssertionError()
+    if n > 0:
+        sharp_legendre_roots(n, &x_buf[0], &w_buf[0])
+    return x, w

@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.special import legendre
+from scipy.special import p_roots
 import libsharp
 
 from numpy.testing import assert_allclose
@@ -39,3 +40,20 @@ def test_legendre_transform():
     for ntheta in nthetas_to_try:
         for lmax in [0, 1, 2, 3, 20] + list(np.random.randint(50, size=4)):
             yield check_legendre_transform, lmax, ntheta
+
+def check_legendre_roots(n):
+    xs, ws = ([], []) if n == 0 else p_roots(n) # from SciPy
+    xl, wl = libsharp.legendre_roots(n)
+    assert_allclose(xs, xl)
+    assert_allclose(ws, wl)
+
+def test_legendre_roots():
+    """
+    Test the Legendre root-finding algorithm from libsharp by comparing it with
+    the SciPy version.
+    """
+    yield check_legendre_roots, 0
+    yield check_legendre_roots, 1
+    yield check_legendre_roots, 32
+    yield check_legendre_roots, 33
+    yield check_legendre_roots, 128
