@@ -39,5 +39,6 @@
 #include <complex.h>
 
 #include "sharp_lowlevel.h"
+#include "sharp_legendre.h"
 
 #endif
