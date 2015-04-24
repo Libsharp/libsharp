@@ -70,7 +70,8 @@ if __name__ == "__main__":
                         ["libsharp/libsharp.pyx"],
                         libraries=["sharp", "fftpack", "c_utils"],
                         include_dirs=[libsharp_include],
-                        library_dirs=[libsharp_lib]
-                        ),
+                        library_dirs=[libsharp_lib],
+                        extra_link_args=["-fopenmp"],
+              )
               ],
           )
