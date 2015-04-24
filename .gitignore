@@ -1,6 +1,9 @@
 *.o
+*.so
 #*
 *~
+*.pyc
+*.pyo
 
 /auto
 /autom4te.cache
@@ -9,3 +12,5 @@
 /config/config.auto
 /configure
 /sharp_oracle.inc
+
+/python/libsharp/libsharp.c

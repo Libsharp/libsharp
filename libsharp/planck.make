@@ -8,7 +8,7 @@ FULL_INCLUDE+= -I$(SD)
 HDR_$(PKG):=$(SD)/*.h
 LIB_$(PKG):=$(LIBDIR)/libsharp.a
 BIN:=sharp_testsuite
-LIBOBJ:=sharp_ylmgen_c.o sharp.o sharp_announce.o sharp_geomhelpers.o sharp_almhelpers.o sharp_core.o
+LIBOBJ:=sharp_ylmgen_c.o sharp.o sharp_announce.o sharp_geomhelpers.o sharp_almhelpers.o sharp_core.o sharp_legendre.o sharp_legendre_roots.o
 ALLOBJ:=$(LIBOBJ) sharp_testsuite.o
 LIBOBJ:=$(LIBOBJ:%=$(OD)/%)
 ALLOBJ:=$(ALLOBJ:%=$(OD)/%)

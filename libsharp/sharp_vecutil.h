@@ -32,6 +32,8 @@
 #ifndef SHARP_VECUTIL_H
 #define SHARP_VECUTIL_H
 
+#ifndef VLEN
+
 #if (defined (__MIC__))
 #define VLEN 8
 #elif (defined (__AVX__))
@@ -40,6 +42,22 @@
 #define VLEN 2
 #else
 #define VLEN 1
+#endif
+
+#endif
+
+#if (VLEN==1)
+#define VLEN_s 1
+#else
+#define VLEN_s (2*VLEN)
+#endif
+
+#ifndef USE_FMA4
+#ifdef __FMA4__
+#define USE_FMA4 1
+#else
+#define USE_FMA4 0
+#endif
 #endif
 
 #endif
