@@ -232,6 +232,7 @@ static void sharp_execute_job_mpi (sharp_job *job, MPI_Comm comm)
       sharp_geom_info lginfo;
       lginfo.pair=RALLOC(sharp_ringpair,(job->ginfo->npairs/nsub)+1);
       lginfo.npairs=0;
+      lginfo.nphmax = job->ginfo->nphmax;
       while (lginfo.npairs*nsub+isub<job->ginfo->npairs)
         {
         lginfo.pair[lginfo.npairs]=job->ginfo->pair[lginfo.npairs*nsub+isub];
