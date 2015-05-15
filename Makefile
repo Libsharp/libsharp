@@ -62,9 +62,10 @@ perftest: compile_all
 genclean:
 	rm libsharp/sharp_legendre.c || exit 0
 
-pytest:
-	rm python/libsharp/libsharp.so || exit 0
-	cd python && LIBSHARP_INCLUDE=$(INCDIR) LIBSHARP_LIB=$(LIBDIR) python setup.py build_ext --inplace
-	cd python && nosetests libsharp
+python/libsharp/libsharp.so: python/libsharp/libsharp.pyx $(LIB_libsharp)
+	cython $<
+	$(CC) -fPIC `python-config --cflags` -I$(INCDIR) -o python/libsharp/libsharp.o -c python/libsharp/libsharp.c
+	$(CL) -shared python/libsharp/libsharp.o -L$(LIBDIR) -lsharp -lfftpack -lc_utils `python-config --libs` -o $@
 
-
+pytest: python/libsharp/libsharp.so
+	cd python && nosetests --nocapture libsharp/tests/test_sht.py
