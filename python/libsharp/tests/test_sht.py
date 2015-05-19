@@ -25,8 +25,9 @@ def test_basic():
         alm[0] = 1
 
 
-    
-    map = libsharp.synthesis(grid, order, alm, comm=MPI.COMM_WORLD)
+    map = libsharp.synthesis(grid, order, np.repeat(alm[None, None, :], 3, 0), comm=MPI.COMM_WORLD)
+    assert np.all(map[2, :] == map[1, :]) and np.all(map[1, :] == map[0, :])
+    map = map[0, 0, :]
     if rank == 0:
         healpy.mollzoom(map)
         from matplotlib.pyplot import show
