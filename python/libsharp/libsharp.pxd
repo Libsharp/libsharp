@@ -27,7 +27,7 @@ cdef extern from "sharp.h":
     void sharp_destroy_geom_info(sharp_geom_info *info)
 
     ptrdiff_t sharp_map_size(sharp_geom_info *info)
-    ptrdiff_t sharp_alm_count(sharp_alm_info *self);
+    ptrdiff_t sharp_alm_count(sharp_alm_info *self)
 
 
     ctypedef enum sharp_jobtype:

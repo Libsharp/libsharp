@@ -105,7 +105,8 @@ def sht(jobtype, geom_info ginfo, alm_info ainfo, double[:, :, ::1] input,
         from mpi4py import MPI
         if not isinstance(comm, MPI.Comm):
             raise TypeError('comm must be an mpi4py communicator')
-        comm_ptr = <void*><size_t>MPI._addressof(comm)
+        from .libsharp_mpi import _addressof
+        comm_ptr = <void*><size_t>_addressof(comm)
         with nogil:
             r = sharp_execute_mpi_maybe (
                 comm_ptr, jobtype_i,

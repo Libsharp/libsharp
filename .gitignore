@@ -14,3 +14,4 @@
 /sharp_oracle.inc
 
 /python/libsharp/libsharp.c
+/python/libsharp/libsharp_mpi.c
