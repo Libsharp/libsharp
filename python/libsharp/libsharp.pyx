@@ -4,6 +4,7 @@ __all__ = ['legendre_transform', 'legendre_roots', 'sht', 'synthesis', 'adjoint_
            'analysis', 'adjoint_analysis', 'healpix_grid', 'triangular_order', 'rectangular_order',
            'packed_real_order']
 
+
 def legendre_transform(x, bl, out=None):
     if out is None:
         out = np.empty_like(x)
