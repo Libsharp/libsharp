@@ -4,7 +4,6 @@ __all__ = ['legendre_transform', 'legendre_roots', 'sht', 'synthesis', 'adjoint_
            'analysis', 'adjoint_analysis', 'healpix_grid', 'triangular_order', 'rectangular_order',
            'packed_real_order']
 
-
 def legendre_transform(x, bl, out=None):
     if out is None:
         out = np.empty_like(x)
@@ -105,7 +104,8 @@ def sht(jobtype, geom_info ginfo, alm_info ainfo, double[:, :, ::1] input,
         from mpi4py import MPI
         if not isinstance(comm, MPI.Comm):
             raise TypeError('comm must be an mpi4py communicator')
-        comm_ptr = <void*><size_t>MPI._addressof(comm)
+        from .libsharp_mpi import _addressof
+        comm_ptr = <void*><size_t>_addressof(comm)
         with nogil:
             r = sharp_execute_mpi_maybe (
                 comm_ptr, jobtype_i,
