@@ -1,9 +1,10 @@
-BLDROOT = $(SRCROOT)/build.$(SHARP_TARGET)
-PREFIX  = $(SRCROOT)/$(SHARP_TARGET)
-BINDIR	= $(PREFIX)/bin
-INCDIR	= $(PREFIX)/include
-LIBDIR	= $(PREFIX)/lib
-DOCDIR	= $(SRCROOT)/doc
+BLDROOT   = $(SRCROOT)/build.$(SHARP_TARGET)
+PREFIX    = $(SRCROOT)/$(SHARP_TARGET)
+BINDIR    = $(PREFIX)/bin
+INCDIR    = $(PREFIX)/include
+LIBDIR    = $(PREFIX)/lib
+DOCDIR    = $(SRCROOT)/doc
+PYTHONDIR = $(SRCROOT)/python/libsharp
 
 # do not use any suffix rules
 .SUFFIXES:
@@ -26,6 +27,7 @@ $(BLDROOT)/%.o : $(SRCROOT)/%.cc | echo_config
 
 clean:
 	rm -rf $(BLDROOT) $(PREFIX) $(DOCDIR) autom4te.cache/ config.log config.status
+	rm -rf $(PYTHONDIR)/*.c $(PYTHONDIR)/*.o $(PYTHONDIR)/*.so
 
 distclean: clean
 	rm -f config/config.auto
