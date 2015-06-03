@@ -992,4 +992,29 @@ int sharp_nv_oracle (sharp_jobtype type, int spin, int ntrans)
 
 #ifdef USE_MPI
 #include "sharp_mpi.c"
+
+int sharp_execute_mpi_maybe (void *pcomm, sharp_jobtype type, int spin,
+  void *alm, void *map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int flags, double *time,
+  unsigned long long *opcnt)
+  {
+  MPI_Comm comm = *(MPI_Comm*)pcomm;
+  sharp_execute_mpi((MPI_Comm)comm, type, spin, alm, map, geom_info, alm_info, ntrans,
+    flags, time, opcnt);
+  return 0;
+  }
+
+#else
+
+int sharp_execute_mpi_maybe (void *pcomm, sharp_jobtype type, int spin,
+  void *alm, void *map, const sharp_geom_info *geom_info,
+  const sharp_alm_info *alm_info, int ntrans, int flags, double *time,
+  unsigned long long *opcnt)
+  {
+  /* Suppress unused warning: */
+  (void)pcomm; (void)type; (void)spin; (void)alm; (void)map; (void)geom_info;
+  (void)alm_info; (void)ntrans; (void)flags; (void)time; (void)opcnt;
+  return SHARP_ERROR_NO_MPI;
+  }
+
 #endif

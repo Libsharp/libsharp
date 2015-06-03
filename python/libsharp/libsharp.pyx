@@ -1,17 +1,8 @@
 import numpy as np
 
-__all__ = ['legendre_transform', 'legendre_roots']
-
-cdef extern from "sharp.h":
-    ctypedef long ptrdiff_t
-
-    void sharp_legendre_transform_s(float *bl, float *recfac, ptrdiff_t lmax, float *x,
-                                    float *out, ptrdiff_t nx)
-    void sharp_legendre_transform(double *bl, double *recfac, ptrdiff_t lmax, double *x,
-                                  double *out, ptrdiff_t nx)
-    void sharp_legendre_transform_recfac(double *r, ptrdiff_t lmax)
-    void sharp_legendre_transform_recfac_s(float *r, ptrdiff_t lmax)
-    void sharp_legendre_roots(int n, double *x, double *w)
+__all__ = ['legendre_transform', 'legendre_roots', 'sht', 'synthesis', 'adjoint_synthesis',
+           'analysis', 'adjoint_analysis', 'healpix_grid', 'triangular_order', 'rectangular_order',
+           'packed_real_order']
 
 
 def legendre_transform(x, bl, out=None):
@@ -54,3 +45,212 @@ def legendre_roots(n):
     if n > 0:
         sharp_legendre_roots(n, &x_buf[0], &w_buf[0])
     return x, w
+
+
+JOBTYPE_TO_CONST = {
+    'Y': SHARP_Y,
+    'Yt': SHARP_Yt,
+    'WY': SHARP_WY,
+    'YtW': SHARP_YtW
+}
+
+def sht(jobtype, geom_info ginfo, alm_info ainfo, double[:, :, ::1] input,
+        int spin=0, comm=None, add=False):
+    cdef void *comm_ptr
+    cdef int flags = SHARP_DP | (SHARP_ADD if add else 0)
+    cdef int r
+    cdef sharp_jobtype jobtype_i
+    cdef double[:, :, ::1] output_buf
+    cdef int ntrans = input.shape[0] * input.shape[1]
+    cdef int i, j
+
+    if spin == 0 and input.shape[1] != 1:
+        raise ValueError('For spin == 0, we need input.shape[1] == 1')
+    elif spin != 0 and input.shape[1] != 2:
+        raise ValueError('For spin != 0, we need input.shape[1] == 2')
+
+
+    cdef size_t[::1] ptrbuf = np.empty(2 * ntrans, dtype=np.uintp)
+    cdef double **alm_ptrs = <double**>&ptrbuf[0]
+    cdef double **map_ptrs = <double**>&ptrbuf[ntrans]
+
+    try:
+        jobtype_i = JOBTYPE_TO_CONST[jobtype]
+    except KeyError:
+        raise ValueError('jobtype must be one of: %s' % ', '.join(sorted(JOBTYPE_TO_CONST.keys())))
+
+    if jobtype_i == SHARP_Y or jobtype_i == SHARP_WY:
+        output = np.empty((input.shape[0], input.shape[1], ginfo.local_size()), dtype=np.float64)
+        output_buf = output
+        for i in range(input.shape[0]):
+            for j in range(input.shape[1]):
+                alm_ptrs[i * input.shape[1] + j] = &input[i, j, 0]
+                map_ptrs[i * input.shape[1] + j] = &output_buf[i, j, 0]
+    else:
+        output = np.empty((input.shape[0], input.shape[1], ainfo.local_size()), dtype=np.float64)
+        output_buf = output
+        for i in range(input.shape[0]):
+            for j in range(input.shape[1]):
+                alm_ptrs[i * input.shape[1] + j] = &output_buf[i, j, 0]
+                map_ptrs[i * input.shape[1] + j] = &input[i, j, 0]
+
+    if comm is None:
+        with nogil:
+            sharp_execute (
+                jobtype_i,
+                geom_info=ginfo.ginfo, alm_info=ainfo.ainfo,
+                spin=spin, alm=alm_ptrs, map=map_ptrs,
+                ntrans=ntrans, flags=flags, time=NULL, opcnt=NULL)
+    else:
+        from mpi4py import MPI
+        if not isinstance(comm, MPI.Comm):
+            raise TypeError('comm must be an mpi4py communicator')
+        from .libsharp_mpi import _addressof
+        comm_ptr = <void*><size_t>_addressof(comm)
+        with nogil:
+            r = sharp_execute_mpi_maybe (
+                comm_ptr, jobtype_i,
+                geom_info=ginfo.ginfo, alm_info=ainfo.ainfo,
+                spin=spin, alm=alm_ptrs, map=map_ptrs,
+                ntrans=ntrans, flags=flags, time=NULL, opcnt=NULL)
+        if r == SHARP_ERROR_NO_MPI:
+            raise Exception('MPI requested, but not available')
+
+    return output
+
+
+def synthesis(*args, **kw):
+    return sht('Y', *args, **kw)
+
+def adjoint_synthesis(*args, **kw):
+    return sht('Yt', *args, **kw)
+
+def analysis(*args, **kw):
+    return sht('YtW', *args, **kw)
+
+def adjoint_analysis(*args, **kw):
+    return sht('WY', *args, **kw)
+
+
+#
+# geom_info
+#
+class NotInitializedError(Exception):
+    pass
+
+
+cdef class geom_info:
+    cdef sharp_geom_info *ginfo
+
+    def __cinit__(self, *args, **kw):
+        self.ginfo = NULL
+
+    def local_size(self):
+        if self.ginfo == NULL:
+            raise NotInitializedError()
+        return sharp_map_size(self.ginfo)
+
+    def __dealloc__(self):
+        if self.ginfo != NULL:
+            sharp_destroy_geom_info(self.ginfo)
+        self.ginfo = NULL
+
+
+cdef class healpix_grid(geom_info):
+
+    _weight_cache = {}  # { (nside, 'T'/'Q'/'U') -> numpy array of ring weights cached from file }
+
+    def __init__(self, int nside, stride=1, int[::1] rings=None, double[::1] weights=None):
+        if weights is not None and weights.shape[0] != 2 * nside:
+            raise ValueError('weights must have length 2 * nside')
+        sharp_make_subset_healpix_geom_info(nside, stride,
+                                            nrings=4 * nside - 1 if rings is None else rings.shape[0],
+                                            rings=NULL if rings is None else &rings[0],
+                                            weight=NULL if weights is None else &weights[0],
+                                            geom_info=&self.ginfo)
+
+    @classmethod
+    def load_ring_weights(cls, nside, fields):
+        """
+        Loads HEALPix ring weights from file. The environment variable
+        HEALPIX should be set, and this routine will look in the `data`
+        subdirectory.
+
+        Parameters
+        ----------
+
+        nside: int
+            HEALPix nside parameter
+
+        fields: tuple of str
+            Which weights to extract; pass ('T',) to only get scalar
+            weights back, or ('T', 'Q', 'U') to get all the weights
+
+        Returns
+        -------
+
+        List of NumPy arrays, according to fields parameter.
+
+        """
+        import os
+        from astropy.io import fits
+        data_path = os.path.join(os.environ['HEALPIX'], 'data')
+        fits_field_names = {
+            'T': 'TEMPERATURE WEIGHTS',
+            'Q': 'Q-POLARISATION WEIGHTS',
+            'U': 'U-POLARISATION WEIGHTS'}
+
+        must_load = [field for field in fields if (nside, field) not in cls._weight_cache]
+
+        if must_load:
+            hdulist = fits.open(os.path.join(data_path, 'weight_ring_n%05d.fits' % nside))
+            try:
+                for field in must_load:
+                    w = hdulist[1].data.field(fits_field_names[field]).ravel().astype(np.double)
+                    w += 1
+                    cls._weight_cache[nside, field] = w
+            finally:
+                hdulist.close()
+        return [cls._weight_cache[(nside, field)].copy() for field in fields]
+
+#
+# alm_info
+#
+
+
+cdef class alm_info:
+    cdef sharp_alm_info *ainfo
+
+    def __cinit__(self, *args, **kw):
+        self.ainfo = NULL
+
+    def local_size(self):
+        if self.ainfo == NULL:
+            raise NotInitializedError()
+        return sharp_alm_count(self.ainfo)
+
+    def __dealloc__(self):
+        if self.ainfo != NULL:
+            sharp_destroy_alm_info(self.ainfo)
+        self.ainfo = NULL
+
+
+cdef class triangular_order(alm_info):
+    def __init__(self, int lmax, mmax=None, stride=1):
+        mmax = mmax if mmax is not None else lmax
+        sharp_make_triangular_alm_info(lmax, mmax, stride, &self.ainfo)
+
+
+cdef class rectangular_order(alm_info):
+    def __init__(self, int lmax, mmax=None, stride=1):
+        mmax = mmax if mmax is not None else lmax
+        sharp_make_rectangular_alm_info(lmax, mmax, stride, &self.ainfo)
+
+
+cdef class packed_real_order(alm_info):
+    def __init__(self, int lmax, stride=1, int[::1] ms=None):
+        sharp_make_mmajor_real_packed_alm_info(lmax=lmax, stride=stride,
+                                               nm=lmax + 1 if ms is None else ms.shape[0],
+                                               ms=NULL if ms is None else &ms[0],
+                                               alm_info=&self.ainfo)
+

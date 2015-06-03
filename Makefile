@@ -19,6 +19,8 @@ include libfftpack/planck.make
 include libsharp/planck.make
 include docsrc/planck.make
 
+CYTHON_MODULES=python/libsharp/libsharp.so $(if $(MPI_CFLAGS), python/libsharp/libsharp_mpi.so)
+
 $(all_lib): %: | $(LIBDIR)_mkdir
 	@echo "#  creating library $*"
 	$(ARCREATE) $@ $^
@@ -62,9 +64,15 @@ perftest: compile_all
 genclean:
 	rm libsharp/sharp_legendre.c || exit 0
 
-pytest:
-	rm python/libsharp/libsharp.so || exit 0
-	cd python && LIBSHARP_INCLUDE=$(INCDIR) LIBSHARP_LIB=$(LIBDIR) python setup.py build_ext --inplace
-	cd python && nosetests libsharp
+$(CYTHON_MODULES): %.so: %.pyx
+ifndef PIC_CFLAGS
+	$(error Python extension must be built using the --enable-pic configure option.)
+endif
+	cython $<
+	$(CC) $(DEBUG_CFLAGS) $(OPENMP_CFLAGS) $(PIC_CFLAGS) `python-config --cflags` -I$(INCDIR) -o $(<:.pyx=.o) -c $(<:.pyx=.c)
+	$(CL) -shared $(<:.pyx=.o) $(OPENMP_CFLAGS) $(CYTHON_OBJ) -L$(LIBDIR) -lsharp -lfftpack -lc_utils -L`python-config --prefix`/lib `python-config --ldflags` -o $@
 
+python: $(all_lib) hdrcopy $(CYTHON_MODULES)
 
+pytest: python
+	cd python && nosetests --nocapture libsharp/tests/test_sht.py
