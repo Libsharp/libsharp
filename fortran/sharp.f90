@@ -21,12 +21,12 @@ module sharp
 
   type sharp_geom_info
      type(c_ptr) :: handle
-     integer(c_ptrdiff_t) :: n_local
+     integer(c_intptr_t) :: n_local
   end type sharp_geom_info
 
   type sharp_alm_info
      type(c_ptr) :: handle
-     integer(c_ptrdiff_t) :: n_local
+     integer(c_intptr_t) :: n_local
   end type sharp_alm_info
 
   interface
@@ -37,7 +37,7 @@ module sharp
        use iso_c_binding
        integer(c_int), value, intent(in)    :: lmax, nm, stride, flags
        integer(c_int), intent(in)           :: mval(nm)
-       integer(c_ptrdiff_t), intent(in)     :: mvstart(nm)
+       integer(c_intptr_t), intent(in)     :: mvstart(nm)
        type(c_ptr), intent(out)             :: alm_info
      end subroutine sharp_make_general_alm_info
 
@@ -51,7 +51,7 @@ module sharp
 
      function c_sharp_alm_count(alm_info) bind(c, name='sharp_alm_count')
        use iso_c_binding
-       integer(c_ptrdiff_t)           :: c_sharp_alm_count
+       integer(c_intptr_t)           :: c_sharp_alm_count
        type(c_ptr), value, intent(in) :: alm_info
      end function c_sharp_alm_count
 
@@ -77,7 +77,7 @@ module sharp
 
      function c_sharp_map_size(info) bind(c, name='sharp_map_size')
        use iso_c_binding
-       integer(c_ptrdiff_t) :: c_sharp_map_size
+       integer(c_intptr_t) :: c_sharp_map_size
        type(c_ptr), value   :: info
      end function c_sharp_map_size
 
@@ -107,7 +107,7 @@ module sharp
      subroutine c_sharp_legendre_transform(bl, recfac, lmax, x, out, nx) &
           bind(c, name='sharp_legendre_transform')
        use iso_c_binding
-       integer(c_ptrdiff_t), value :: lmax, nx
+       integer(c_intptr_t), value :: lmax, nx
        real(c_double) :: bl(lmax + 1), x(nx), out(nx)
        real(c_double), optional :: recfac(lmax + 1)
      end subroutine c_sharp_legendre_transform
@@ -115,7 +115,7 @@ module sharp
      subroutine c_sharp_legendre_transform_s(bl, recfac, lmax, x, out, nx) &
           bind(c, name='sharp_legendre_transform_s')
        use iso_c_binding
-       integer(c_ptrdiff_t), value :: lmax, nx
+       integer(c_intptr_t), value :: lmax, nx
        real(c_float) :: bl(lmax + 1), x(nx), out(nx)
        real(c_float), optional :: recfac(lmax + 1)
      end subroutine c_sharp_legendre_transform_s
@@ -237,8 +237,8 @@ contains
 
     ! Set up pointer table to access maps
     do k = 1, nmaps
-       alm_ptr(k) = c_loc(alm(0, k))
-       map_ptr(k) = c_loc(map(0, k))
+       if (alm_info%n_local > 0) alm_ptr(k) = c_loc(alm(0, k))
+       if (geom_info%n_local > 0) map_ptr(k) = c_loc(map(0, k))
     end do
 
     if (present(comm)) then
@@ -265,9 +265,9 @@ contains
     real(c_double) :: bl(:)
     real(c_double) :: x(:), out(size(x))
     !--
-    integer(c_ptrdiff_t) :: lmax, nx
-    call c_sharp_legendre_transform(bl, lmax=int(size(bl) - 1, c_ptrdiff_t), &
-                                    x=x, out=out, nx=int(size(x), c_ptrdiff_t))
+    integer(c_intptr_t) :: lmax, nx
+    call c_sharp_legendre_transform(bl, lmax=int(size(bl) - 1, c_intptr_t), &
+                                    x=x, out=out, nx=int(size(x), c_intptr_t))
   end subroutine sharp_legendre_transform_d
 
   subroutine sharp_legendre_transform_s(bl, x, out)
@@ -275,9 +275,9 @@ contains
     real(c_float) :: bl(:)
     real(c_float) :: x(:), out(size(x))
     !--
-    integer(c_ptrdiff_t) :: lmax, nx
-    call c_sharp_legendre_transform_s(bl, lmax=int(size(bl) - 1, c_ptrdiff_t), &
-                                      x=x, out=out, nx=int(size(x), c_ptrdiff_t))
+    integer(c_intptr_t) :: lmax, nx
+    call c_sharp_legendre_transform_s(bl, lmax=int(size(bl) - 1, c_intptr_t), &
+                                      x=x, out=out, nx=int(size(x), c_intptr_t))
   end subroutine sharp_legendre_transform_s
 
 
