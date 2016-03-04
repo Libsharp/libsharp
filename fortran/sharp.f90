@@ -236,6 +236,8 @@ contains
     end if
 
     ! Set up pointer table to access maps
+    alm_ptr(:) = c_null_ptr
+    map_ptr(:) = c_null_ptr
     do k = 1, nmaps
        if (alm_info%n_local > 0) alm_ptr(k) = c_loc(alm(0, k))
        if (geom_info%n_local > 0) map_ptr(k) = c_loc(map(0, k))
