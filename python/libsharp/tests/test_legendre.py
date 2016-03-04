@@ -44,8 +44,8 @@ def test_legendre_transform():
 def check_legendre_roots(n):
     xs, ws = ([], []) if n == 0 else p_roots(n) # from SciPy
     xl, wl = libsharp.legendre_roots(n)
-    assert_allclose(xs, xl)
-    assert_allclose(ws, wl)
+    assert_allclose(xs, xl, rtol=1e-14, atol=1e-14)
+    assert_allclose(ws, wl, rtol=1e-14, atol=1e-14)
 
 def test_legendre_roots():
     """
