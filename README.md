@@ -1,3 +1,16 @@
+# Libsharp
+
+*IMPORTANT NOTE*: It appears that the default branch upon cloning from
+github.com/dagss/libsharp was an outdated 'dagss' branch instead of
+the 'master' branch. To get the latest copy,
+please do `git checkout master; git pull`. New clones are no longer affected.
+
+## Paper
+
+https://arxiv.org/abs/1303.4945
+
+## Compilation
+
 GNU make is required for compilation.
 
 Libsharp compilation has been successfully tested with GNU and Intel compilers.
