@@ -25,7 +25,7 @@
 /*! \file sharp_ylmgen_c.h
  *  Code for efficient calculation of Y_lm(phi=0,theta)
  *
- *  Copyright (C) 2005-2012 Max-Planck-Society
+ *  Copyright (C) 2005-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -49,6 +49,7 @@ typedef struct
 /* for public use; immutable during lifetime */
   int lmax, mmax, s;
   double *cf;
+  double *powlimit;
 
 /* for public use; will typically change after call to Ylmgen_prepare() */
   int m;

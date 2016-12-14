@@ -25,7 +25,7 @@
 /*! \file c_utils.h
  *  Convenience functions
  *
- *  Copyright (C) 2008, 2009, 2010, 2011 Max-Planck-Society
+ *  Copyright (C) 2008-2013 Max-Planck-Society
  *  \author Martin Reinecke
  *  \note This file should only be included from .c files, NOT from .h files.
  */

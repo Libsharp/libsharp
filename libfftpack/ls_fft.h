@@ -25,7 +25,7 @@
 /*! \file ls_fft.h
  *  Interface for the LevelS FFT package.
  *
- *  Copyright (C) 2004 Max-Planck-Society
+ *  Copyright (C) 2004-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -53,7 +53,7 @@ double precision incarnation by Hugh C. Pumphrey
 (http://www.netlib.org/fftpack/dp.tgz).
 
 I replaced the iterative sine and cosine calculations in radfg() and radbg()
-by an exact calculation, which slightly improves the transform accuracy for
+by another algorithm, which slightly improves the transform accuracy for
 real FFTs with lengths containing large prime factors.
 
 Since FFTPACK becomes quite slow for FFT lengths with large prime factors
@@ -75,15 +75,10 @@ data corruption.
 */
 /*! \{ */
 
-typedef struct
-  {
-  double *work;
-  size_t length, worksize;
-  int bluestein;
-  } complex_plan_i;
+struct complex_plan_i;
 
 /*! The opaque handle type for complex-FFT plans. */
-typedef complex_plan_i * complex_plan;
+typedef struct complex_plan_i * complex_plan;
 
 /*! Returns a plan for a complex FFT with \a length elements. */
 complex_plan make_complex_plan (size_t length);
@@ -100,15 +95,10 @@ void complex_plan_forward (complex_plan plan, double *data);
     r[length-1], i[length-1]</tt>. */
 void complex_plan_backward (complex_plan plan, double *data);
 
-typedef struct
-  {
-  double *work;
-  size_t length, worksize;
-  int bluestein;
-  } real_plan_i;
+struct real_plan_i;
 
 /*! The opaque handle type for real-FFT plans. */
-typedef real_plan_i * real_plan;
+typedef struct real_plan_i * real_plan;
 
 /*! Returns a plan for a real FFT with \a length elements. */
 real_plan make_real_plan (size_t length);
@@ -151,6 +141,11 @@ void real_plan_forward_c (real_plan plan, double *data);
       r[length-1], i[length-1]</tt>;
     - on exit, it has the form <tt>r0, 0, r1, 0, ..., r[length-1], 0</tt>. */
 void real_plan_backward_c (real_plan plan, double *data);
+
+/*! Rearrange the contents of \a data from FFTPACK order to halfcomplex order */
+void fftpack2halfcomplex (double *data, size_t n);
+/*! Rearrange the contents of \a data from halfcomplex order to FFTPACK order */
+void halfcomplex2fftpack (double *data, size_t n);
 
 /*! \} */
 

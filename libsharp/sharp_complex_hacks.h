@@ -25,7 +25,7 @@
 /*  \file sharp_complex_hacks.h
  *  support for converting vector types and complex numbers
  *
- *  Copyright (C) 2012,2013 Max-Planck-Society
+ *  Copyright (C) 2012-2016 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -50,6 +50,10 @@ static inline complex double vhsum_cmplx(Tv a, Tv b)
 static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c, Tv d,
   complex double * restrict c1, complex double * restrict c2)
   { *c1 += a+_Complex_I*b; *c2 += c+_Complex_I*d; }
+
+static inline void vhsum_cmplx_special (Tv a, Tv b, Tv c, Tv d,
+  complex double * restrict cc)
+  { cc[0] += a+_Complex_I*b; cc[1] += c+_Complex_I*d; }
 
 #endif
 
@@ -94,6 +98,10 @@ static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c,
 #endif
   }
 
+static inline void vhsum_cmplx_special (Tv a, Tv b, Tv c, Tv d,
+  complex double * restrict cc)
+  { vhsum_cmplx2(a,b,c,d,cc,cc+1); }
+
 #endif
 
 #if (VLEN==4)
@@ -130,6 +138,23 @@ static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c, Tv d,
 #endif
   }
 
+static inline void vhsum_cmplx_special (Tv a, Tv b, Tv c, Tv d,
+  complex double * restrict cc)
+  {
+  Tv tmp1=_mm256_hadd_pd(a,b), tmp2=_mm256_hadd_pd(c,d);
+  Tv tmp3=_mm256_permute2f128_pd(tmp1,tmp2,49),
+     tmp4=_mm256_permute2f128_pd(tmp1,tmp2,32);
+  tmp1=vadd(tmp3,tmp4);
+#ifdef UNSAFE_CODE
+  _mm256_storeu_pd((double *)cc,
+    _mm256_add_pd(_mm256_loadu_pd((double *)cc),tmp1));
+#else
+  union {Tv v; complex double c[2]; } u;
+  u.v=tmp1;
+  cc[0]+=u.c[0]; cc[1]+=u.c[1];
+#endif
+  }
+
 #endif
 
 #if (VLEN==8)
@@ -143,6 +168,10 @@ static inline void vhsum_cmplx2 (Tv a, Tv b, Tv c, Tv d,
   *c1 += _mm512_reduce_add_pd(a)+_Complex_I*_mm512_reduce_add_pd(b);
   *c2 += _mm512_reduce_add_pd(c)+_Complex_I*_mm512_reduce_add_pd(d);
   }
+
+static inline void vhsum_cmplx_special (Tv a, Tv b, Tv c, Tv d,
+  complex double * restrict cc)
+  { vhsum_cmplx2(a,b,c,d,cc,cc+1); }
 
 #endif
 

@@ -25,7 +25,7 @@
 /*! \file sharp_core_inc.c
  *  Type-dependent code for the computational core
  *
- *  Copyright (C) 2012 Max-Planck-Society
+ *  Copyright (C) 2012-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -73,8 +73,8 @@ static inline void Y(Tbmuleq)(Tb * restrict a, Tb b)
 static void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
   double maxval)
   {
-  const Tv vfsmall=vload(sharp_fsmall), vfbig=vload(sharp_fbig);
   const Tv vfmin=vload(sharp_fsmall*maxval), vfmax=vload(maxval);
+  const Tv vfsmall=vload(sharp_fsmall), vfbig=vload(sharp_fbig);
   for (int i=0;i<nvec; ++i)
     {
     Tm mask = vgt(vabs(val->v[i]),vfmax);
@@ -94,35 +94,58 @@ static void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
     }
   }
 
-static void Y(mypow) (Tb val, int npow, Tb * restrict resd,
-  Tb * restrict ress)
+static void Y(mypow) (Tb val, int npow, const double * restrict powlimit,
+  Tb * restrict resd, Tb * restrict ress)
   {
-  Tb scale=Y(Tbconst)(0.), scaleint=Y(Tbconst)(0.), res=Y(Tbconst)(1.);
-
-  Y(Tbnormalize)(&val,&scaleint,sharp_fbighalf);
-
-  do
+  Tv vminv=vload(powlimit[npow]);
+  Tm mask = vlt(vabs(val.v[0]),vminv);
+  for (int i=1;i<nvec; ++i)
+    mask=vor_mask(mask,vlt(vabs(val.v[i]),vminv));
+  if (!vanyTrue(mask)) // no underflows possible, use quick algoritm
     {
-    if (npow&1)
+    Tb res=Y(Tbconst)(1.);
+    do
       {
+      if (npow&1)
+        for (int i=0; i<nvec; ++i)
+          {
+          vmuleq(res.v[i],val.v[i]);
+          vmuleq(val.v[i],val.v[i]);
+          }
+      else
+        for (int i=0; i<nvec; ++i)
+          vmuleq(val.v[i],val.v[i]);
+      }
+    while(npow>>=1);
+    *resd=res;
+    *ress=Y(Tbconst)(0.);
+    }
+  else
+    {
+    Tb scale=Y(Tbconst)(0.), scaleint=Y(Tbconst)(0.), res=Y(Tbconst)(1.);
+    Y(Tbnormalize)(&val,&scaleint,sharp_fbighalf);
+    do
+      {
+      if (npow&1)
+        {
+        for (int i=0; i<nvec; ++i)
+          {
+          vmuleq(res.v[i],val.v[i]);
+          vaddeq(scale.v[i],scaleint.v[i]);
+          }
+        Y(Tbnormalize)(&res,&scale,sharp_fbighalf);
+        }
       for (int i=0; i<nvec; ++i)
         {
-        vmuleq(res.v[i],val.v[i]);
-        vaddeq(scale.v[i],scaleint.v[i]);
+        vmuleq(val.v[i],val.v[i]);
+        vaddeq(scaleint.v[i],scaleint.v[i]);
         }
-      Y(Tbnormalize)(&res,&scale,sharp_fbighalf);
+      Y(Tbnormalize)(&val,&scaleint,sharp_fbighalf);
       }
-    for (int i=0; i<nvec; ++i)
-      {
-      vmuleq(val.v[i],val.v[i]);
-      vaddeq(scaleint.v[i],scaleint.v[i]);
-      }
-    Y(Tbnormalize)(&val,&scaleint,sharp_fbighalf);
+    while(npow>>=1);
+    *resd=res;
+    *ress=scale;
     }
-  while(npow>>=1);
-
-  *resd=res;
-  *ress=scale;
   }
 
 static inline int Y(rescale) (Tb * restrict lam1, Tb * restrict lam2,
@@ -185,7 +208,7 @@ static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
   {
   int l=gen->m;
   Tb lam_1=Y(Tbconst)(0.), lam_2, scale;
-  Y(mypow) (sth,l,&lam_2,&scale);
+  Y(mypow) (sth,l,gen->powlimit,&lam_2,&scale);
   Y(Tbmuleq1) (&lam_2,(gen->m&1) ? -gen->mfac[gen->m]:gen->mfac[gen->m]);
   Y(Tbnormalize)(&lam_2,&scale,sharp_ftol);
 
@@ -240,8 +263,10 @@ static void Y(iter_to_ieee_spin) (const Tb cth, const Tb sth, int *l_,
     }
 
   Tb ccp, ccps, ssp, ssps, csp, csps, scp, scps;
-  Y(mypow)(cth2,gen->cosPow,&ccp,&ccps); Y(mypow)(sth2,gen->sinPow,&ssp,&ssps);
-  Y(mypow)(cth2,gen->sinPow,&csp,&csps); Y(mypow)(sth2,gen->cosPow,&scp,&scps);
+  Y(mypow)(cth2,gen->cosPow,gen->powlimit,&ccp,&ccps);
+  Y(mypow)(sth2,gen->sinPow,gen->powlimit,&ssp,&ssps);
+  Y(mypow)(cth2,gen->sinPow,gen->powlimit,&csp,&csps);
+  Y(mypow)(sth2,gen->cosPow,gen->powlimit,&scp,&scps);
 
   Tb rec2p, rec2m, scalep, scalem;
   Tb rec1p=Y(Tbconst)(0.), rec1m=Y(Tbconst)(0.);

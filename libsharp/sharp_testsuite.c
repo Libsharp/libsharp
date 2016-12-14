@@ -23,7 +23,7 @@
  */
 
 /*  \file sharp_testsuite.c
- * 
+ *
  *  Copyright (C) 2012-2013 Max-Planck-Society
  *  \author Martin Reinecke
  */
@@ -50,9 +50,9 @@ typedef complex double dcmplx;
 
 int ntasks, mytask;
 
-static double drand (double min, double max, int *state)
+static double drand (double min, double max, unsigned *state)
   {
-  *state = (((*state) * 1103515245) + 12345) & 0x7fffffff;
+  *state = (((*state) * 1103515245u) + 12345u) & 0x7fffffffu;
   return min + (max-min)*(*state)/(0x7fffffff+1.0);
   }
 
@@ -65,7 +65,7 @@ static void random_alm (dcmplx *alm, sharp_alm_info *helper, int spin, int cnt)
   for (mi=0;mi<helper->nm; ++mi)
     {
     int m=helper->mval[mi];
-    int state=1234567*cnt+8912*m; // random seed
+    unsigned state=1234567u*(unsigned)cnt+8912u*(unsigned)m; // random seed
     for (int l=m;l<=helper->lmax; ++l)
       {
       if ((l<spin)&&(m<spin))

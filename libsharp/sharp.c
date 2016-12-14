@@ -25,7 +25,7 @@
 /*! \file sharp.c
  *  Spherical transform library
  *
- *  Copyright (C) 2006-2013 Max-Planck-Society
+ *  Copyright (C) 2006-2016 Max-Planck-Society
  *  \author Martin Reinecke \author Dag Sverre Seljebotn
  */
 
@@ -37,6 +37,7 @@
 #include "sharp_core.h"
 #include "sharp_vecutil.h"
 #include "walltime_c.h"
+#include "trig_utils.h"
 #include "sharp_almhelpers.h"
 #include "sharp_geomhelpers.h"
 
@@ -83,12 +84,13 @@ typedef struct
   dcmplx *shiftarr;
   int s_shift;
   real_plan plan;
+  int length;
   int norot;
   } ringhelper;
 
 static void ringhelper_init (ringhelper *self)
   {
-  static ringhelper rh_null = { 0, NULL, 0, NULL, 0 };
+  static ringhelper rh_null = { 0, NULL, 0, NULL, 0, 0 };
   *self = rh_null;
   }
 
@@ -108,14 +110,15 @@ static void ringhelper_update (ringhelper *self, int nph, int mmax, double phi0)
       RESIZE (self->shiftarr,dcmplx,mmax+1);
       self->s_shift = mmax+1;
       self->phi0_ = phi0;
-      for (int m=0; m<=mmax; ++m)
-        self->shiftarr[m] = cos(m*phi0) + _Complex_I*sin(m*phi0);
+      double *tmp=(double *) self->shiftarr;
+      sincos_multi (mmax+1, phi0, 0., &tmp[1], &tmp[0], 2);
       }
   if (!self->plan) self->plan=make_real_plan(nph);
-  if (nph!=(int)self->plan->length)
+  if (nph!=(int)self->length)
     {
     kill_real_plan(self->plan);
     self->plan=make_real_plan(nph);
+    self->length=nph;
     }
   }
 
@@ -480,14 +483,14 @@ static void alloc_phase (sharp_job *job, int nm, int ntheta)
   {
   if (job->type==SHARP_MAP2ALM)
     {
-    if ((nm&1023)==0) nm+=3; // hack to avoid critical strides
     job->s_m=2*job->ntrans*job->nmaps;
+    if (((job->s_m*16*nm)&1023)==0) nm+=3; // hack to avoid critical strides
     job->s_th=job->s_m*nm;
     }
   else
     {
-    if ((ntheta&1023)==0) ntheta+=3; // hack to avoid critical strides
     job->s_th=2*job->ntrans*job->nmaps;
+    if (((job->s_th*16*ntheta)&1023)==0) ntheta+=3; // hack to avoid critical strides
     job->s_m=job->s_th*ntheta;
     }
   job->phase=RALLOC(dcmplx,2*job->ntrans*job->nmaps*nm*ntheta);
@@ -505,19 +508,25 @@ static void dealloc_almtmp (sharp_job *job)
 static void alm2almtmp (sharp_job *job, int lmax, int mi)
   {
 
-#define COPY_LOOP(real_t, source_t, expr_of_x)                      \
-  for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)            \
+#define COPY_LOOP(real_t, source_t, expr_of_x)              \
+  {                                                         \
+  for (int l=m; l<lmin; ++l)                                \
+    for (int i=0; i<job->ntrans*job->nalm; ++i)             \
+      job->almtmp[job->ntrans*job->nalm*l+i] = 0;           \
+  for (int l=lmin; l<=lmax; ++l)                            \
     for (int i=0; i<job->ntrans*job->nalm; ++i)             \
       {                                                     \
-        source_t x = *(source_t *)(((real_t *)job->alm[i])+ofs+l*stride); \
-        job->almtmp[job->ntrans*job->nalm*l+i] = expr_of_x; \
-      }
+      source_t x = *(source_t *)(((real_t *)job->alm[i])+ofs+l*stride); \
+      job->almtmp[job->ntrans*job->nalm*l+i] = expr_of_x;   \
+      }                                                     \
+  }
 
   if (job->type!=SHARP_MAP2ALM)
     {
     ptrdiff_t ofs=job->ainfo->mvstart[mi];
     int stride=job->ainfo->stride;
     int m=job->ainfo->mval[mi];
+    int lmin=(m<job->spin) ? job->spin : m;
     /* in the case of SHARP_REAL_HARMONICS, phase2ring scales all the
        coefficients by sqrt_one_half; here we must compensate to avoid scaling
        m=0 */
@@ -572,7 +581,7 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
   {
 
 #define COPY_LOOP(real_t, target_t, expr_of_x)               \
-  for (int l=job->ainfo->mval[mi]; l<=lmax; ++l)             \
+  for (int l=lmin; l<=lmax; ++l)                             \
     for (int i=0; i<job->ntrans*job->nalm; ++i)              \
       {                                                      \
         dcmplx x = job->almtmp[job->ntrans*job->nalm*l+i];   \
@@ -583,6 +592,7 @@ static void almtmp2alm (sharp_job *job, int lmax, int mi)
   ptrdiff_t ofs=job->ainfo->mvstart[mi];
   int stride=job->ainfo->stride;
   int m=job->ainfo->mval[mi];
+  int lmin=(m<job->spin) ? job->spin : m;
   /* in the case of SHARP_REAL_HARMONICS, ring2phase scales all the
      coefficients by sqrt_two; here we must compensate to avoid scaling
      m=0 */

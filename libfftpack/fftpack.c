@@ -27,13 +27,14 @@
   Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber
   (Version 4, 1985).
 
-  C port by Martin Reinecke (2010)
+  C port by Martin Reinecke (2010-2016)
  */
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
 #include "fftpack.h"
+#include "trig_utils.h"
 
 #define WA(x,i) wa[(i)+(x)*ido]
 #define CH(a,b,c) ch[(a)+ido*((b)+l1*(c))]
@@ -228,9 +229,8 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
   double *cc, double *ch, const double *wa)
   {
   const size_t cdim=ip;
-  static const double twopi=6.28318530717958647692;
   size_t idij, ipph, i, j, k, l, j2, ic, jc, lc, ik;
-  double ai1, ai2, ar1, ar2, arg;
+  double ai1, ai2, ar1, ar2;
   double *csarr;
   size_t aidx;
 
@@ -264,17 +264,8 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
       PM(C1(0,k,j),C1(0,k,jc),CH(0,k,jc),CH(0,k,j))
 
   csarr=RALLOC(double,2*ip);
-  arg=twopi / ip;
-  csarr[0]=1.;
-  csarr[1]=0.;
-  csarr[2]=csarr[2*ip-2]=cos(arg);
-  csarr[3]=sin(arg); csarr[2*ip-1]=-csarr[3];
-  for (i=2; i<=ip/2; ++i)
-    {
-    csarr[2*i]=csarr[2*ip-2*i]=cos(i*arg);
-    csarr[2*i+1]=sin(i*arg);
-    csarr[2*ip-2*i+1]=-csarr[2*i+1];
-    }
+  sincos_2pibyn(ip, ip, &csarr[1], &csarr[0], 2);
+
   for(l=1,lc=ip-1; l<ipph; l++,lc--)
     {
     ar1=csarr[2*l];
@@ -499,9 +490,8 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
   double *cc, double *ch, const double *wa)
   {
   const size_t cdim=ip;
-  static const double twopi=6.28318530717958647692;
   size_t idij, ipph, i, j, k, l, j2, ic, jc, lc, ik;
-  double ai1, ai2, ar1, ar2, arg;
+  double ai1, ai2, ar1, ar2;
   double *csarr;
   size_t aidx;
 
@@ -530,17 +520,8 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
           }
 
   csarr=RALLOC(double,2*ip);
-  arg=twopi/ip;
-  csarr[0]=1.;
-  csarr[1]=0.;
-  csarr[2]=csarr[2*ip-2]=cos(arg);
-  csarr[3]=sin(arg); csarr[2*ip-1]=-csarr[3];
-  for (i=2; i<=ip/2; ++i)
-    {
-    csarr[2*i]=csarr[2*ip-2*i]=cos(i*arg);
-    csarr[2*i+1]=sin(i*arg);
-    csarr[2*ip-2*i+1]=-csarr[2*i+1];
-    }
+  sincos_2pibyn(ip, ip, &csarr[1], &csarr[0], 2);
+
   for(l=1; l<ipph; l++)
     {
     lc=ip-l;
@@ -690,7 +671,7 @@ static void cffti1(size_t n, double wa[], size_t ifac[])
   {
   static const size_t ntryh[5]={4,6,3,2,5};
   static const double twopi=6.28318530717958647692;
-  size_t j, k, fi;
+  size_t j, k;
 
   double argh=twopi/n;
   size_t i=0, l1=1;
@@ -703,15 +684,9 @@ static void cffti1(size_t n, double wa[], size_t ifac[])
       {
       size_t is = i;
       double argld=j*l1*argh;
-      wa[i  ]=1;
-      wa[i+1]=0;
-      for(fi=1; fi<=ido; fi++)
-        {
-        double arg=fi*argld;
-        i+=2;
-        wa[i  ]=cos(arg);
-        wa[i+1]=sin(arg);
-        }
+      sincos_multi (ido+1,argld,0.,&wa[i+1],&wa[i],2);
+      i+=2*ido;
+
       if(ip>6)
         {
         wa[is  ]=wa[i  ];
@@ -805,7 +780,7 @@ static void rffti1(size_t n, double wa[], size_t ifac[])
   {
   static const size_t ntryh[4]={4,2,3,5};
   static const double twopi=6.28318530717958647692;
-  size_t i, j, k, fi;
+  size_t j, k;
 
   double argh=twopi/n;
   size_t is=0, l1=1;
@@ -817,12 +792,7 @@ static void rffti1(size_t n, double wa[], size_t ifac[])
     for (j=1; j<ip; ++j)
       {
       double argld=j*l1*argh;
-      for(i=is,fi=1; i<=ido+is-3; i+=2,++fi)
-        {
-        double arg=fi*argld;
-        wa[i  ]=cos(arg);
-        wa[i+1]=sin(arg);
-        }
+      sincos_multi((ido-1)/2,argld,argld,&wa[is+1],&wa[is],2);
       is+=ido;
       }
     l1*=ip;

@@ -25,7 +25,7 @@
 /*
  *  Helper code for efficient calculation of Y_lm(theta,phi=0)
  *
- *  Copyright (C) 2005-2014 Max-Planck-Society
+ *  Copyright (C) 2005-2016 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -59,6 +59,12 @@ void sharp_Ylmgen_init (sharp_Ylmgen_C *gen, int l_max, int m_max, int spin)
     gen->cf[m]=gen->cf[m+1]*sharp_fsmall;
   for (int m=-sharp_minscale+1; m<(sharp_maxscale-sharp_minscale+1); ++m)
     gen->cf[m]=gen->cf[m-1]*sharp_fbig;
+  gen->powlimit=RALLOC(double,m_max+spin+1);
+  gen->powlimit[0]=0.;
+  const double ln2 = 0.6931471805599453094172321214581766;
+  const double expo=-400*ln2;
+  for (int m=1; m<=m_max+spin; ++m)
+    gen->powlimit[m]=exp(expo/m);
 
   gen->m = -1;
   if (spin==0)
@@ -124,6 +130,7 @@ void sharp_Ylmgen_init (sharp_Ylmgen_C *gen, int l_max, int m_max, int spin)
 void sharp_Ylmgen_destroy (sharp_Ylmgen_C *gen)
   {
   DEALLOC(gen->cf);
+  DEALLOC(gen->powlimit);
   if (gen->s==0)
     {
     DEALLOC(gen->rf);

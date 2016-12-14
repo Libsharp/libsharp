@@ -25,9 +25,8 @@
 /*! \file sharp_geomhelpers.c
  *  Spherical transform library
  *
- *  Copyright (C) 2006-2012 Max-Planck-Society<br>
- *  Copyright (C) 2007-2008 Pavel Holoborodko (for gauss_legendre_tbl)
- *  \author Martin Reinecke \author Pavel Holoborodko
+ *  Copyright (C) 2006-2016 Max-Planck-Society
+ *  \author Martin Reinecke
  */
 
 #include <math.h>
@@ -35,7 +34,6 @@
 #include "sharp_legendre_roots.h"
 #include "c_utils.h"
 #include "ls_fft.h"
-#include <stdio.h>
 
 void sharp_make_subset_healpix_geom_info (int nside, int stride, int nrings,
   const int *rings, const double *weight, sharp_geom_info **geom_info)

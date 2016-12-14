@@ -56,8 +56,12 @@ case $CCTYPE in
     changequote(,)
     gcc43=`echo $GCCVERSION | grep -c '^4\.[3456789]'`
     gcc44=`echo $GCCVERSION | grep -c '^4\.4'`
+    gcc5plus=`echo $GCCVERSION | grep -c '^[56789]\.'`
     changequote([,])
     if test $gcc43 -gt 0; then
+      CCFLAGS="$CCFLAGS -march=native"
+    fi
+    if test $gcc5plus -gt 0; then
       CCFLAGS="$CCFLAGS -march=native"
     fi
     if test $gcc44 -gt 0; then

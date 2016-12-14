@@ -25,7 +25,7 @@
 /*
  *  Convenience functions
  *
- *  Copyright (C) 2008, 2009, 2010, 2011, 2012 Max-Planck-Society
+ *  Copyright (C) 2008-2013 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 

@@ -23,12 +23,13 @@
  */
 
 /*
- *  Copyright (C) 2005, 2006, 2007, 2008 Max-Planck-Society
+ *  Copyright (C) 2005-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
 #include <math.h>
 #include <stdlib.h>
+#include "trig_utils.h"
 #include "fftpack.h"
 #include "bluestein.h"
 
@@ -67,12 +68,10 @@ static size_t good_size(size_t n)
 
 void bluestein_i (size_t n, double **tstorage, size_t *worksize)
   {
-  static const double pi=3.14159265358979323846;
   size_t n2=good_size(n*2-1);
   size_t m, coeff;
-  double angle, xn2;
-  double *bk, *bkf, *work;
-  double pibyn=pi/n;
+  double xn2;
+  double *bk, *bkf, *work, *tmp;
   *worksize=2+2*n+8*n2+16;
   *tstorage = RALLOC(double,2+2*n+8*n2+16);
   ((size_t *)(*tstorage))[0]=n2;
@@ -81,6 +80,8 @@ void bluestein_i (size_t n, double **tstorage, size_t *worksize)
   work= *tstorage+2+2*(n+n2);
 
 /* initialize b_k */
+  tmp=RALLOC(double,4*n);
+  sincos_2pibyn(2*n,2*n,&tmp[1],&tmp[0],2);
   bk[0] = 1;
   bk[1] = 0;
 
@@ -89,10 +90,10 @@ void bluestein_i (size_t n, double **tstorage, size_t *worksize)
     {
     coeff+=2*m-1;
     if (coeff>=2*n) coeff-=2*n;
-    angle = pibyn*coeff;
-    bk[2*m] = cos(angle);
-    bk[2*m+1] = sin(angle);
+    bk[2*m  ] = tmp[2*coeff  ];
+    bk[2*m+1] = tmp[2*coeff+1];
     }
+  DEALLOC(tmp);
 
 /* initialize the zero-padded, Fourier transformed b_k. Add normalisation. */
   xn2 = 1./n2;

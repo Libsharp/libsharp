@@ -22,50 +22,32 @@
  *  (DLR).
  */
 
-/*! \file sharp_vecutil.h
- *  Functionality related to vector instruction support
+/*! \file trig_utils.h
  *
- *  Copyright (C) 2012-2016 Max-Planck-Society
+ *  Copyright (C) 2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
-#ifndef SHARP_VECUTIL_H
-#define SHARP_VECUTIL_H
+#ifndef PLANCK_TRIGHELPER_H
+#define PLANCK_TRIGHELPER_H
 
-#ifndef VLEN
+#include <stdlib.h>
 
-#if (defined (__MIC__))
-#define VLEN 8
-#elif (defined (__AVX__))
-#define VLEN 4
-#elif (defined (__SSE2__))
-#define VLEN 2
-#else
-#define VLEN 1
+#ifdef __cplusplus
+extern "C" {
 #endif
 
-#endif
+/*! Computes sine and cosine of \a i*alpha+beta for \a i=[0;n[. Stores the sines
+    in \a s[i*stride] and the cosines in c[i*stride]. */
+void sincos_multi (size_t n, double alpha, double beta, double *s, double *c,
+  int stride);
 
-#if (VLEN==1)
-#define VLEN_s 1
-#else
-#define VLEN_s (2*VLEN)
-#endif
+/*! Computes sine and cosine of \a i*2pi/n for \a i=[0;nang[. Stores the sines
+    in \a s[i*stride] and the cosines in c[i*stride]. */
+void sincos_2pibyn (size_t n, size_t nang, double *s, double *c, int stride);
 
-#ifndef USE_FMA4
-#ifdef __FMA4__
-#define USE_FMA4 1
-#else
-#define USE_FMA4 0
-#endif
-#endif
-
-#ifndef USE_FMA
-#ifdef __FMA__
-#define USE_FMA 1
-#else
-#define USE_FMA 0
-#endif
+#ifdef __cplusplus
+}
 #endif
 
 #endif

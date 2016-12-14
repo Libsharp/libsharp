@@ -25,7 +25,7 @@
 /*! \file sharp_almhelpers.c
  *  Spherical transform library
  *
- *  Copyright (C) 2008-2013 Max-Planck-Society
+ *  Copyright (C) 2008-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 

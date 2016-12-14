@@ -25,7 +25,7 @@
 /*  \file sharp_vecsupport.h
  *  Convenience functions for vector arithmetics
  *
- *  Copyright (C) 2012,2013 Max-Planck-Society
+ *  Copyright (C) 2012-2016 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -72,6 +72,7 @@ typedef int Tm;
 #define vge(a,b) ((a)>=(b))
 #define vne(a,b) ((a)!=(b))
 #define vand_mask(a,b) ((a)&&(b))
+#define vor_mask(a,b) ((a)||(b))
 #define vstoreu(p, a) (*(p)=a)
 #define vstoreu_s(p, a) (*(p)=a)
 
@@ -138,6 +139,7 @@ static inline Tv vblend__(Tv m, Tv a, Tv b)
 #define vge(a,b) _mm_cmpge_pd(a,b)
 #define vne(a,b) _mm_cmpneq_pd(a,b)
 #define vand_mask(a,b) _mm_and_pd(a,b)
+#define vor_mask(a,b) _mm_or_pd(a,b)
 #define vmin(a,b) _mm_min_pd(a,b)
 #define vmax(a,b) _mm_max_pd(a,b);
 #define vanyTrue(a) (_mm_movemask_pd(a)!=0)
@@ -183,6 +185,13 @@ typedef __m256d Tm;
 #define vfmaaeq(a,b,c,d,e) a=_mm256_macc_pd(d,e,_mm256_macc_pd(b,c,a))
 #define vfmaseq(a,b,c,d,e) a=_mm256_nmacc_pd(d,e,_mm256_macc_pd(b,c,a))
 #else
+#if (USE_FMA)
+#define vfmaeq(a,b,c) a=_mm256_fmadd_pd(b,c,a)
+#define vfmaeq_s(a,b,c) a=_mm256_fmadd_ps(b,c,a)
+#define vfmseq(a,b,c) a=_mm256_fnmadd_pd(b,c,a)
+#define vfmaaeq(a,b,c,d,e) a=_mm256_fmadd_pd(d,e,_mm256_fmadd_pd(b,c,a))
+#define vfmaseq(a,b,c,d,e) a=_mm256_fnmadd_pd(d,e,_mm256_fmadd_pd(b,c,a))
+#else
 #define vfmaeq(a,b,c) a=_mm256_add_pd(a,_mm256_mul_pd(b,c))
 #define vfmaeq_s(a,b,c) a=_mm256_add_ps(a,_mm256_mul_ps(b,c))
 #define vfmseq(a,b,c) a=_mm256_sub_pd(a,_mm256_mul_pd(b,c))
@@ -190,6 +199,7 @@ typedef __m256d Tm;
   a=_mm256_add_pd(a,_mm256_add_pd(_mm256_mul_pd(b,c),_mm256_mul_pd(d,e)))
 #define vfmaseq(a,b,c,d,e) \
   a=_mm256_add_pd(a,_mm256_sub_pd(_mm256_mul_pd(b,c),_mm256_mul_pd(d,e)))
+#endif
 #endif
 #define vneg(a) _mm256_xor_pd(_mm256_set1_pd(-0.),a)
 #define vload(a) _mm256_set1_pd(a)
@@ -201,6 +211,7 @@ typedef __m256d Tm;
 #define vge(a,b) _mm256_cmp_pd(a,b,_CMP_GE_OQ)
 #define vne(a,b) _mm256_cmp_pd(a,b,_CMP_NEQ_OQ)
 #define vand_mask(a,b) _mm256_and_pd(a,b)
+#define vor_mask(a,b) _mm256_or_pd(a,b)
 #define vmin(a,b) _mm256_min_pd(a,b)
 #define vmax(a,b) _mm256_max_pd(a,b)
 #define vanyTrue(a) (_mm256_movemask_pd(a)!=0)
@@ -242,6 +253,7 @@ typedef __mmask8 Tm;
 #define vge(a,b) _mm512_cmpnlt_pd_mask(a,b)
 #define vne(a,b) _mm512_cmpneq_pd_mask(a,b)
 #define vand_mask(a,b) ((a)&(b))
+#define vor_mask(a,b) ((a)|(b))
 #define vmin(a,b) _mm512_min_pd(a,b)
 #define vmax(a,b) _mm512_max_pd(a,b)
 #define vanyTrue(a) (a!=0)

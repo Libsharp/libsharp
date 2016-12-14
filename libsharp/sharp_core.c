@@ -25,7 +25,7 @@
 /*! \file sharp_core.c
  *  Computational core
  *
- *  Copyright (C) 2012-2013 Max-Planck-Society
+ *  Copyright (C) 2012-2016 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -34,7 +34,6 @@
 #include <string.h>
 #include "sharp_vecsupport.h"
 #include "sharp_complex_hacks.h"
-#include "sharp_ylmgen_c.h"
 #include "sharp.h"
 #include "sharp_core.h"
 #include "c_utils.h"
