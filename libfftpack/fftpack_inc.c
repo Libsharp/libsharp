@@ -46,15 +46,14 @@ static void X(2) (size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
   const cmplx *wa)
   {
   const size_t cdim=2;
-  size_t k,i;
-  cmplx t;
-  if (ido==1)
-    for (k=0;k<l1;++k)
+  if (ido==1) // CC(1,2,l1) CH(1,l1,2)
+    for (size_t k=0;k<l1;++k)
       PMC (CH(0,k,0),CH(0,k,1),CC(0,0,k),CC(0,1,k))
-  else
-    for (k=0;k<l1;++k)
-      for (i=0;i<ido;++i)
+  else // CC(ido,2,l1) CH(ido,l1,2) WA(1,ido)
+    for (size_t k=0;k<l1;++k)
+      for (size_t i=0;i<ido;++i)
         {
+        cmplx t;
         PMC (CH(i,k,0),t,CC(i,0,k),CC(i,1,k))
         MULPMSIGNC (CH(i,k,1),WA(0,i),t)
         }
@@ -65,11 +64,10 @@ static void X(3)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
   {
   const size_t cdim=3;
   static const double taur=-0.5, taui= PSIGN 0.86602540378443864676;
-  size_t i, k;
   cmplx c2, c3, d2, d3, t2;
 
   if (ido==1)
-    for (k=0; k<l1; ++k)
+    for (size_t k=0; k<l1; ++k)
       {
       PMC (t2,c3,CC(0,1,k),CC(0,2,k))
       ADDC (CH(0,k,0),t2,CC(0,0,k))
@@ -80,8 +78,8 @@ static void X(3)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
       PMC(CH(0,k,1),CH(0,k,2),c2,c3)
       }
   else
-    for (k=0; k<l1; ++k)
-      for (i=0; i<ido; ++i)
+    for (size_t k=0; k<l1; ++k)
+      for (size_t i=0; i<ido; ++i)
         {
         PMC (t2,c3,CC(i,1,k),CC(i,2,k))
         ADDC (CH(i,k,0),t2,CC(i,0,k))
@@ -99,11 +97,10 @@ static void X(4)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
   const cmplx *wa)
   {
   const size_t cdim=4;
-  size_t i, k;
   cmplx c2, c3, c4, t1, t2, t3, t4;
 
   if (ido==1)
-    for (k=0; k<l1; ++k)
+    for (size_t k=0; k<l1; ++k)
       {
       PMC(t2,t1,CC(0,0,k),CC(0,2,k))
       PMC(t3,t4,CC(0,1,k),CC(0,3,k))
@@ -112,8 +109,8 @@ static void X(4)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
       PMSIGNC (CH(0,k,1),CH(0,k,3),t1,t4)
       }
   else
-    for (k=0; k<l1; ++k)
-      for (i=0; i<ido; ++i)
+    for (size_t k=0; k<l1; ++k)
+      for (size_t i=0; i<ido; ++i)
         {
         PMC(t2,t1,CC(i,0,k),CC(i,2,k))
         PMC(t3,t4,CC(i,1,k),CC(i,3,k))
@@ -134,11 +131,10 @@ static void X(5)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
                       ti11= PSIGN 0.95105651629515357212,
                       tr12=-0.8090169943749474241,
                       ti12= PSIGN 0.58778525229247312917;
-  size_t i, k;
   cmplx c2, c3, c4, c5, d2, d3, d4, d5, t2, t3, t4, t5;
 
   if (ido==1)
-    for (k=0; k<l1; ++k)
+    for (size_t k=0; k<l1; ++k)
       {
       PMC (t2,t5,CC(0,1,k),CC(0,4,k))
       PMC (t3,t4,CC(0,2,k),CC(0,3,k))
@@ -158,8 +154,8 @@ static void X(5)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
       PMC(CH(0,k,2),CH(0,k,3),c3,c4)
       }
   else
-    for (k=0; k<l1; ++k)
-      for (i=0; i<ido; ++i)
+    for (size_t k=0; k<l1; ++k)
+      for (size_t i=0; i<ido; ++i)
         {
         PMC (t2,t5,CC(i,1,k),CC(i,4,k))
         PMC (t3,t4,CC(i,2,k),CC(i,3,k))
@@ -190,10 +186,9 @@ static void X(6)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
   const size_t cdim=6;
   static const double taui= PSIGN 0.86602540378443864676;
   cmplx ta1,ta2,ta3,a0,a1,a2,tb1,tb2,tb3,b0,b1,b2,d1,d2,d3,d4,d5;
-  size_t i, k;
 
   if (ido==1)
-    for (k=0; k<l1; ++k)
+    for (size_t k=0; k<l1; ++k)
       {
       PMC(ta1,ta3,CC(0,2,k),CC(0,4,k))
       ta2.r = CC(0,0,k).r - .5*ta1.r;
@@ -214,8 +209,8 @@ static void X(6)(size_t ido, size_t l1, const cmplx *cc, cmplx *ch,
       PMC(CH(0,k,2),CH(0,k,5),a2,b2)
       }
   else
-    for (k=0; k<l1; ++k)
-      for (i=0; i<ido; ++i)
+    for (size_t k=0; k<l1; ++k)
+      for (size_t i=0; i<ido; ++i)
         {
         PMC(ta1,ta3,CC(i,2,k),CC(i,4,k))
         ta2.r = CC(i,0,k).r - .5*ta1.r;
@@ -248,27 +243,26 @@ static void X(g)(size_t ido, size_t ip, size_t l1, const cmplx *cc, cmplx *ch,
   const size_t cdim=ip;
   cmplx *tarr=RALLOC(cmplx,2*ip);
   cmplx *ccl=tarr, *wal=tarr+ip;
-  size_t i,j,k,l,jc,lc;
   size_t ipph = (ip+1)/2;
 
-  for (i=1; i<ip; ++i)
+  for (size_t i=1; i<ip; ++i)
     wal[i]=wa[ido*(i-1)];
-  for (k=0; k<l1; ++k)
-    for (i=0; i<ido; ++i)
+  for (size_t k=0; k<l1; ++k)
+    for (size_t i=0; i<ido; ++i)
       {
       cmplx s=CC(i,0,k);
       ccl[0] = CC(i,0,k);
-      for(j=1,jc=ip-1; j<ipph; ++j,--jc)
+      for(size_t j=1,jc=ip-1; j<ipph; ++j,--jc)
         {
         PMC (ccl[j],ccl[jc],CC(i,j,k),CC(i,jc,k))
         ADDC (s,s,ccl[j])
         }
       CH(i,k,0) = s;
-      for (j=1, jc=ip-1; j<=ipph; ++j,--jc)
+      for (size_t j=1, jc=ip-1; j<=ipph; ++j,--jc)
         {
         cmplx abr=ccl[0], abi={0.,0.};
         size_t iang=0;
-        for (l=1,lc=ip-1; l<ipph; ++l,--lc)
+        for (size_t l=1,lc=ip-1; l<ipph; ++l,--lc)
           {
           iang+=j;
           if (iang>ip) iang-=ip;
@@ -289,11 +283,11 @@ static void X(g)(size_t ido, size_t ip, size_t l1, const cmplx *cc, cmplx *ch,
 
   if (ido==1) return;
 
-  for (j=1; j<ip; ++j)
-    for (k=0; k<l1; ++k)
+  for (size_t j=1; j<ip; ++j)
+    for (size_t k=0; k<l1; ++k)
       {
       size_t idij=(j-1)*ido+1;
-      for(i=1; i<ido; ++i, ++idij)
+      for(size_t i=1; i<ido; ++i, ++idij)
         {
         cmplx t=CH(i,k,j);
         MULPMSIGNC (CH(i,k,j),wa[idij],t)

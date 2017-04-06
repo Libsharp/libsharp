@@ -25,7 +25,7 @@
 /*! \file c_utils.h
  *  Convenience functions
  *
- *  Copyright (C) 2008-2013 Max-Planck-Society
+ *  Copyright (C) 2008-2017 Max-Planck-Society
  *  \author Martin Reinecke
  *  \note This file should only be included from .c files, NOT from .h files.
  */
@@ -142,6 +142,12 @@ void util_free_ (void *ptr);
 
 #ifdef __cplusplus
 }
+#endif
+
+#ifdef __GNUC__
+#define NOINLINE __attribute__((noinline))
+#else
+#define NOINLINE
 #endif
 
 #endif

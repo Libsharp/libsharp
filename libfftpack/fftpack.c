@@ -27,7 +27,7 @@
   Algorithmically based on Fortran-77 FFTPACK by Paul N. Swarztrauber
   (Version 4, 1985).
 
-  C port by Martin Reinecke (2010-2016)
+  C port by Martin Reinecke (2010-2017)
  */
 
 #include <math.h>
@@ -72,22 +72,21 @@ static void radf2 (size_t ido, size_t l1, const double *cc, double *ch,
   const double *wa)
   {
   const size_t cdim=2;
-  size_t i, k, ic;
-  double ti2, tr2;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     PM (CH(0,0,k),CH(ido-1,1,k),CC(0,k,0),CC(0,k,1))
   if ((ido&1)==0)
-    for (k=0; k<l1; k++)
+    for (size_t k=0; k<l1; k++)
       {
       CH(    0,1,k) = -CC(ido-1,k,1);
       CH(ido-1,0,k) =  CC(ido-1,k,0);
       }
   if (ido<=2) return;
-  for (k=0; k<l1; k++)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1; k++)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
+      double ti2, tr2;
       MULPM (tr2,ti2,WA(0,i-2),WA(0,i-1),CC(i-1,k,1),CC(i,k,1))
       PM (CH(i-1,0,k),CH(ic-1,1,k),CC(i-1,k,0),tr2)
       PM (CH(i  ,0,k),CH(ic  ,1,k),ti2,CC(i  ,k,0))
@@ -99,31 +98,30 @@ static void radf3(size_t ido, size_t l1, const double *cc, double *ch,
   {
   const size_t cdim=3;
   static const double taur=-0.5, taui=0.86602540378443864676;
-  size_t i, k, ic;
-  double ci2, di2, di3, cr2, dr2, dr3, ti2, ti3, tr2, tr3;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
-    cr2=CC(0,k,1)+CC(0,k,2);
+    double cr2=CC(0,k,1)+CC(0,k,2);
     CH(0,0,k) = CC(0,k,0)+cr2;
     CH(0,2,k) = taui*(CC(0,k,2)-CC(0,k,1));
     CH(ido-1,1,k) = CC(0,k,0)+taur*cr2;
     }
   if (ido==1) return;
-  for (k=0; k<l1; k++)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1; k++)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
+      double di2, di3, dr2, dr3;
       MULPM (dr2,di2,WA(0,i-2),WA(0,i-1),CC(i-1,k,1),CC(i,k,1))
       MULPM (dr3,di3,WA(1,i-2),WA(1,i-1),CC(i-1,k,2),CC(i,k,2))
-      cr2=dr2+dr3;
-      ci2=di2+di3;
+      double cr2=dr2+dr3;
+      double ci2=di2+di3;
       CH(i-1,0,k) = CC(i-1,k,0)+cr2;
       CH(i  ,0,k) = CC(i  ,k,0)+ci2;
-      tr2 = CC(i-1,k,0)+taur*cr2;
-      ti2 = CC(i  ,k,0)+taur*ci2;
-      tr3 = taui*(di2-di3);
-      ti3 = taui*(dr3-dr2);
+      double tr2 = CC(i-1,k,0)+taur*cr2;
+      double ti2 = CC(i  ,k,0)+taur*ci2;
+      double tr3 = taui*(di2-di3);
+      double ti3 = taui*(dr3-dr2);
       PM(CH(i-1,2,k),CH(ic-1,1,k),tr2,tr3)
       PM(CH(i  ,2,k),CH(ic  ,1,k),ti3,ti2)
       }
@@ -134,17 +132,16 @@ static void radf4(size_t ido, size_t l1, const double *cc, double *ch,
   {
   const size_t cdim=4;
   static const double hsqt2=0.70710678118654752440;
-  size_t i, k, ic;
   double ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
     PM (tr1,CH(0,2,k),CC(0,k,3),CC(0,k,1))
     PM (tr2,CH(ido-1,1,k),CC(0,k,0),CC(0,k,2))
     PM (CH(0,0,k),CH(ido-1,3,k),tr2,tr1)
     }
   if ((ido&1)==0)
-    for (k=0; k<l1; k++)
+    for (size_t k=0; k<l1; k++)
       {
       ti1=-hsqt2*(CC(ido-1,k,1)+CC(ido-1,k,3));
       tr1= hsqt2*(CC(ido-1,k,1)-CC(ido-1,k,3));
@@ -152,10 +149,10 @@ static void radf4(size_t ido, size_t l1, const double *cc, double *ch,
       PM (CH(    0,3,k),CH(    0,1,k),ti1,CC(ido-1,k,2))
       }
   if (ido<=2) return;
-  for (k=0; k<l1; k++)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1; k++)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
       MULPM(cr2,ci2,WA(0,i-2),WA(0,i-1),CC(i-1,k,1),CC(i,k,1))
       MULPM(cr3,ci3,WA(1,i-2),WA(1,i-1),CC(i-1,k,2),CC(i,k,2))
       MULPM(cr4,ci4,WA(2,i-2),WA(2,i-1),CC(i-1,k,3),CC(i,k,3))
@@ -176,11 +173,10 @@ static void radf5(size_t ido, size_t l1, const double *cc, double *ch,
   const size_t cdim=5;
   static const double tr11= 0.3090169943749474241, ti11=0.95105651629515357212,
                       tr12=-0.8090169943749474241, ti12=0.58778525229247312917;
-  size_t i, k, ic;
   double ci2, di2, ci4, ci5, di3, di4, di5, ci3, cr2, cr3, dr2, dr3,
          dr4, dr5, cr5, cr4, ti2, ti3, ti5, ti4, tr2, tr3, tr4, tr5;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
     PM (cr2,ci5,CC(0,k,4),CC(0,k,1))
     PM (cr3,ci4,CC(0,k,3),CC(0,k,2))
@@ -191,10 +187,10 @@ static void radf5(size_t ido, size_t l1, const double *cc, double *ch,
     CH(0,4,k)=ti12*ci5-ti11*ci4;
     }
   if (ido==1) return;
-  for (k=0; k<l1;++k)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1;++k)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
       MULPM (dr2,di2,WA(0,i-2),WA(0,i-1),CC(i-1,k,1),CC(i,k,1))
       MULPM (dr3,di3,WA(1,i-2),WA(1,i-1),CC(i-1,k,2),CC(i,k,2))
       MULPM (dr4,di4,WA(2,i-2),WA(2,i-1),CC(i-1,k,3),CC(i,k,3))
@@ -229,28 +225,24 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
   double *cc, double *ch, const double *wa)
   {
   const size_t cdim=ip;
-  size_t idij, ipph, i, j, k, l, j2, ic, jc, lc, ik;
-  double ai1, ai2, ar1, ar2;
-  double *csarr;
-  size_t aidx;
 
-  ipph=(ip+1)/ 2;
+  size_t ipph=(ip+1)/ 2;
   if(ido!=1)
     {
     memcpy(ch,cc,idl1*sizeof(double));
 
-    for(j=1; j<ip; j++)
-      for(k=0; k<l1; k++)
+    for(size_t j=1; j<ip; j++)
+      for(size_t k=0; k<l1; k++)
         {
         CH(0,k,j)=C1(0,k,j);
-        idij=(j-1)*ido+1;
-        for(i=2; i<ido; i+=2,idij+=2)
+        size_t idij=(j-1)*ido+1;
+        for(size_t i=2; i<ido; i+=2,idij+=2)
           MULPM(CH(i-1,k,j),CH(i,k,j),wa[idij-1],wa[idij],C1(i-1,k,j),C1(i,k,j))
         }
 
-    for(j=1,jc=ip-1; j<ipph; j++,jc--)
-      for(k=0; k<l1; k++)
-        for(i=2; i<ido; i+=2)
+    for(size_t j=1,jc=ip-1; j<ipph; j++,jc--)
+      for(size_t k=0; k<l1; k++)
+        for(size_t i=2; i<ido; i+=2)
           {
           PM(C1(i-1,k,j),C1(i  ,k,jc),CH(i-1,k,jc),CH(i-1,k,j ))
           PM(C1(i  ,k,j),C1(i-1,k,jc),CH(i  ,k,j ),CH(i  ,k,jc))
@@ -259,30 +251,30 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
   else
     memcpy(cc,ch,idl1*sizeof(double));
 
-  for(j=1,jc=ip-1; j<ipph; j++,jc--)
-    for(k=0; k<l1; k++)
+  for(size_t j=1,jc=ip-1; j<ipph; j++,jc--)
+    for(size_t k=0; k<l1; k++)
       PM(C1(0,k,j),C1(0,k,jc),CH(0,k,jc),CH(0,k,j))
 
-  csarr=RALLOC(double,2*ip);
+  double *csarr=RALLOC(double,2*ip);
   sincos_2pibyn(ip, ip, &csarr[1], &csarr[0], 2);
 
-  for(l=1,lc=ip-1; l<ipph; l++,lc--)
+  for(size_t l=1,lc=ip-1; l<ipph; l++,lc--)
     {
-    ar1=csarr[2*l];
-    ai1=csarr[2*l+1];
-    for(ik=0; ik<idl1; ik++)
+    double ar1=csarr[2*l];
+    double ai1=csarr[2*l+1];
+    for(size_t ik=0; ik<idl1; ik++)
       {
       CH2(ik,l)=C2(ik,0)+ar1*C2(ik,1);
       CH2(ik,lc)=ai1*C2(ik,ip-1);
       }
-    aidx=2*l;
-    for(j=2,jc=ip-2; j<ipph; j++,jc--)
+    size_t aidx=2*l;
+    for(size_t j=2,jc=ip-2; j<ipph; j++,jc--)
       {
       aidx+=2*l;
       if (aidx>=2*ip) aidx-=2*ip;
-      ar2=csarr[aidx];
-      ai2=csarr[aidx+1];
-      for(ik=0; ik<idl1; ik++)
+      double ar2=csarr[aidx];
+      double ai2=csarr[aidx+1];
+      for(size_t ik=0; ik<idl1; ik++)
         {
         CH2(ik,l )+=ar2*C2(ik,j );
         CH2(ik,lc)+=ai2*C2(ik,jc);
@@ -291,17 +283,17 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
     }
   DEALLOC(csarr);
 
-  for(j=1; j<ipph; j++)
-    for(ik=0; ik<idl1; ik++)
+  for(size_t j=1; j<ipph; j++)
+    for(size_t ik=0; ik<idl1; ik++)
       CH2(ik,0)+=C2(ik,j);
 
-  for(k=0; k<l1; k++)
+  for(size_t k=0; k<l1; k++)
     memcpy(&CC(0,0,k),&CH(0,k,0),ido*sizeof(double));
-  for(j=1; j<ipph; j++)
+  for(size_t j=1; j<ipph; j++)
     {
-    jc=ip-j;
-    j2=2*j;
-    for(k=0; k<l1; k++)
+    size_t jc=ip-j;
+    size_t j2=2*j;
+    for(size_t k=0; k<l1; k++)
       {
       CC(ido-1,j2-1,k) = CH(0,k,j );
       CC(0    ,j2  ,k) = CH(0,k,jc);
@@ -309,14 +301,14 @@ static void radfg(size_t ido, size_t ip, size_t l1, size_t idl1,
     }
   if(ido==1) return;
 
-  for(j=1; j<ipph; j++)
+  for(size_t j=1; j<ipph; j++)
     {
-    jc=ip-j;
-    j2=2*j;
-    for(k=0; k<l1; k++)
-      for(i=2; i<ido; i+=2)
+    size_t jc=ip-j;
+    size_t j2=2*j;
+    for(size_t k=0; k<l1; k++)
+      for(size_t i=2; i<ido; i+=2)
         {
-        ic=ido-i;
+        size_t ic=ido-i;
         PM (CC(i-1,j2,k),CC(ic-1,j2-1,k),CH(i-1,k,j ),CH(i-1,k,jc))
         PM (CC(i  ,j2,k),CC(ic  ,j2-1,k),CH(i  ,k,jc),CH(i  ,k,j ))
         }
@@ -332,22 +324,21 @@ static void radb2(size_t ido, size_t l1, const double *cc, double *ch,
   const double *wa)
   {
   const size_t cdim=2;
-  size_t i, k, ic;
-  double ti2, tr2;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     PM (CH(0,k,0),CH(0,k,1),CC(0,0,k),CC(ido-1,1,k))
   if ((ido&1)==0)
-    for (k=0; k<l1; k++)
+    for (size_t k=0; k<l1; k++)
       {
       CH(ido-1,k,0) =  2*CC(ido-1,0,k);
       CH(ido-1,k,1) = -2*CC(0    ,1,k);
       }
   if (ido<=2) return;
-  for (k=0; k<l1;++k)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1;++k)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
+      double ti2, tr2;
       PM (CH(i-1,k,0),tr2,CC(i-1,0,k),CC(ic-1,1,k))
       PM (ti2,CH(i  ,k,0),CC(i  ,0,k),CC(ic  ,1,k))
       MULPM (CH(i,k,1),CH(i-1,k,1),WA(0,i-2),WA(0,i-1),ti2,tr2)
@@ -359,10 +350,9 @@ static void radb3(size_t ido, size_t l1, const double *cc, double *ch,
   {
   const size_t cdim=3;
   static const double taur=-0.5, taui=0.86602540378443864676;
-  size_t i, k, ic;
   double ci2, ci3, di2, di3, cr2, cr3, dr2, dr3, ti2, tr2;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
     tr2=2*CC(ido-1,1,k);
     cr2=CC(0,0,k)+taur*tr2;
@@ -371,10 +361,10 @@ static void radb3(size_t ido, size_t l1, const double *cc, double *ch,
     PM (CH(0,k,2),CH(0,k,1),cr2,ci3);
     }
   if (ido==1) return;
-  for (k=0; k<l1; k++)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1; k++)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
       tr2=CC(i-1,2,k)+CC(ic-1,1,k);
       ti2=CC(i  ,2,k)-CC(ic  ,1,k);
       cr2=CC(i-1,0,k)+taur*tr2;
@@ -395,10 +385,9 @@ static void radb4(size_t ido, size_t l1, const double *cc, double *ch,
   {
   const size_t cdim=4;
   static const double sqrt2=1.41421356237309504880;
-  size_t i, k, ic;
   double ci2, ci3, ci4, cr2, cr3, cr4, ti1, ti2, ti3, ti4, tr1, tr2, tr3, tr4;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
     PM (tr2,tr1,CC(0,0,k),CC(ido-1,3,k))
     tr3=2*CC(ido-1,1,k);
@@ -407,7 +396,7 @@ static void radb4(size_t ido, size_t l1, const double *cc, double *ch,
     PM (CH(0,k,3),CH(0,k,1),tr1,tr4)
     }
   if ((ido&1)==0)
-    for (k=0; k<l1; k++)
+    for (size_t k=0; k<l1; k++)
       {
       PM (ti1,ti2,CC(0    ,3,k),CC(0    ,1,k))
       PM (tr2,tr1,CC(ido-1,0,k),CC(ido-1,2,k))
@@ -417,10 +406,10 @@ static void radb4(size_t ido, size_t l1, const double *cc, double *ch,
       CH(ido-1,k,3)=-sqrt2*(tr1+ti1);
       }
   if (ido<=2) return;
-  for (k=0; k<l1;++k)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1;++k)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
       PM (tr2,tr1,CC(i-1,0,k),CC(ic-1,3,k))
       PM (ti1,ti2,CC(i  ,0,k),CC(ic  ,3,k))
       PM (tr4,ti3,CC(i  ,2,k),CC(ic  ,1,k))
@@ -441,11 +430,10 @@ static void radb5(size_t ido, size_t l1, const double *cc, double *ch,
   const size_t cdim=5;
   static const double tr11= 0.3090169943749474241, ti11=0.95105651629515357212,
                       tr12=-0.8090169943749474241, ti12=0.58778525229247312917;
-  size_t i, k, ic;
   double ci2, ci3, ci4, ci5, di3, di4, di5, di2, cr2, cr3, cr5, cr4,
          ti2, ti3, ti4, ti5, dr3, dr4, dr5, dr2, tr2, tr3, tr4, tr5;
 
-  for (k=0; k<l1; k++)
+  for (size_t k=0; k<l1; k++)
     {
     ti5=2*CC(0,2,k);
     ti4=2*CC(0,4,k);
@@ -459,10 +447,10 @@ static void radb5(size_t ido, size_t l1, const double *cc, double *ch,
     PM(CH(0,k,3),CH(0,k,2),cr3,ci4)
     }
   if (ido==1) return;
-  for (k=0; k<l1;++k)
-    for (i=2; i<ido; i+=2)
+  for (size_t k=0; k<l1;++k)
+    for (size_t i=2; i<ido; i+=2)
       {
-      ic=ido-i;
+      size_t ic=ido-i;
       PM(tr2,tr5,CC(i-1,2,k),CC(ic-1,1,k))
       PM(ti5,ti2,CC(i  ,2,k),CC(ic  ,1,k))
       PM(tr3,tr4,CC(i-1,4,k),CC(ic-1,3,k))
@@ -490,19 +478,15 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
   double *cc, double *ch, const double *wa)
   {
   const size_t cdim=ip;
-  size_t idij, ipph, i, j, k, l, j2, ic, jc, lc, ik;
-  double ai1, ai2, ar1, ar2;
-  double *csarr;
-  size_t aidx;
 
-  ipph=(ip+1)/ 2;
-  for(k=0; k<l1; k++)
+  size_t ipph=(ip+1)/ 2;
+  for(size_t k=0; k<l1; k++)
     memcpy(&CH(0,k,0),&CC(0,0,k),ido*sizeof(double));
-  for(j=1; j<ipph; j++)
+  for(size_t j=1; j<ipph; j++)
     {
-    jc=ip-j;
-    j2=2*j;
-    for(k=0; k<l1; k++)
+    size_t jc=ip-j;
+    size_t j2=2*j;
+    for(size_t k=0; k<l1; k++)
       {
       CH(0,k,j )=2*CC(ido-1,j2-1,k);
       CH(0,k,jc)=2*CC(0    ,j2  ,k);
@@ -510,37 +494,37 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
     }
 
   if(ido!=1)
-    for(j=1,jc=ip-1; j<ipph; j++,jc--)
-      for(k=0; k<l1; k++)
-        for(i=2; i<ido; i+=2)
+    for(size_t j=1,jc=ip-1; j<ipph; j++,jc--)
+      for(size_t k=0; k<l1; k++)
+        for(size_t i=2; i<ido; i+=2)
           {
-          ic=ido-i;
+          size_t ic=ido-i;
           PM (CH(i-1,k,j ),CH(i-1,k,jc),CC(i-1,2*j,k),CC(ic-1,2*j-1,k))
           PM (CH(i  ,k,jc),CH(i  ,k,j ),CC(i  ,2*j,k),CC(ic  ,2*j-1,k))
           }
 
-  csarr=RALLOC(double,2*ip);
+  double *csarr=RALLOC(double,2*ip);
   sincos_2pibyn(ip, ip, &csarr[1], &csarr[0], 2);
 
-  for(l=1; l<ipph; l++)
+  for(size_t l=1; l<ipph; l++)
     {
-    lc=ip-l;
-    ar1=csarr[2*l];
-    ai1=csarr[2*l+1];
-    for(ik=0; ik<idl1; ik++)
+    size_t lc=ip-l;
+    double ar1=csarr[2*l];
+    double ai1=csarr[2*l+1];
+    for(size_t ik=0; ik<idl1; ik++)
       {
       C2(ik,l)=CH2(ik,0)+ar1*CH2(ik,1);
       C2(ik,lc)=ai1*CH2(ik,ip-1);
       }
-    aidx=2*l;
-    for(j=2; j<ipph; j++)
+    size_t aidx=2*l;
+    for(size_t j=2; j<ipph; j++)
       {
-      jc=ip-j;
+      size_t jc=ip-j;
       aidx+=2*l;
       if (aidx>=2*ip) aidx-=2*ip;
-      ar2=csarr[aidx];
-      ai2=csarr[aidx+1];
-      for(ik=0; ik<idl1; ik++)
+      double ar2=csarr[aidx];
+      double ai2=csarr[aidx+1];
+      for(size_t ik=0; ik<idl1; ik++)
         {
         C2(ik,l )+=ar2*CH2(ik,j );
         C2(ik,lc)+=ai2*CH2(ik,jc);
@@ -549,31 +533,31 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
     }
   DEALLOC(csarr);
 
-  for(j=1; j<ipph; j++)
-    for(ik=0; ik<idl1; ik++)
+  for(size_t j=1; j<ipph; j++)
+    for(size_t ik=0; ik<idl1; ik++)
       CH2(ik,0)+=CH2(ik,j);
 
-  for(j=1,jc=ip-1; j<ipph; j++,jc--)
-    for(k=0; k<l1; k++)
+  for(size_t j=1,jc=ip-1; j<ipph; j++,jc--)
+    for(size_t k=0; k<l1; k++)
       PM (CH(0,k,jc),CH(0,k,j),C1(0,k,j),C1(0,k,jc))
 
   if(ido==1)
     return;
-  for(j=1,jc=ip-1; j<ipph; j++,jc--)
-    for(k=0; k<l1; k++)
-      for(i=2; i<ido; i+=2)
+  for(size_t j=1,jc=ip-1; j<ipph; j++,jc--)
+    for(size_t k=0; k<l1; k++)
+      for(size_t i=2; i<ido; i+=2)
         {
         PM (CH(i-1,k,jc),CH(i-1,k,j ),C1(i-1,k,j),C1(i  ,k,jc))
         PM (CH(i  ,k,j ),CH(i  ,k,jc),C1(i  ,k,j),C1(i-1,k,jc))
         }
   memcpy(cc,ch,idl1*sizeof(double));
 
-  for(j=1; j<ip; j++)
-    for(k=0; k<l1; k++)
+  for(size_t j=1; j<ip; j++)
+    for(size_t k=0; k<l1; k++)
       {
       C1(0,k,j)=CH(0,k,j);
-      idij=(j-1)*ido+1;
-      for(i=2; i<ido; i+=2,idij+=2)
+      size_t idij=(j-1)*ido+1;
+      for(size_t i=2; i<ido; i+=2,idij+=2)
         MULPM (C1(i,k,j),C1(i-1,k,j),wa[idij-1],wa[idij],CH(i,k,j),CH(i-1,k,j))
       }
   }
@@ -591,10 +575,10 @@ static void radbg(size_t ido, size_t ip, size_t l1, size_t idl1,
 static void cfft1(size_t n, cmplx c[], cmplx ch[], const cmplx wa[],
   const size_t ifac[], int isign)
   {
-  size_t k1, l1=1, nf=ifac[1], iw=0;
+  size_t l1=1, nf=ifac[1], iw=0;
   cmplx *p1=c, *p2=ch;
 
-  for(k1=0; k1<nf; k1++)
+  for(size_t k1=0; k1<nf; k1++)
     {
     size_t ip=ifac[k1+2];
     size_t l2=ip*l1;
@@ -641,7 +625,7 @@ void cfftb(size_t n, double c[], double wsave[])
 
 static void factorize (size_t n, const size_t *pf, size_t npf, size_t *ifac)
   {
-  size_t nl=n, nf=0, ntry=0, j=0, i;
+  size_t nl=n, nf=0, ntry=0, j=0;
 
 startloop:
   j++;
@@ -657,7 +641,7 @@ startloop:
     nl=nq;
     if ((ntry==2) && (nf!=1))
       {
-      for (i=nf+1; i>2; --i)
+      for (size_t i=nf+1; i>2; --i)
         ifac[i]=ifac[i-1];
       ifac[2]=2;
       }
@@ -670,31 +654,30 @@ startloop:
 static void cffti1(size_t n, double wa[], size_t ifac[])
   {
   static const size_t ntryh[5]={4,6,3,2,5};
-  static const double twopi=6.28318530717958647692;
-  size_t j, k;
 
-  double argh=twopi/n;
   size_t i=0, l1=1;
   factorize (n,ntryh,5,ifac);
-  for(k=1; k<=ifac[1]; k++)
+  triggen tg;
+  triggen_init (&tg,n);
+  for(size_t k=1; k<=ifac[1]; k++)
     {
     size_t ip=ifac[k+1];
     size_t ido=n/(l1*ip);
-    for(j=1; j<ip; j++)
+    for(size_t j=1; j<ip; j++)
       {
-      size_t is = i;
-      double argld=j*l1*argh;
-      sincos_multi (ido+1,argld,0.,&wa[i+1],&wa[i],2);
-      i+=2*ido;
+      for (size_t l=0; l<ido+1; ++l)
+        triggen_get (&tg,j*l1*l,&wa[i+2*l+1],&wa[i+2*l]);
 
       if(ip>6)
         {
-        wa[is  ]=wa[i  ];
-        wa[is+1]=wa[i+1];
+        wa[i  ]=wa[i+2*ido  ];
+        wa[i+1]=wa[i+2*ido+1];
         }
+      i+=2*ido;
       }
     l1*=ip;
     }
+  triggen_destroy(&tg);
   }
 
 void cffti(size_t n, double wsave[])
@@ -708,10 +691,10 @@ void cffti(size_t n, double wsave[])
 static void rfftf1(size_t n, double c[], double ch[], const double wa[],
   const size_t ifac[])
   {
-  size_t k1, l1=n, nf=ifac[1], iw=n-1;
+  size_t l1=n, nf=ifac[1], iw=n-1;
   double *p1=ch, *p2=c;
 
-  for(k1=1; k1<=nf;++k1)
+  for(size_t k1=1; k1<=nf;++k1)
     {
     size_t ip=ifac[nf-k1+2];
     size_t ido=n / l1;
@@ -741,10 +724,10 @@ static void rfftf1(size_t n, double c[], double ch[], const double wa[],
 static void rfftb1(size_t n, double c[], double ch[], const double wa[],
   const size_t ifac[])
   {
-  size_t k1, l1=1, nf=ifac[1], iw=0;
+  size_t l1=1, nf=ifac[1], iw=0;
   double *p1=c, *p2=ch;
 
-  for(k1=1; k1<=nf; k1++)
+  for(size_t k1=1; k1<=nf; k1++)
     {
     size_t ip = ifac[k1+1],
            ido= n/(ip*l1);
@@ -779,24 +762,24 @@ void rfftb(size_t n, double r[], double wsave[])
 static void rffti1(size_t n, double wa[], size_t ifac[])
   {
   static const size_t ntryh[4]={4,2,3,5};
-  static const double twopi=6.28318530717958647692;
-  size_t j, k;
 
-  double argh=twopi/n;
+  triggen tg;
+  triggen_init (&tg,n);
   size_t is=0, l1=1;
   factorize (n,ntryh,4,ifac);
-  for (k=1; k<ifac[1]; k++)
+  for (size_t k=1; k<ifac[1]; k++)
     {
     size_t ip=ifac[k+1],
            ido=n/(l1*ip);
-    for (j=1; j<ip; ++j)
+    for (size_t j=1; j<ip; ++j)
       {
-      double argld=j*l1*argh;
-      sincos_multi((ido-1)/2,argld,argld,&wa[is+1],&wa[is],2);
+      for (size_t i=1; i<=(ido-1)/2; ++i)
+        triggen_get(&tg,j*l1*i,&wa[is+2*i-1],&wa[is+2*i-2]);
       is+=ido;
       }
     l1*=ip;
     }
+  triggen_destroy (&tg);
   }
 
 void rffti(size_t n, double wsave[])

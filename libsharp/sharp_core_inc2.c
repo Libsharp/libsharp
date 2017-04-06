@@ -25,15 +25,9 @@
 /*! \file sharp_core_inc2.c
  *  Type-dependent code for the computational core
  *
- *  Copyright (C) 2012-2016 Max-Planck-Society
+ *  Copyright (C) 2012-2017 Max-Planck-Society
  *  \author Martin Reinecke
  */
-
-#ifdef __GNUC__
-#define NOINLINE __attribute__((noinline))
-#else
-#define NOINLINE
-#endif
 
 NOINLINE static void Z(alm2map_kernel) (const Tb cth, Y(Tbri) * restrict p1,
   Y(Tbri) * restrict p2, Tb lam_1, Tb lam_2,
@@ -83,29 +77,32 @@ if (njobs>1)
   }
   while (l<lmax)
     {
-    Tv r0=vload(rf[l].f[0]),r1=vload(rf[l].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_1.v[i] = vsub(vmul(vmul(cth.v[i],lam_2.v[i]),r0),vmul(lam_1.v[i],r1));
+      lam_1.v[i] = vload(rf[l].f[0])*(cth.v[i]*lam_2.v[i])
+                 - vload(rf[l].f[1])*lam_1.v[i];
     for (int j=0; j<njobs; ++j)
       {
       Tv ar=vload(creal(alm[njobs*l+j])),
          ai=vload(cimag(alm[njobs*l+j]));
       for (int i=0; i<nvec; ++i)
         {
-        vfmaeq(p1[j].r.v[i],lam_2.v[i],ar);
-        vfmaeq(p1[j].i.v[i],lam_2.v[i],ai);
-        }
-      ar=vload(creal(alm[njobs*(l+1)+j]));
-      ai=vload(cimag(alm[njobs*(l+1)+j]));
-      for (int i=0; i<nvec; ++i)
-        {
-        vfmaeq(p2[j].r.v[i],lam_1.v[i],ar);
-        vfmaeq(p2[j].i.v[i],lam_1.v[i],ai);
+        p1[j].r.v[i] += lam_2.v[i]*ar;
+        p1[j].i.v[i] += lam_2.v[i]*ai;
         }
       }
-    r0=vload(rf[l+1].f[0]);r1=vload(rf[l+1].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
+      lam_2.v[i] = vload(rf[l+1].f[0])*(cth.v[i]*lam_1.v[i])
+                 - vload(rf[l+1].f[1])*lam_2.v[i];
+    for (int j=0; j<njobs; ++j)
+      {
+      Tv ar=vload(creal(alm[njobs*(l+1)+j])),
+         ai=vload(cimag(alm[njobs*(l+1)+j]));
+      for (int i=0; i<nvec; ++i)
+        {
+        p2[j].r.v[i] += lam_1.v[i]*ar;
+        p2[j].i.v[i] += lam_1.v[i]*ai;
+        }
+      }
     l+=2;
     }
   if (l==lmax)
@@ -115,8 +112,8 @@ if (njobs>1)
       Tv ar=vload(creal(alm[njobs*l+j])),ai=vload(cimag(alm[njobs*l+j]));
       for (int i=0; i<nvec; ++i)
         {
-        vfmaeq(p1[j].r.v[i],lam_2.v[i],ar);
-        vfmaeq(p1[j].i.v[i],lam_2.v[i],ai);
+        p1[j].r.v[i] += lam_2.v[i]*ar;
+        p1[j].i.v[i] += lam_2.v[i]*ai;
         }
       }
     }
@@ -124,49 +121,39 @@ if (njobs>1)
 
 NOINLINE static void Z(map2alm_kernel) (const Tb cth,
   const Y(Tbri) * restrict p1, const Y(Tbri) * restrict p2, Tb lam_1, Tb lam_2,
-  const sharp_ylmgen_dbl2 * restrict rf, dcmplx * restrict alm, int l, int lmax
+  const sharp_ylmgen_dbl2 * restrict rf, int l, int lmax, Tv *restrict atmp
   NJ1)
   {
   while (l<lmax)
     {
-    Tv r0=vload(rf[l].f[0]),r1=vload(rf[l].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_1.v[i] = vsub(vmul(vmul(cth.v[i],lam_2.v[i]),r0),vmul(lam_1.v[i],r1));
+      lam_1.v[i] = vload(rf[l].f[0])*(cth.v[i]*lam_2.v[i])
+                 - vload(rf[l].f[1])*lam_1.v[i];
     for (int j=0; j<njobs; ++j)
-      {
-      Tv tr1=vzero, ti1=vzero, tr2=vzero, ti2=vzero;
       for (int i=0; i<nvec; ++i)
         {
-        vfmaeq(tr1,lam_2.v[i],p1[j].r.v[i]);
-        vfmaeq(ti1,lam_2.v[i],p1[j].i.v[i]);
+        atmp[2*(l*njobs+j)]+=lam_2.v[i]*p1[j].r.v[i];
+        atmp[2*(l*njobs+j)+1]+=lam_2.v[i]*p1[j].i.v[i];
         }
-      for (int i=0; i<nvec; ++i)
-        {
-        vfmaeq(tr2,lam_1.v[i],p2[j].r.v[i]);
-        vfmaeq(ti2,lam_1.v[i],p2[j].i.v[i]);
-        }
-      if (njobs==1)
-        vhsum_cmplx_special(tr1,ti1,tr2,ti2,&alm[l*njobs+j]);
-      else
-        vhsum_cmplx2(tr1,ti1,tr2,ti2,&alm[l*njobs+j],&alm[(l+1)*njobs+j]);
-      }
-    r0=vload(rf[l+1].f[0]);r1=vload(rf[l+1].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
+      lam_2.v[i] = vload(rf[l+1].f[0])*(cth.v[i]*lam_1.v[i])
+                 - vload(rf[l+1].f[1])*lam_2.v[i];
+    for (int j=0; j<njobs; ++j)
+      for (int i=0; i<nvec; ++i)
+        {
+        atmp[2*((l+1)*njobs+j)]+=lam_1.v[i]*p2[j].r.v[i];
+        atmp[2*((l+1)*njobs+j)+1]+=lam_1.v[i]*p2[j].i.v[i];
+        }
     l+=2;
     }
   if (l==lmax)
     {
     for (int j=0; j<njobs; ++j)
-      {
-      Tv tre=vzero, tim=vzero;
       for (int i=0; i<nvec; ++i)
         {
-        vfmaeq(tre,lam_2.v[i],p1[j].r.v[i]);
-        vfmaeq(tim,lam_2.v[i],p1[j].i.v[i]);
+        atmp[2*(l*njobs+j)] += lam_2.v[i]*p1[j].r.v[i];
+        atmp[2*(l*njobs+j)+1] += lam_2.v[i]*p1[j].i.v[i];
         }
-      alm[l*njobs+j]+=vhsum_cmplx(tre,tim);
-      }
     }
   }
 
@@ -175,7 +162,7 @@ NOINLINE static void Z(calc_alm2map) (const Tb cth, const Tb sth,
   Y(Tbri) * restrict p2 NJ1)
   {
   int l,lmax=gen->lmax;
-  Tb lam_1,lam_2,scale;
+  Tb lam_1=Y(Tbconst)(0.),lam_2=Y(Tbconst)(0.),scale;
   Y(iter_to_ieee) (sth,cth,&l,&lam_1,&lam_2,&scale,gen);
   job->opcnt += (l-gen->m) * 4*VLEN*nvec;
   if (l>lmax) return;
@@ -230,10 +217,10 @@ NOINLINE static void Z(calc_alm2map) (const Tb cth, const Tb sth,
 
 NOINLINE static void Z(calc_map2alm) (const Tb cth, const Tb sth,
   const sharp_Ylmgen_C *gen, sharp_job *job, const Y(Tbri) * restrict p1,
-  const Y(Tbri) * restrict p2 NJ1)
+  const Y(Tbri) * restrict p2, Tv *restrict atmp NJ1)
   {
   int lmax=gen->lmax;
-  Tb lam_1,lam_2,scale;
+  Tb lam_1=Y(Tbconst)(0.),lam_2=Y(Tbconst)(0.),scale;
   int l=gen->m;
   Y(iter_to_ieee) (sth,cth,&l,&lam_1,&lam_2,&scale,gen);
   job->opcnt += (l-gen->m) * 4*VLEN*nvec;
@@ -243,40 +230,31 @@ NOINLINE static void Z(calc_map2alm) (const Tb cth, const Tb sth,
   const sharp_ylmgen_dbl2 * restrict rf = gen->rf;
   Tb corfac;
   Y(getCorfac)(scale,&corfac,gen->cf);
-  dcmplx * restrict alm=job->almtmp;
   int full_ieee = Y(TballGe)(scale,sharp_minscale);
   while (!full_ieee)
     {
     for (int j=0; j<njobs; ++j)
-      {
-      Tv tre=vzero, tim=vzero;
       for (int i=0; i<nvec; ++i)
         {
-        Tv tmp=vmul(lam_2.v[i],corfac.v[i]);
-        vfmaeq(tre,tmp,p1[j].r.v[i]);
-        vfmaeq(tim,tmp,p1[j].i.v[i]);
+        Tv tmp=lam_2.v[i]*corfac.v[i];
+        atmp[2*(l*njobs+j)]+=tmp*p1[j].r.v[i];
+        atmp[2*(l*njobs+j)+1]+=tmp*p1[j].i.v[i];
         }
-      alm[l*njobs+j]+=vhsum_cmplx(tre,tim);
-      }
     if (++l>lmax) return;
-    Tv r0=vload(rf[l-1].f[0]),r1=vload(rf[l-1].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_1.v[i] = vsub(vmul(vmul(cth.v[i],lam_2.v[i]),r0),vmul(lam_1.v[i],r1));
+      lam_1.v[i] = vload(rf[l-1].f[0])*(cth.v[i]*lam_2.v[i])
+                 - vload(rf[l-1].f[1])*lam_1.v[i];
     for (int j=0; j<njobs; ++j)
-      {
-      Tv tre=vzero, tim=vzero;
       for (int i=0; i<nvec; ++i)
         {
-        Tv tmp=vmul(lam_1.v[i],corfac.v[i]);
-        vfmaeq(tre,tmp,p2[j].r.v[i]);
-        vfmaeq(tim,tmp,p2[j].i.v[i]);
+        Tv tmp=lam_1.v[i]*corfac.v[i];
+        atmp[2*(l*njobs+j)]+=tmp*p2[j].r.v[i];
+        atmp[2*(l*njobs+j)+1]+=tmp*p2[j].i.v[i];
         }
-      alm[l*njobs+j]+=vhsum_cmplx(tre,tim);
-      }
     if (++l>lmax) return;
-    r0=vload(rf[l-1].f[0]); r1=vload(rf[l-1].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
+      lam_2.v[i] = vload(rf[l-1].f[0])*(cth.v[i]*lam_1.v[i])
+                 - vload(rf[l-1].f[1])*lam_2.v[i];
     if (Y(rescale)(&lam_1,&lam_2,&scale))
       {
       Y(getCorfac)(scale,&corfac,gen->cf);
@@ -285,7 +263,7 @@ NOINLINE static void Z(calc_map2alm) (const Tb cth, const Tb sth,
     }
 
   Y(Tbmuleq)(&lam_1,corfac); Y(Tbmuleq)(&lam_2,corfac);
-  Z(map2alm_kernel) (cth, p1, p2, lam_1, lam_2, rf, alm, l, lmax NJ2);
+  Z(map2alm_kernel) (cth, p1, p2, lam_1, lam_2, rf, l, lmax, atmp NJ2);
   }
 
 static inline void Z(saddstep) (Y(Tbqu) * restrict px, Y(Tbqu) * restrict py,
@@ -326,8 +304,8 @@ static inline void Z(saddstepb) (Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2,
        acr2=vload(creal(alm2[2*j+1])), aci2=vload(cimag(alm2[2*j+1]));
     for (int i=0; i<nvec; ++i)
       {
-      Tv lw1=vadd(r2p.v[i],r2m.v[i]);
-      Tv lx2=vsub(r1m.v[i],r1p.v[i]);
+      Tv lw1=r2p.v[i]+r2m.v[i];
+      Tv lx2=r1m.v[i]-r1p.v[i];
       vfmaseq(p1[j].qr.v[i],agr1,lw1,aci2,lx2);
       vfmaaeq(p1[j].qi.v[i],agi1,lw1,acr2,lx2);
       vfmaaeq(p1[j].ur.v[i],acr1,lw1,agi2,lx2);
@@ -335,8 +313,8 @@ static inline void Z(saddstepb) (Y(Tbqu) * restrict p1, Y(Tbqu) * restrict p2,
       }
     for (int i=0; i<nvec; ++i)
       {
-      Tv lx1=vsub(r2m.v[i],r2p.v[i]);
-      Tv lw2=vadd(r1p.v[i],r1m.v[i]);
+      Tv lx1=r2m.v[i]-r2p.v[i];
+      Tv lw2=r1p.v[i]+r1m.v[i];
       vfmaseq(p2[j].qr.v[i],agr2,lw2,aci1,lx1);
       vfmaaeq(p2[j].qi.v[i],agi2,lw2,acr1,lx1);
       vfmaaeq(p2[j].ur.v[i],acr2,lw2,agi1,lx1);
@@ -383,10 +361,8 @@ NOINLINE static void Z(alm2map_spin_kernel) (Tb cth, Y(Tbqu) * restrict p1,
        fx2=vload(fx[l+1].f[2]);
     for (int i=0; i<nvec; ++i)
       {
-      rec1p.v[i] = vsub(vmul(vsub(cth.v[i],fx1),vmul(fx0,rec2p.v[i])),
-                        vmul(fx2,rec1p.v[i]));
-      rec1m.v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rec2m.v[i])),
-                        vmul(fx2,rec1m.v[i]));
+      rec1p.v[i] = (cth.v[i]-fx1)*fx0*rec2p.v[i] - fx2*rec1p.v[i];
+      rec1m.v[i] = (cth.v[i]+fx1)*fx0*rec2m.v[i] - fx2*rec1m.v[i];
       }
     Z(saddstepb)(p1,p2,rec1p,rec1m,rec2p,rec2m,&alm[2*njobs*l],
       &alm[2*njobs*(l+1)] NJ2);
@@ -394,10 +370,8 @@ NOINLINE static void Z(alm2map_spin_kernel) (Tb cth, Y(Tbqu) * restrict p1,
     fx2=vload(fx[l+2].f[2]);
     for (int i=0; i<nvec; ++i)
       {
-      rec2p.v[i] = vsub(vmul(vsub(cth.v[i],fx1),vmul(fx0,rec1p.v[i])),
-                        vmul(fx2,rec2p.v[i]));
-      rec2m.v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rec1m.v[i])),
-                        vmul(fx2,rec2m.v[i]));
+      rec2p.v[i] = (cth.v[i]-fx1)*fx0*rec1p.v[i] - fx2*rec2p.v[i];
+      rec2m.v[i] = (cth.v[i]+fx1)*fx0*rec1m.v[i] - fx2*rec2m.v[i];
       }
     l+=2;
     }
@@ -630,7 +604,7 @@ NOINLINE static void Z(calc_alm2map_deriv1) (const Tb cth, const Tb sth,
 
 #define VZERO(var) do { memset(&(var),0,sizeof(var)); } while(0)
 
-static void Z(inner_loop) (sharp_job *job, const int *ispair,
+NOINLINE static void Z(inner_loop_a2m) (sharp_job *job, const int *ispair,
   const double *cth_, const double *sth_, int llim, int ulim,
   sharp_Ylmgen_C *gen, int mi, const int *mlim NJ1)
   {
@@ -731,10 +705,30 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
         }
       break;
       }
+    default:
+      {
+      UTIL_FAIL("must not happen");
+      break;
+      }
+    }
+  }
+
+NOINLINE static void Z(inner_loop_m2a) (sharp_job *job, const int *ispair,
+  const double *cth_, const double *sth_, int llim, int ulim,
+  sharp_Ylmgen_C *gen, int mi, const int *mlim NJ1)
+  {
+  const int nval=nvec*VLEN;
+  const int m = job->ainfo->mval[mi];
+  sharp_Ylmgen_prepare (gen, m);
+
+  switch (job->type)
+    {
     case SHARP_MAP2ALM:
       {
       if (job->spin==0)
         {
+        Tv atmp[2*njobs*(gen->lmax+1)];
+        memset (&atmp[2*njobs*m],0,2*njobs*(gen->lmax+1-m)*sizeof(Tv));
         for (int ith=0; ith<ulim-llim; ith+=nval)
           {
           Y(Tburi) p1[njobs], p2[njobs]; VZERO(p1); VZERO(p2);
@@ -760,8 +754,15 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
               }
             }
           if (!skip)
-            Z(calc_map2alm)(cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b NJ2);
+            Z(calc_map2alm)(cth.b,sth.b,gen,job,&p1[0].b,&p2[0].b, atmp NJ2);
           }
+        {
+        int istart=m*njobs, istop=(gen->lmax+1)*njobs;
+        for(; istart<istop-2; istart+=2)
+          vhsum_cmplx_special(atmp[2*istart],atmp[2*istart+1],atmp[2*istart+2],atmp[2*istart+3],&(job->almtmp[istart]));
+        for(; istart<istop; istart++)
+          job->almtmp[istart]+=vhsum_cmplx(atmp[2*istart],atmp[2*istart+1]);
+        }
         }
       else
         {
@@ -807,6 +808,15 @@ static void Z(inner_loop) (sharp_job *job, const int *ispair,
       break;
       }
     }
+  }
+
+static void Z(inner_loop) (sharp_job *job, const int *ispair,
+  const double *cth_, const double *sth_, int llim, int ulim,
+  sharp_Ylmgen_C *gen, int mi, const int *mlim NJ1)
+  {
+  (job->type==SHARP_MAP2ALM) ?
+    Z(inner_loop_m2a)(job,ispair,cth_,sth_,llim,ulim,gen,mi,mlim NJ2) :
+    Z(inner_loop_a2m)(job,ispair,cth_,sth_,llim,ulim,gen,mi,mlim NJ2);
   }
 
 #undef VZERO

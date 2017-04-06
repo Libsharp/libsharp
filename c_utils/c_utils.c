@@ -25,7 +25,7 @@
 /*
  *  Convenience functions
  *
- *  Copyright (C) 2008-2013 Max-Planck-Society
+ *  Copyright (C) 2008-2017 Max-Planck-Society
  *  Author: Martin Reinecke
  */
 
@@ -44,7 +44,7 @@ void util_warn_ (const char *file, int line, const char *func, const char *msg)
 
 /* This function tries to avoid allocations with a total size close to a high
    power of two (called the "critical stride" here), by adding a few more bytes
-   if necssary. This lowers the probability that two arrays differ by a multiple
+   if necessary. This lowers the probability that two arrays differ by a multiple
    of the critical stride in their starting address, which in turn lowers the
    risk of cache line contention. */
 static size_t manipsize(size_t sz)
@@ -61,7 +61,7 @@ void *util_malloc_ (size_t sz)
   {
   void *res;
   if (sz==0) return NULL;
-  res = _mm_malloc(manipsize(sz),16);
+  res = _mm_malloc(manipsize(sz),32);
   UTIL_ASSERT(res,"_mm_malloc() failed");
   return res;
   }

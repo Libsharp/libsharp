@@ -25,7 +25,7 @@
 /*! \file sharp_core_inc.c
  *  Type-dependent code for the computational core
  *
- *  Copyright (C) 2012-2016 Max-Planck-Society
+ *  Copyright (C) 2012-2017 Max-Planck-Society
  *  \author Martin Reinecke
  */
 
@@ -94,7 +94,7 @@ static void Y(Tbnormalize) (Tb * restrict val, Tb * restrict scale,
     }
   }
 
-static void Y(mypow) (Tb val, int npow, const double * restrict powlimit,
+NOINLINE static void Y(mypow) (Tb val, int npow, const double * restrict powlimit,
   Tb * restrict resd, Tb * restrict ress)
   {
   Tv vminv=vload(powlimit[npow]);
@@ -202,7 +202,7 @@ static void Y(getCorfac)(Tb scale, Tb * restrict corfac,
   *corfac=corf.b;
   }
 
-static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
+NOINLINE static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
   Tb * restrict lam_1_, Tb * restrict lam_2_, Tb * restrict scale_,
   const sharp_Ylmgen_C * restrict gen)
   {
@@ -216,12 +216,12 @@ static void Y(iter_to_ieee) (const Tb sth, Tb cth, int *l_,
   while (below_limit)
     {
     if (l+2>gen->lmax) {*l_=gen->lmax+1;return;}
-    Tv r0=vload(gen->rf[l].f[0]),r1=vload(gen->rf[l].f[1]);
     for (int i=0; i<nvec; ++i)
-      lam_1.v[i] = vsub(vmul(vmul(cth.v[i],lam_2.v[i]),r0),vmul(lam_1.v[i],r1));
-    r0=vload(gen->rf[l+1].f[0]); r1=vload(gen->rf[l+1].f[1]);
+      lam_1.v[i] = vload(gen->rf[l].f[0])*(cth.v[i]*lam_2.v[i])
+                 - vload(gen->rf[l].f[1])*lam_1.v[i];
     for (int i=0; i<nvec; ++i)
-      lam_2.v[i] = vsub(vmul(vmul(cth.v[i],lam_1.v[i]),r0),vmul(lam_2.v[i],r1));
+      lam_2.v[i] = vload(gen->rf[l+1].f[0])*(cth.v[i]*lam_1.v[i])
+                 - vload(gen->rf[l+1].f[1])*lam_2.v[i];
     if (Y(rescale)(&lam_1,&lam_2,&scale))
       below_limit = Y(TballLt)(scale,sharp_limscale);
     l+=2;
@@ -236,10 +236,8 @@ static inline void Y(rec_step) (Tb * restrict rxp, Tb * restrict rxm,
   Tv fx0=vload(fx.f[0]),fx1=vload(fx.f[1]),fx2=vload(fx.f[2]);
   for (int i=0; i<nvec; ++i)
     {
-    rxp->v[i] = vsub(vmul(vsub(cth.v[i],fx1),vmul(fx0,ryp->v[i])),
-                vmul(fx2,rxp->v[i]));
-    rxm->v[i] = vsub(vmul(vadd(cth.v[i],fx1),vmul(fx0,rym->v[i])),
-                vmul(fx2,rxm->v[i]));
+    rxp->v[i] = (cth.v[i]-fx1)*fx0*ryp->v[i] - fx2*rxp->v[i];
+    rxm->v[i] = (cth.v[i]+fx1)*fx0*rym->v[i] - fx2*rxm->v[i];
     }
   }
 
