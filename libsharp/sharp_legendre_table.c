@@ -1417,19 +1417,16 @@ New high-level wrapper
 
 void sharp_normalized_associated_legendre_table(
   ptrdiff_t m,
+  int spin,
   ptrdiff_t lmax,
   ptrdiff_t ntheta,
-  /* contigious 1D array of theta values to compute for,
-     contains ntheta values */
   double *theta,
-  /* number of columns in out; see below. Should be >= (lmax - m). */
-  ptrdiff_t ncols,
-  /* contigiuos 2D array, in "theta-major ordering". Has `ntheta`
-     rows and `ncols` columns. Indexed as out[itheta * ncols + (l - m)].
-     If `ncols > lmax - m` then those entries are not accessed.
-  */
+  ptrdiff_t theta_stride,
+  ptrdiff_t l_stride,
+  ptrdiff_t spin_stride,
   double *out
 ) {
+    if (spin != 0) UTIL_FAIL ("sharp_normalized_associated_legendre_table: only spin=0 has been implemented so far");
 
     Ylmgen_C ctx;
     ptrdiff_t itheta, l, lmin;
@@ -1444,14 +1441,14 @@ void sharp_normalized_associated_legendre_table(
         Ylmgen_recalc_Ylm_sse2(&ctx);
         lmin = IMIN(*ctx.firstl, lmax + 1);
         for (l = m; l < lmin; ++l) {
-            out[itheta * ncols + l - m] = 0;
-            out[(itheta + 1) * ncols + l - m ] = 0;
+            out[itheta * theta_stride + (l - m) * l_stride + spin * spin_stride] = 0;
+            out[(itheta + 1) * theta_stride + (l - m) * l_stride + spin * spin_stride] = 0;
         }
         for (l = IMAX(lmin, m); l <= lmax; ++l) {
             double v1, v2;
             read_v2df(ctx.ylm_sse2[l], &v1, &v2);
-            out[itheta * ncols + l - m] = v1;
-            out[(itheta + 1) * ncols + l - m] = v2;
+            out[itheta * theta_stride + (l - m) * l_stride + spin * spin_stride] = v1;
+            out[(itheta + 1) * theta_stride + (l - m) * l_stride + spin * spin_stride] = v2;
         }
     }
     #endif
@@ -1460,10 +1457,10 @@ void sharp_normalized_associated_legendre_table(
         Ylmgen_recalc_Ylm(&ctx);
         lmin = IMIN(*ctx.firstl, lmax + 1);
         for (l = m; l < lmin; ++l) {
-            out[itheta * ncols + l - m] = 0;
+            out[itheta * theta_stride + (l - m) * l_stride + spin * spin_stride] = 0;
         }
         for (l = IMAX(lmin, m); l <= lmax; ++l) {
-            out[itheta * ncols + l - m] = ctx.ylm[l];
+            out[itheta * theta_stride + (l - m) * l_stride + spin * spin_stride] = ctx.ylm[l];
         }
     }
     Ylmgen_destroy(&ctx);

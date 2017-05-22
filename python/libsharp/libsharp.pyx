@@ -267,5 +267,5 @@ def normalized_associated_legendre_table(int lmax, int m, theta):
     if lmax < m:
         raise ValueError("lmax < m")
     with nogil:
-        sharp_normalized_associated_legendre_table(m, lmax, theta_.shape[0], &theta_[0], lmax - m + 1, &out_[0,0])
+        sharp_normalized_associated_legendre_table(m, 0, lmax, theta_.shape[0], &theta_[0], lmax - m + 1, 1, 1, &out_[0,0])
     return out
