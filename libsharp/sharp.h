@@ -41,5 +41,6 @@
 #include "sharp_lowlevel.h"
 #include "sharp_legendre.h"
 #include "sharp_legendre_roots.h"
+#include "sharp_legendre_table.h"
 
 #endif

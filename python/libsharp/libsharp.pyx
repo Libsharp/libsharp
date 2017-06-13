@@ -1,8 +1,9 @@
 import numpy as np
+cimport cython
 
 __all__ = ['legendre_transform', 'legendre_roots', 'sht', 'synthesis', 'adjoint_synthesis',
            'analysis', 'adjoint_analysis', 'healpix_grid', 'triangular_order', 'rectangular_order',
-           'packed_real_order']
+           'packed_real_order', 'normalized_associated_legendre_table']
 
 
 def legendre_transform(x, bl, out=None):
@@ -254,3 +255,17 @@ cdef class packed_real_order(alm_info):
                                                ms=NULL if ms is None else &ms[0],
                                                alm_info=&self.ainfo)
 
+#
+# 
+#
+
+@cython.boundscheck(False)
+def normalized_associated_legendre_table(int lmax, int m, theta):
+    cdef double[::1] theta_ = np.ascontiguousarray(theta, dtype=np.double)
+    out = np.zeros((theta_.shape[0], lmax - m + 1), np.double)
+    cdef double[:, ::1] out_ = out
+    if lmax < m:
+        raise ValueError("lmax < m")
+    with nogil:
+        sharp_normalized_associated_legendre_table(m, 0, lmax, theta_.shape[0], &theta_[0], lmax - m + 1, 1, 1, &out_[0,0])
+    return out

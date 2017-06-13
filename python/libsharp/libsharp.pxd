@@ -59,6 +59,9 @@ cdef extern from "sharp.h":
         sharp_alm_info *alm_info, int ntrans, int flags, double *time,
         unsigned long long *opcnt) nogil
 
+    void sharp_normalized_associated_legendre_table(int m, int spin, int lmax, int ntheta,
+        double *theta, int theta_stride, int l_stride, int spin_stride, double *out) nogil
+
 
 cdef extern from "sharp_geomhelpers.h":
     void sharp_make_subset_healpix_geom_info(
@@ -75,5 +78,4 @@ cdef extern from "sharp_almhelpers.h":
         sharp_alm_info **alm_info)
     void sharp_make_mmajor_real_packed_alm_info (int lmax, int stride,
         int nm, const int *ms, sharp_alm_info **alm_info)
-
 

@@ -56,4 +56,3 @@ def test_legendre_roots():
     yield check_legendre_roots, 1
     yield check_legendre_roots, 32
     yield check_legendre_roots, 33
-    yield check_legendre_roots, 128
