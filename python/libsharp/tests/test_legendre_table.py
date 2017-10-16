@@ -12,8 +12,8 @@ def test_compare_legendre_table_with_scipy():
 
         Plm_p = sph_harm(m, np.arange(m, lmax + 1), 0, theta)[None, :]
         if not np.allclose(Plm_p, Plm):
-            print Plm_p
-            print Plm
+            print(Plm_p)
+            print(Plm)
         return ok_, np.allclose(Plm_p, Plm)
 
     yield test(np.pi/2, 0, 10)
