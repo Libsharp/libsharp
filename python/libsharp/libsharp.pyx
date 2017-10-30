@@ -246,6 +246,18 @@ cdef class alm_info:
             sharp_destroy_alm_info(self.ainfo)
         self.ainfo = NULL
 
+    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=1, mode='c'] fl, int rank):
+        """Multiply Alm by a Ell based array
+
+        For example beam smoothing"""
+        mvstart = 0
+        for m in self.mval():
+            f = 1 if (m==0) else 2
+            num_ells = self.ainfo.lmax + 1 - m
+            for i_l in range(num_ells):
+                l = m + i_l
+                alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l]
+            mvstart += f * num_ells
 
 cdef class triangular_order(alm_info):
     def __init__(self, int lmax, mmax=None, stride=1):
