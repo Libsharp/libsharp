@@ -1,5 +1,4 @@
 cdef extern from "sharp.h":
-    ctypedef long ptrdiff_t
 
     void sharp_legendre_transform_s(float *bl, float *recfac, ptrdiff_t lmax, float *x,
                                     float *out, ptrdiff_t nx)
@@ -11,7 +10,19 @@ cdef extern from "sharp.h":
 
     # sharp_lowlevel.h
     ctypedef struct sharp_alm_info:
-        pass
+      # Maximum \a l index of the array
+      int lmax
+      # Number of different \a m values in this object
+      int nm
+      # Array with \a nm entries containing the individual m values
+      int *mval
+      # Combination of flags from sharp_almflags
+      int flags
+      # Array with \a nm entries containing the (hypothetical) indices of
+      #   the coefficients with quantum numbers 0,\a mval[i]
+      long *mvstart
+      # Stride between a_lm and a_(l+1),m
+      long stride
 
     ctypedef struct sharp_geom_info:
         pass
