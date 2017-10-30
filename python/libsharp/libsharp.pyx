@@ -1,4 +1,5 @@
 import numpy as np
+cimport numpy as np
 cimport cython
 
 __all__ = ['legendre_transform', 'legendre_roots', 'sht', 'synthesis', 'adjoint_synthesis',
@@ -229,6 +230,16 @@ cdef class alm_info:
         if self.ainfo == NULL:
             raise NotInitializedError()
         return sharp_alm_count(self.ainfo)
+
+    def mval(self):
+        if self.ainfo == NULL:
+            raise NotInitializedError()
+        return np.asarray(<int[:self.ainfo.nm]> self.ainfo.mval)
+
+    def mvstart(self):
+        if self.ainfo == NULL:
+            raise NotInitializedError()
+        return np.asarray(<long[:self.ainfo.nm]> self.ainfo.mvstart)
 
     def __dealloc__(self):
         if self.ainfo != NULL:
