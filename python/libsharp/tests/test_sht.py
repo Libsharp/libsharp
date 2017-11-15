@@ -1,7 +1,4 @@
 import numpy as np
-import healpy
-from scipy.special import legendre
-from scipy.special import p_roots
 from numpy.testing import assert_allclose
 import libsharp
 
@@ -28,7 +25,8 @@ def test_basic():
     map = libsharp.synthesis(grid, order, np.repeat(alm[None, None, :], 3, 0), comm=MPI.COMM_WORLD)
     assert np.all(map[2, :] == map[1, :]) and np.all(map[1, :] == map[0, :])
     map = map[0, 0, :]
-    if rank == 0:
-        healpy.mollzoom(map)
-        from matplotlib.pyplot import show
-        show()
+    print(rank, "shape", map.shape)
+    print(rank, "mean", map.mean())
+
+if __name__=="__main__":
+    test_basic()
