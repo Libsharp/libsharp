@@ -247,17 +247,36 @@ cdef class alm_info:
             sharp_destroy_alm_info(self.ainfo)
         self.ainfo = NULL
 
-    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=1, mode='c'] fl, int rank):
-        """Multiply Alm by a Ell based array
+    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, mode='c'] fl, int rank):
+        """Multiply Alms by a Ell based array
 
-        For example beam smoothing"""
+
+        Parameters
+        ----------
+        alm : np.ndarray
+            input alm, 3 dimensions = (different signal x polarizations x lm-ordering)
+        fl : np.ndarray
+            either 1 dimension, e.g. gaussian beam, or 2 dimensions e.g. a polarized beam
+
+        Returns
+        -------
+        None, it modifies alms in-place
+
+        """
         mvstart = 0
         for m in self.mval():
             f = 1 if (m==0) else 2
             num_ells = self.ainfo.lmax + 1 - m
-            for i_l in range(num_ells):
-                l = m + i_l
-                alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l]
+
+            has_multiple_beams = alm.shape[2] > 1 and fl.ndim > 1
+            if not has_multiple_beams:
+                for i_l in range(num_ells):
+                    l = m + i_l
+                    alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l]
+            else:
+                for i_l in range(num_ells):
+                    l = m + i_l
+                    alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[:alm.shape[2],l]
             mvstart += f * num_ells
 
 cdef class triangular_order(alm_info):
