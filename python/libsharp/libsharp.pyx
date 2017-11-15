@@ -63,7 +63,8 @@ def sht(jobtype, geom_info ginfo, alm_info ainfo, double[:, :, ::1] input,
     cdef int r
     cdef sharp_jobtype jobtype_i
     cdef double[:, :, ::1] output_buf
-    cdef int ntrans = input.shape[0] * input.shape[1]
+    cdef int ntrans = input.shape[0]
+    cdef int ntotcomp = ntrans * input.shape[1]
     cdef int i, j
 
     if spin == 0 and input.shape[1] != 1:
@@ -72,9 +73,9 @@ def sht(jobtype, geom_info ginfo, alm_info ainfo, double[:, :, ::1] input,
         raise ValueError('For spin != 0, we need input.shape[1] == 2')
 
 
-    cdef size_t[::1] ptrbuf = np.empty(2 * ntrans, dtype=np.uintp)
+    cdef size_t[::1] ptrbuf = np.empty(2 * ntotcomp, dtype=np.uintp)
     cdef double **alm_ptrs = <double**>&ptrbuf[0]
-    cdef double **map_ptrs = <double**>&ptrbuf[ntrans]
+    cdef double **map_ptrs = <double**>&ptrbuf[ntotcomp]
 
     try:
         jobtype_i = JOBTYPE_TO_CONST[jobtype]
