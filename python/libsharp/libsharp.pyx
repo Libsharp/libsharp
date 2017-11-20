@@ -247,8 +247,8 @@ cdef class alm_info:
             sharp_destroy_alm_info(self.ainfo)
         self.ainfo = NULL
 
-    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, mode='c'] fl, int rank):
-        """Multiply Alms by a Ell based array
+    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=2, mode='c'] fl, int rank):
+        """Multiply Alm by a Ell based array
 
 
         Parameters
@@ -264,19 +264,21 @@ cdef class alm_info:
 
         """
         mvstart = 0
+        has_multiple_beams = alm.shape[2] > 1 and fl.shape[1] > 1
         for m in self.mval():
             f = 1 if (m==0) else 2
             num_ells = self.ainfo.lmax + 1 - m
 
-            has_multiple_beams = alm.shape[2] > 1 and fl.ndim > 1
             if not has_multiple_beams:
                 for i_l in range(num_ells):
                     l = m + i_l
                     alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l]
             else:
-                for i_l in range(num_ells):
-                    l = m + i_l
-                    alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[:alm.shape[2],l]
+                for i_signal in range(alm.shape[0]):
+                    for i_pol in range(alm.shape[1]):
+                        for i_l in range(num_ells):
+                            l = m + i_l
+                            alm[i_signal, i_pol, mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l, i_pol]
             mvstart += f * num_ells
 
 cdef class triangular_order(alm_info):
