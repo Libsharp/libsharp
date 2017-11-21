@@ -247,7 +247,7 @@ cdef class alm_info:
             sharp_destroy_alm_info(self.ainfo)
         self.ainfo = NULL
 
-    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=2, mode='c'] fl, int rank):
+    def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=2, mode='c'] fl):
         """Multiply Alm by a Ell based array
 
 
