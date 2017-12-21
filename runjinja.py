@@ -15,5 +15,5 @@ env = Environment(block_start_string='/*{',
 
 extra_vars = dict(len=len)
 input = sys.stdin.read()
-sys.stdout.write('/* DO NOT EDIT. md5sum of source: %s */' % hashlib.md5(input).hexdigest())
+sys.stdout.write('/* DO NOT EDIT. md5sum of source: %s */' % hashlib.md5(input.encode()).hexdigest())
 sys.stdout.write(env.from_string(input).render(**extra_vars))
