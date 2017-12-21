@@ -64,7 +64,7 @@
 #include "sharp_legendre.h"
 #include "sharp_vecsupport.h"
 
-#include <malloc.h>
+#include <stdlib.h>
 
 /*{ for scalar, T in [("double", ""), ("float", "_s")] }*/
 /*{ for cs in range(1, 7) }*/
