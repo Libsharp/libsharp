@@ -247,6 +247,7 @@ cdef class alm_info:
             sharp_destroy_alm_info(self.ainfo)
         self.ainfo = NULL
 
+    @cython.boundscheck(False)
     def almxfl(self, np.ndarray[double, ndim=3, mode='c'] alm, np.ndarray[double, ndim=2, mode='c'] fl):
         """Multiply Alm by a Ell based array
 
@@ -263,22 +264,29 @@ cdef class alm_info:
         None, it modifies alms in-place
 
         """
-        mvstart = 0
-        has_multiple_beams = alm.shape[2] > 1 and fl.shape[1] > 1
-        for m in self.mval():
+        cdef int mvstart = 0
+        cdef bint has_multiple_beams = alm.shape[2] > 1 and fl.shape[1] > 1
+        cdef int f, i_m, m, num_ells, i_l, i_signal, i_pol, i_mv
+
+        for i_m in range(self.ainfo.nm):
+            m = self.ainfo.mval[i_m]
             f = 1 if (m==0) else 2
             num_ells = self.ainfo.lmax + 1 - m
 
             if not has_multiple_beams:
-                for i_l in range(num_ells):
-                    l = m + i_l
-                    alm[:,:,mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l]
+                for i_signal in range(alm.shape[0]):
+                    for i_pol in range(alm.shape[1]):
+                        for i_l in range(num_ells):
+                            l = m + i_l
+                            for i_mv in range(mvstart + f*i_l, mvstart + f*i_l +f):
+                                alm[i_signal, i_pol, i_mv] *= fl[l, 0]
             else:
                 for i_signal in range(alm.shape[0]):
                     for i_pol in range(alm.shape[1]):
                         for i_l in range(num_ells):
                             l = m + i_l
-                            alm[i_signal, i_pol, mvstart + f*i_l:mvstart + f*i_l +f] *= fl[l, i_pol]
+                            for i_mv in range(mvstart + f*i_l, mvstart + f*i_l +f):
+                                alm[i_signal, i_pol, i_mv] *= fl[l, i_pol]
             mvstart += f * num_ells
 
 cdef class triangular_order(alm_info):
