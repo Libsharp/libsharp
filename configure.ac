@@ -49,7 +49,7 @@ AC_ARG_ENABLE(pic,
 
 case $CCTYPE in
   gcc)
-    CCFLAGS="-O3 -fno-tree-vectorize -ffast-math -fomit-frame-pointer -std=c99 -pedantic -Wextra -Wall -Wno-unknown-pragmas -Wshadow -Wmissing-prototypes -Wfatal-errors"
+    CCFLAGS="-O3 -fno-tree-vectorize -ffast-math -fomit-frame-pointer -std=c99 -pedantic -Wextra -Wall -Wno-unknown-pragmas -Wshadow -Wmissing-prototypes -Wfatal-errors -march=native"
     GCCVERSION="`$CC -dumpversion 2>&1`"
     echo "Using gcc version $GCCVERSION"
     AC_SUBST(GCCVERSION)
@@ -57,9 +57,6 @@ case $CCTYPE in
     gcc43=`echo $GCCVERSION | grep -c '^4\.[3456789]'`
     gcc44=`echo $GCCVERSION | grep -c '^4\.4'`
     changequote([,])
-    if test $gcc43 -gt 0; then
-      CCFLAGS="$CCFLAGS -march=native"
-    fi
     if test $gcc44 -gt 0; then
       CCFLAGS="$CCFLAGS -fno-tree-fre"
     fi
