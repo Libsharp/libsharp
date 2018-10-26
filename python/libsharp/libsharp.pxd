@@ -1,5 +1,4 @@
 cdef extern from "sharp.h":
-    ctypedef long ptrdiff_t
 
     void sharp_legendre_transform_s(float *bl, float *recfac, ptrdiff_t lmax, float *x,
                                     float *out, ptrdiff_t nx)
@@ -11,7 +10,19 @@ cdef extern from "sharp.h":
 
     # sharp_lowlevel.h
     ctypedef struct sharp_alm_info:
-        pass
+      # Maximum \a l index of the array
+      int lmax
+      # Number of different \a m values in this object
+      int nm
+      # Array with \a nm entries containing the individual m values
+      int *mval
+      # Combination of flags from sharp_almflags
+      int flags
+      # Array with \a nm entries containing the (hypothetical) indices of
+      #   the coefficients with quantum numbers 0,\a mval[i]
+      long *mvstart
+      # Stride between a_lm and a_(l+1),m
+      long stride
 
     ctypedef struct sharp_geom_info:
         pass
@@ -59,6 +70,9 @@ cdef extern from "sharp.h":
         sharp_alm_info *alm_info, int ntrans, int flags, double *time,
         unsigned long long *opcnt) nogil
 
+    void sharp_normalized_associated_legendre_table(int m, int spin, int lmax, int ntheta,
+        double *theta, int theta_stride, int l_stride, int spin_stride, double *out) nogil
+
 
 cdef extern from "sharp_geomhelpers.h":
     void sharp_make_subset_healpix_geom_info(
@@ -75,5 +89,4 @@ cdef extern from "sharp_almhelpers.h":
         sharp_alm_info **alm_info)
     void sharp_make_mmajor_real_packed_alm_info (int lmax, int stride,
         int nm, const int *ms, sharp_alm_info **alm_info)
-
 

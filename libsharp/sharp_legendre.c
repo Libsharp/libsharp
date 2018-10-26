@@ -1,4 +1,4 @@
-/* DO NOT EDIT. md5sum of source: d9499375a254cbf1e7903a249a8676ff *//*
+/* DO NOT EDIT. md5sum of source: a8c5c18a7a19c378187dbf461d12eb5c *//*
 
     NOTE NOTE NOTE
 
@@ -64,7 +64,7 @@
 #include "sharp_legendre.h"
 #include "sharp_vecsupport.h"
 
-#include <malloc.h>
+#include <stdlib.h>
 
 
 

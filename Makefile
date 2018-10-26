@@ -74,5 +74,7 @@ endif
 
 python: $(all_lib) hdrcopy $(CYTHON_MODULES)
 
+# the following test files are automatic; the sht wrapper test
+# must be run manually and requires MPI at the moment..
 pytest: python
-	cd python && nosetests --nocapture libsharp/tests/test_sht.py
+	cd python && nosetests --nocapture libsharp/tests/test_legendre_table.py libsharp/tests/test_legendre.py

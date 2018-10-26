@@ -27,7 +27,7 @@ project_path = os.path.split(__file__)[0]
 sys.path.append(os.path.join(project_path, 'fake_pyrex'))
 
 from setuptools import setup, find_packages, Extension
-from Cython.Distutils import build_ext
+from Cython.Build import cythonize
 import numpy as np
 
 libsharp = os.environ.get('LIBSHARP', None)
@@ -64,14 +64,20 @@ if __name__ == "__main__":
               'Intended Audience :: Science/Research',
               'License :: OSI Approved :: GNU General Public License (GPL)',
               'Topic :: Scientific/Engineering'],
-          cmdclass = {"build_ext": build_ext},
-          ext_modules = [
+          ext_modules = cythonize([
               Extension("libsharp.libsharp",
                         ["libsharp/libsharp.pyx"],
                         libraries=["sharp", "fftpack", "c_utils"],
-                        include_dirs=[libsharp_include],
+                        include_dirs=[libsharp_include, np.get_include()],
                         library_dirs=[libsharp_lib],
                         extra_link_args=["-fopenmp"],
-              )
-              ],
+              ),
+              Extension("libsharp.libsharp_mpi",
+                        ["libsharp/libsharp_mpi.pyx"],
+                        libraries=["sharp", "fftpack", "c_utils"],
+                        include_dirs=[libsharp_include, np.get_include()],
+                        library_dirs=[libsharp_lib],
+                        extra_link_args=["-fopenmp"],
+              ),
+              ]),
           )
