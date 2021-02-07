@@ -1,3 +1,22 @@
+# Development has moved
+
+This repository has been archived and is only kept so that packages depending on
+it have a cacnonical places to download the last version.
+
+For new projects using spherical harmonic transforms we recommend to use
+- `libsharp2` (https://gitlab.mpcdf.mpg.de/mtr/libsharp) if you need MPI
+  functionality, or
+- `the `sht` component of https://gitlab.mpcdf.mpg.de/mtr/ducc if your project
+  is written in modern C++ or Python, and you don't need MPI support within
+  the transforms.
+
+Both of the above libraries are successors to `libsharp` which are
+significantly faster than the last `libsharp` version available here. Since the
+switch to the new algorithms required slight changes to the API, we decided to
+develop them in separate repositories and keep the original `libsharp`
+repository unchanged.
+
+
 # Libsharp
 
 *IMPORTANT NOTE*: It appears that the default branch upon cloning from
